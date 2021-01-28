@@ -1,3 +1,23 @@
+const axios = require('axios');
+
+let BTC_ADDR = "";
+
+let btcParams = {
+  apiKey: process.env.BLOCKNATIVE_APIKEY,
+  address: BTC_ADDR,
+  blockchain: "bitcoin",
+  networks: ["testnet"]
+};
+
+try {
+  btcHook = await axios.post("https://api.blocknative.com/address", btcParams, { 'Content-Type': 'application/json;charset=UTF-8' });
+  btcHookOk = true;
+} catch (error) {
+  btcHookOk = false;
+}
+
+
+
 exports.balanceWebhook = async (req) => {
 
   const {
@@ -55,46 +75,6 @@ exports.balanceWebhook = async (req) => {
         };
       });
 
-
-  }
-
-  /*
-    IEMDX on Kovan
-   */
-  if (system == "ethereum" && network == "kovan" && contractCall != undefined) {//TODO: NETWORK selector/contract addr in the future
-
-    let IEMDXTESTNET = "0x6fdad8993714c37e02eb929c81b93c397931fe51";
-
-    if (contractCall.contractAddress.toLowerCase() != IEMDXTESTNET)
-      return { data: null, error: null, message: 'Not IEMDX token transfer' };
-
-    let { data } = await userService.getByAddress(contractCall.params._to);
-    let currency = await Currency.findOne({ id: req.body.asset.toLowerCase() });
-
-    let marketId = (await Market.findOne({ id: "usdtusd" }))._id;
-    let usdtUsdIndexPrice = (await Indexes.findOne({ market: marketId }).sort({ createdAt: -1 })).indexPrice;
-
-    if (data.length < 1)
-      return { data: null, error: true, message: 'No wallet found' };
-
-    let user = data[0];
-
-    let iemdxValue = contractCall.decimalValue;
-
-    let conversionRate = 0.003125 * usdtUsdIndexPrice;
-
-    return this.deposit(user._id, iemdxValue, currency._id, conversionRate, hash, req)
-      .then(updatedBalance => {
-        return {
-          data: updatedBalance, error: null, message: ''
-        };
-      })
-      .catch(error => {
-        console.log(error);
-        return {
-          data: null, error: error, message: 'Error updating balance'
-        };
-      });
 
   }
 
