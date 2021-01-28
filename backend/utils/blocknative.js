@@ -1,0 +1,33 @@
+const _ = require('lodash');
+const axios = require('axios');
+
+require('dotenv').config();
+
+function registerAddress(address) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const options = {
+        'Content-Type': 'application/json;charset=UTF-8'
+      };
+      const params = {
+        address,
+        apiKey: process.env.BLOCKNATIVE_APIKEY,
+        blockchain: 'bitcoin',
+        networks: [process.env.BTC_NETWORK]
+      };
+
+      const response = await axios.post(process.env.BLOCKNATIVE_ADDRESS, params, options);
+      const msg = _.get(response, 'data.msg');
+
+      resolve(msg);
+    } catch (error) {
+      console.error(error);
+
+      reject('Error creating hook');
+    }
+  });
+}
+
+module.exports = {
+  registerAddress
+};

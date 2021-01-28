@@ -41,9 +41,9 @@ require('./utils/connection');
 
 //Routes
 //=====================================================================
-// const views = require('./apis/views');
+const order = require('./apis/order');
 
-// app.use('/', views);
+order(app);
 
 app.listen(process.env.PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV}`);
