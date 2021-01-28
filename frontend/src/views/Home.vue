@@ -1,15 +1,19 @@
 <template>
   <div class="home">
-    <v-card class="mx-auto" max-width="1024" elevation="0">
+    <page>
       <div>This is the home</div>
-    </v-card>
+    </page>
   </div>
 </template>
 
 <script>
+import Page from "@/components/page.vue";
+
 export default {
   name: "Home",
-  components: {},
+  components: {
+    Page,
+  },
   data: () => ({}),
   methods: {},
 };
@@ -17,6 +21,5 @@ export default {
 
 <style lang="scss" scoped>
 .home {
-  margin-top: 50px;
 }
 </style>
