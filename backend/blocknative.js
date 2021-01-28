@@ -1,3 +1,23 @@
+const axios = require('axios');
+
+let BTC_ADDR = "";
+
+let btcParams = {
+  apiKey: process.env.BLOCKNATIVE_APIKEY,
+  address: BTC_ADDR,
+  blockchain: "bitcoin",
+  networks: ["testnet"]
+};
+
+try {
+  btcHook = await axios.post("https://api.blocknative.com/address", btcParams, { 'Content-Type': 'application/json;charset=UTF-8' });
+  btcHookOk = true;
+} catch (error) {
+  btcHookOk = false;
+}
+
+
+
 exports.balanceWebhook = async (req) => {
 
   const {
