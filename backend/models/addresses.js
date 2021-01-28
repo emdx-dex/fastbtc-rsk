@@ -12,6 +12,6 @@ const schemaConfig = {
 const addressesSchema = new Schema({
 }, schemaConfig);
 
-const addressesModel = model('conversionsModel', addressesSchema);
+const addressesModel = model('addressesModel', addressesSchema);
 
-module.exports = conversionsModel;
+module.exports = addressesModel;
