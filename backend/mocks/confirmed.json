@@ -1,0 +1,59 @@
+{
+  "status": "confirmed",
+  "system": "bitcoin",
+  "network": "testnet",
+  "monitorId": "BITCOIND_TESTNET_F_PROD",
+  "monitorVersion": "0.8.0",
+  "serverVersion": "0.88.0",
+  "timeStamp": "2021-01-29T10:35:09.281Z",
+  "timePending": "19995",
+  "pendingTimeStamp": "2021-01-29T10:34:49.414Z",
+  "rawTransaction": {
+    "txid": "1f4d9acb4a070336f54d15929206a5d57ae0e6a379f8e71a341a22983e0f174c",
+    "hash": "aae2dcc0884c77a7f7b4d06f88d567107e5c13232a0f509c2836c9e30fdfb2f8",
+    "version": 2,
+    "size": 222,
+    "vsize": 141,
+    "weight": 561,
+    "locktime": 1906598,
+    "vin": "[ [Object] ]",
+    "vout": "[ [Object], [Object] ]",
+    "hex": "02000000000101a97c8d1fe363287486fc818e73a8cb3f74f70686403f9c835baebc64b46d54620100000000fdffffff0201000000000000001600140d42635210baf0b0148e3e224faeed45913e25240aa70100000000001600141fb821fdc948c42d63ae1cfbb072f40c17a1bd2b0247304402207ed18658676f52c2e92a0ed3716ab2a331c883bdee8ca735b363d14dc98592ee02204e1e7f7d29c05581eb6d74043cab956c0a865516a436bf0d12de3a75fbe98553012102e5fc234bf9646d948f2032704ccebadeca2159f3c43fc9e39b49980c87e699bea6171d00"
+  },
+  "txid": "1f4d9acb4a070336f54d15929206a5d57ae0e6a379f8e71a341a22983e0f174c",
+  "inputs": [
+    {
+      "address": "tb1qzz6rfamafu5gvdcuxdrcthn055698wamjp3aeq",
+      "value": "0.00108511"
+    }
+  ],
+  "outputs": [
+    {
+      "address": "tb1qp4pxx5sshtctq9yw8c3ylthdgkgnuffy88z0a4",
+      "value": "0.00000001"
+    },
+    {
+      "address": "tb1qr7uzrlwffrzz6cawrnamquh5pst6r0ftsn0ycr",
+      "value": "0.00108298"
+    }
+  ],
+  "fee": "0.00000212",
+  "netBalanceChanges": [
+    {
+      "address": "tb1qzz6rfamafu5gvdcuxdrcthn055698wamjp3aeq",
+      "delta": "-0.00108511"
+    },
+    {
+      "address": "tb1qp4pxx5sshtctq9yw8c3ylthdgkgnuffy88z0a4",
+      "delta": "0.00000001"
+    },
+    {
+      "address": "tb1qr7uzrlwffrzz6cawrnamquh5pst6r0ftsn0ycr",
+      "delta": "0.00108298"
+    }
+  ],
+  "blockHeight": "1906599",
+  "blockHash": "000000006a85299a9618951acdf07856223597271a84826a3eb62cd32a6680d1",
+  "watchedAddress": "tb1qp4pxx5sshtctq9yw8c3ylthdgkgnuffy88z0a4",
+  "apiKey": "fbb04a52-2a4c-4bd3-8ddf-b539f35ed8f9"
+}

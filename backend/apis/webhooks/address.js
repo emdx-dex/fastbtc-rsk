@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const express = require('express');
 const orderModel = require('../../models/orders');
+const STATUS = require('../../utils/status');
 
 const router = express.Router();
 
@@ -9,38 +10,34 @@ require('dotenv').config();
 router.post('/', async (req, res) => {
   const {
     blockHeight,
-    netBalanceChanges,
     status,
     txid,
     watchedAddress
   } = req.body;
 
-  if (status !== 'confirmed') {
-    console.log('TX received but not confirmed');
-
-    return {
-      data: null,
-      error: null,
-      message: 'Recv unconfirmed tx, ignoring..'
-    };
-  }
-
-  console.log('TX confirmed');
+  console.log(req.body);
 
   try {
+    const order = await orderModel.findOne({ btcDepositAddress: watchedAddress });
 
-    const { delta } = netBalanceChanges.find(({ address }) => {
-      return address.toLowerCase() === watchedAddress;
-    });
+    // TODO: What happened if user trasnfer less?
+    // const { delta } = netBalanceChanges.find(({ address }) => {
+    //   return address.toLowerCase() === watchedAddress;
+    // });
 
-    const order = new orderModel({
-      block: blockHeight,
-      // TODO: Get deposit address.
-      // btcDepositAddress: ,
-      rbtcTransferAddress: watchedAddress,
-      txId: txid,
-      value: delta
-    });
+    if (_.isEmpty(order)) {
+      return res.sendStatus(500);
+    }
+
+    if (status === STATUS.PENDING) {
+      order.status = status;
+      order.txId = txid;
+    }
+
+    if (status === STATUS.CONFIRMED) {
+      order.block = blockHeight;
+      order.status = status;
+    }
 
     await order.save();
 

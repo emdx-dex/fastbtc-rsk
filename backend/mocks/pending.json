@@ -1,0 +1,58 @@
+{
+  "status": "pending",
+  "system": "bitcoin",
+  "network": "testnet",
+  "monitorId": "BITCOIND_TESTNET_F_PROD",
+  "monitorVersion": "0.8.0",
+  "serverVersion": "0.88.0",
+  "timeStamp": "2021-01-29T09:49:32.648Z",
+  "pendingTimeStamp": "2021-01-29T09:49:32.652Z",
+  "rawTransaction": {
+    "txid": "e71f20f7cf73e30cc29c3577d2aa996ba741338de2e1ba1abf19febd59c10c4b",
+    "hash": "23a6a8ef24d9b9c16bfbbceac7341b2a099dc228f3b37a63f8e2326ad30b5b25",
+    "version": 2,
+    "size": 222,
+    "vsize": 141,
+    "weight": 561,
+    "locktime": 1906595,
+    "vin": "[ [Object] ]",
+    "vout": "[ [Object], [Object] ]",
+    "hex": "0200000000010199b15300567492f2d0ca78555ac50f15defae3f985d54c7c564b5268155ba12d0100000000fdffffff0201000000000000001600140d42635210baf0b0148e3e224faeed45913e2524fba8010000000000160014d8b4d81503bca6725a606c231c1519019bf07d280247304402207620e67702eb97ffbd434259478c9496e77ac8426bbee722934acb1a9cdbfcfb022022df9c8755beac0b0855b7d5df70d930ed765ece50eaebf01fbb7dcc7d04faaa01210210a5d2b532420045f138e609114ce86579c0c4e17854d1ad4b3b7533c36da627a3171d00"
+  },
+  "txid": "e71f20f7cf73e30cc29c3577d2aa996ba741338de2e1ba1abf19febd59c10c4b",
+  "inputs": [
+    {
+      "address": "tb1ql6y04nhme34rx0z9zp9n8sdfu04uqutgeaecg7",
+      "value": "0.00108937"
+    }
+  ],
+  "outputs": [
+    {
+      "address": "tb1qp4pxx5sshtctq9yw8c3ylthdgkgnuffy88z0a4",
+      "value": "0.00000001"
+    },
+    {
+      "address": "tb1qmz6ds9grhjn8yknqds33c9geqxdlqlfgcxkvv8",
+      "value": "0.00108795"
+    }
+  ],
+  "fee": "0.00000141",
+  "netBalanceChanges": [
+    {
+      "address": "tb1ql6y04nhme34rx0z9zp9n8sdfu04uqutgeaecg7",
+      "delta": "-0.00108937"
+    },
+    {
+      "address": "tb1qp4pxx5sshtctq9yw8c3ylthdgkgnuffy88z0a4",
+      "delta": "0.00000001"
+    },
+    {
+      "address": "tb1qmz6ds9grhjn8yknqds33c9geqxdlqlfgcxkvv8",
+      "delta": "0.00108795"
+    }
+  ],
+  "blockHeight": null,
+  "blockHash": null,
+  "watchedAddress": "tb1qp4pxx5sshtctq9yw8c3ylthdgkgnuffy88z0a4",
+  "apiKey": "fbb04a52-2a4c-4bd3-8ddf-b539f35ed8f9"
+}

@@ -14,6 +14,7 @@ const ordersSchema = new Schema({
   btcDepositAddress: String,
   rbtcTransferAddress: String,
   side: String,
+  status: String,
   txId: String,
   value: String
 }, schemaConfig);

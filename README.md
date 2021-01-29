@@ -13,7 +13,8 @@ Creates the order. Add hook in Blocknative to listen for transactions in the add
 #### Body
 ```
 {
-  "address": ...
+  "rbtcAddress": ...,
+  "value": ...
 }
 ```
 
