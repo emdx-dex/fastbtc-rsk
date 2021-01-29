@@ -10,11 +10,12 @@ const schemaConfig = {
 };
 
 const ordersSchema = new Schema({
-  side: String,
+  block: Number,
   btcDepositAddress: String,
   rbtcTransferAddress: String,
+  side: String,
   txId: String,
-  block: Number
+  value: String
 }, schemaConfig);
 
 const ordersModel = model('ordersModel', ordersSchema);

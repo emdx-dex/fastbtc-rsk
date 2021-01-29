@@ -6,9 +6,9 @@
 
 ## Endpoints
 
-### POST /order
+### POST /api/order
 
-Creates the order. Add hook in blocknative to listen for transactions in the address.
+Creates the order. Add hook in Blocknative to listen for transactions in the address.
 
 #### Body
 ```
@@ -16,3 +16,9 @@ Creates the order. Add hook in blocknative to listen for transactions in the add
   "address": ...
 }
 ```
+
+## Webhooks
+
+### POST /api/webhook/address
+
+Blocknative webhook when addres receives transaction.

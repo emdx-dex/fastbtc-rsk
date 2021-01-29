@@ -17,9 +17,13 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const msg = await registerAddress(address);
+    const message = await registerAddress(address);
 
-    return res.json({ data: msg });
+    return res.json({
+      data: null,
+      error: null,
+      message
+    });
   } catch (error) {
     return res.status(500).json({ error });
   }
