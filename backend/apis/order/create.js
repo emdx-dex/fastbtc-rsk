@@ -38,8 +38,7 @@ router.post('/', async (req, res) => {
     await order.save();
 
     return res.json({
-      data: { order },
-      error: null
+      data: { order }
     });
   } catch (error) {
     return res.status(500).json({ error });
