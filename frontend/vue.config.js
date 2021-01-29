@@ -5,7 +5,7 @@ module.exports = {
   devServer: {
     //open: process.platform === 'darwin',
     //host: '0.0.0.0',
-    port: 5555, // CHANGE YOUR PORT HERE!
+    port: 5556, // CHANGE YOUR PORT HERE!
     //disableHostCheck: true,
     compress: true,
     public: 'fastbtc.emdx.io' // That solved it

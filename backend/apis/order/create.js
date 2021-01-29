@@ -19,7 +19,8 @@ router.post('/', async (req, res) => {
     });
   }
 
-  if (_.isEmpty(value) || _.isNaN(value) || value < 0) {
+  // TODO: Validate is number
+  if (value < 0) {
     return res.status(400).json({
       error: '\'value\' is a required parameter.'
     });
