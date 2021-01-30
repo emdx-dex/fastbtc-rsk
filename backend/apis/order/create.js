@@ -15,19 +15,19 @@ router.post('/', async (req, res) => {
 
   if (_.isEmpty(rbtcAddress)) {
     return res.status(400).json({
-      error: '\'rbtcAddress\' is a required parameter.'
+      error: 'RBTC address is a required parameter.'
     });
   }
 
   if (!web3.utils.isAddress(rbtcAddress)) {
     return res.status(400).json({
-      error: '\'rbtcAddress\' should be a valid RSK address.'
+      error: 'RBTC address should be a valid RSK address.'
     });
   }
 
   if (_.isNaN(Number(value)) || value <= 0) {
     return res.status(400).json({
-      error: '\'value\' is a required parameter.'
+      error: 'value is a required parameter.'
     });
   }
 
