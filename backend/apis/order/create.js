@@ -3,6 +3,7 @@ const { registerAddress } = require('../../utils/blocknative');
 const express = require('express');
 const orderModel = require('../../models/orders');
 const STATUS = require('../../utils/status');
+const web3 = require('web3');
 
 const router = express.Router();
 
@@ -12,10 +13,15 @@ router.post('/', async (req, res) => {
   const { rbtcAddress, value } = req.body;
   const depositAddress = process.env.BTC_DEPOSIT_ADDRESS;
 
-  // TODO: Validate this is a RBTC address.
   if (_.isEmpty(rbtcAddress)) {
     return res.status(400).json({
       error: '\'rbtcAddress\' is a required parameter.'
+    });
+  }
+
+  if (!web3.utils.isAddress(rbtcAddress)) {
+    return res.status(400).json({
+      error: '\'rbtcAddress\' should be a valid RSK address.'
     });
   }
 

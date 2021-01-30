@@ -13,7 +13,6 @@
           :rules="valueRule"
           label="Value"
           required
-          hide-details
           single-line
           type="number"
         ></v-text-field>
@@ -32,14 +31,9 @@
 
 <script>
 import { createOrder } from '@/services';
-import isNaN from 'lodash/isNaN';
-import Page from '@/components/page.vue';
 
 export default {
   name: 'Home',
-  components: {
-    Page,
-  },
   data: () => ({
     alert: false,
     rbtcAddress: '',
@@ -48,19 +42,22 @@ export default {
     value: '',
     valueRule: [
       (v) => v !== '' || 'Value is required.',
-      (v) => !isNaN(Number(v)) || 'Value should be a number.',
       (v) => v > 0 || 'Value should be greater than 0.',
     ],
   }),
   methods: {
-    submit() {
+    async submit() {
       const { rbtcAddress, value } = this;
       const valid = this.$refs.form.validate();
 
       this.alert = true;
 
       if (valid) {
-        createOrder({ rbtcAddress, value });
+        try {
+          const order = await createOrder({ rbtcAddress, value });
+        } catch (error) {
+          console.log(error);          
+        }
       }
     },
   },

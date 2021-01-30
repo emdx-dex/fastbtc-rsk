@@ -8,21 +8,18 @@
       :loading="loading"
       class="orders__table"
     ></v-data-table>
+    <error-notification :error="error"></error-notification>
   </page>
 </template>
 
 <script>
 import _ from 'lodash';
-import { listOrders } from '@/services';
 import moment from 'moment';
-import Page from '@/components/page.vue';
 
 export default {
   name: 'Orders',
-  components: {
-    Page,
-  },
   data: () => ({
+    error: '',
     headers: [
       {
         class: 'orders__table__row--date',
@@ -42,19 +39,23 @@ export default {
       },
       { text: 'Value', value: 'value', sortable: false },
       { text: 'Tx ID', value: 'txId', sortable: false },
-      { text: 'Statud', value: 'status', sortable: false },
+      { text: 'Status', value: 'status', sortable: false },
     ],
     loading: false,
     orders: [],
   }),
   mounted: async function () {
-    try {
-      this.loading = true;
-      const response = await listOrders();
-      this.loading = false;
-      const orders = _.get(response, 'data.orders', []);
-     
-     // TODO: Render address and txs as urls.
+    this.$store.dispatch('orders/list');
+  },
+  watch: {
+    '$store.state.orders.error': function (error) {
+      this.error = error;
+    },
+    '$store.state.orders.loading': function (loading) {
+      this.loading = loading;
+    },
+    '$store.state.orders.orders': function (orders) {
+      // TODO: Render address and txs as urls.
       const formattedOrders = orders.map(
         ({
           createdAt,
@@ -76,11 +77,7 @@ export default {
       );
 
       this.orders = formattedOrders;
-    } catch (error) {
-      console.log(error);
-
-      this.loading = false;
-    }
+    },
   },
 };
 </script>

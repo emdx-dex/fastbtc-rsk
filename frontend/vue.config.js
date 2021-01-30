@@ -8,8 +8,9 @@ module.exports = {
     port: 5556, // CHANGE YOUR PORT HERE!
     //disableHostCheck: true,
     compress: true,
-    public: 'fastbtc.emdx.io' // That solved it
+    public: 'fastbtc.emdx.io', // That solved it
     //https: false,
     //hotOnly: false,
   },
+  runtimeCompiler: true,
 }

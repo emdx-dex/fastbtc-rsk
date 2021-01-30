@@ -15,7 +15,9 @@ router.get('/', async (req, res) => {
       data: { orders }
     });
   } catch (error) {
-    return res.status(500).json({ error });
+    return res.status(500).json({
+      error: 'Error fetching orders'
+    });
   }
 });
 
