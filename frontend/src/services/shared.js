@@ -2,8 +2,6 @@ import axios from 'axios';
 
 const API_URL = process.env.VUE_APP_API_URL;
 
-console.log('--- ', API_URL);
-
 export const httpDelete = (endpoint, data = {}) => {
   return axios.delete(`${API_URL}${endpoint}`, {
     data

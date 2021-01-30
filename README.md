@@ -18,6 +18,14 @@ Creates the order. Add hook in Blocknative to listen for transactions in the add
 }
 ```
 
+### GET /api/order
+
+Get all the orders
+
+### GET /api/order/:id
+
+Get order by id
+
 ## Webhooks
 
 ### POST /api/webhook/address
