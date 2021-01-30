@@ -1,7 +1,7 @@
-import { VCard, VCardText } from 'vuetify/lib';
-import Vue from 'vue';
 import { getAddressUrl } from '@/utils/btc-urls';
 import { getAddressUrl as getRSKAddressUrl } from '@/utils/rsk-urls';
+import { VCard, VCardText } from 'vuetify/lib';
+import Vue from 'vue';
 
 Vue.component('order', {
   components: {
@@ -10,9 +10,9 @@ Vue.component('order', {
   },
   data: () => ({
     btcAddressUrl: '',
-    rbtcAddressUrl: '',
+    rbtcAddressUrl: ''
   }),
-  props: ['btcDepositAddress', 'rbtcAddress', 'show', 'value'],
+  props: ['btcDepositAddress', 'rbtcAddress', 'show', 'status', 'value'],
   watch: {
     btcDepositAddress: function (btcDepositAddress) {
       this.btcAddressUrl = getAddressUrl(btcDepositAddress);
@@ -28,7 +28,10 @@ Vue.component('order', {
     >
       <v-card-text>
         <p class="title text--primary">
-          Order created succcessfully
+          Order created succcessfully 
+          <span class="order__status">
+            <status :status="status" ></status>
+          </span>
         </p>
 
         <p class="subtitle-1 text--primary">

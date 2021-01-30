@@ -29,6 +29,7 @@
         :btcDepositAddress="btcDepositAddress"
         :rbtcAddress="rbtcAddress"
         :show="show"
+        :status="status"
         :value="value"
       ></order>
     </div>
@@ -47,6 +48,7 @@ export default {
     rbtcAddress: '',
     rbtcAddressRule: [(v) => v !== '' || 'Address is required.'],
     show: false,
+    status: '',
     valid: false,
     value: '',
     valueRule: [
@@ -73,10 +75,11 @@ export default {
     },
     '$store.state.order.order': function (order) {
       if (!_.isEmpty(order)) {
-        const { btcDepositAddress, value } = order;
+        const { btcDepositAddress, status, value } = order;
 
         this.btcDepositAddress = btcDepositAddress;
         this.show = true;
+        this.status = status;
         this.value = value;
       }
     },
