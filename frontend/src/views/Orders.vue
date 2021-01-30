@@ -6,7 +6,7 @@
       :hide-default-footer="true"
       :items="orders"
       :loading="loading"
-      class="transactions__table"
+      class="orders__table"
     ></v-data-table>
   </page>
 </template>
@@ -18,14 +18,14 @@ import moment from 'moment';
 import Page from '@/components/page.vue';
 
 export default {
-  name: 'Transactions',
+  name: 'Orders',
   components: {
     Page,
   },
   data: () => ({
     headers: [
       {
-        class: 'transactions__table__row--date',
+        class: 'orders__table__row--date',
         text: 'Date',
         value: 'createdAt',
         sortable: false,
@@ -86,7 +86,7 @@ export default {
 </script>
 
 <style lang="scss">
-.transactions {
+.orders {
   &__table {
     td {
       white-space: nowrap !important;

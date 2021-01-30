@@ -15,8 +15,8 @@
 
       <v-spacer></v-spacer>
 
-      <router-link class="app__header__link" to="/transactions">
-        <div class="d-flex align-center">Transactions</div>
+      <router-link class="app__header__link" to="/orders">
+        <div class="d-flex align-center">Orders</div>
       </router-link>
     </v-app-bar>
 

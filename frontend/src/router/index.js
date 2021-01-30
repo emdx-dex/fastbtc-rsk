@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
-import Transactions from '../views/Transactions.vue'
+import Orders from '../views/Orders.vue'
 
 Vue.use(VueRouter)
 
@@ -12,9 +12,9 @@ const routes = [
     component: Home
   },
   {
-    path: '/transactions',
-    name: 'Transactions',
-    component: Transactions
+    path: '/orders',
+    name: 'Orders',
+    component: Orders
   }
 ]
 
