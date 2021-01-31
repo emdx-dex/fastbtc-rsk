@@ -15,23 +15,15 @@
         type="number"
         v-model="value"
       ></v-text-field>
-      <v-btn
-        :disabled="!valid"
-        @click="submit"
-        class="home__form__submit mr-4"
-        color="success"
-      >
-        submit
-      </v-btn>
+      <div class="home__form__footer">
+        <v-btn :disabled="!valid" @click="submit" class="mr-4" color="success">
+          submit
+        </v-btn>
+        <v-btn @click="clear" class="mr-4"> clear order </v-btn>
+      </div>
     </v-form>
     <div class="home__ordersummary">
-      <order
-        :btcDepositAddress="btcDepositAddress"
-        :rbtcTransferAddress="rbtcTransferAddress"
-        :show="show"
-        :status="status"
-        :value="transferValue"
-      ></order>
+      <order></order>
     </div>
     <error-notification :error="error"></error-notification>
   </page>
@@ -39,29 +31,43 @@
 
 <script>
 import _ from 'lodash';
-import { get as getCookie, NAMES } from '@/utils/cookies';
+import {
+  get as getCookie,
+  NAMES,
+  remove as removeCookie,
+} from '@/utils/cookies';
 import STATUS from '@/utils/status';
 
 export default {
   name: 'Home',
   data: () => ({
-    btcDepositAddress: '',
     error: '',
     interval: null,
     rbtcAddress: '',
-    rbtcAddressRule: [(v) => v !== '' || 'Address is required.'],
-    rbtcTransferAddress: '',
-    show: false,
-    status: '',
-    transferValue: '',
+    rbtcAddressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
     valid: false,
     value: '',
     valueRule: [
-      (v) => v !== '' || 'Value is required.',
+      (v) => !_.isEmpty(v) || 'Value is required.',
       (v) => v > 0 || 'Value should be greater than 0.',
     ],
   }),
   methods: {
+    async clear() {
+      removeCookie(NAMES.ORDER);
+
+      this.$refs.form.reset();
+      this.$refs.form.resetValidation();
+      this.$store.dispatch('order/clean');
+      this.valid = true;
+
+      this.removePooling();
+    },
+    removePooling() {
+      clearInterval(this.interval);
+
+      this.interval = null;
+    },
     async submit() {
       const { rbtcAddress, value } = this;
       const valid = this.$refs.form.validate();
@@ -88,13 +94,9 @@ export default {
     },
     '$store.state.order.order': function (order) {
       if (!_.isEmpty(order)) {
-        const { btcDepositAddress, id, rbtcTransferAddress, status, value } = order;
+        const { id, status } = order;
 
-        this.btcDepositAddress = btcDepositAddress;
-        this.rbtcTransferAddress = rbtcTransferAddress;
-        this.show = true;
-        this.status = status;
-        this.transferValue = value;
+        this.valid = false;
 
         if (
           (status === STATUS.OPEN || status === STATUS.PENDING) &&
@@ -104,7 +106,11 @@ export default {
             this.$store.dispatch('order/get', { id });
           }, 10000);
         } else if (status === STATUS.CONFIRMED || status === STATUS.FAILED) {
-          clearInterval(this.interval);
+          this.removePooling();
+        }
+      } else {
+        if (this.interval) {
+          this.removePooling();
         }
       }
     },

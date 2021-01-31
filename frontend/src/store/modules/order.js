@@ -33,9 +33,15 @@ export default {
     ERROR_FETCH(state, error) {
       state.loading = false;
       state.error = error;
+    },
+    CLEAN(state) {
+      state.order = {};
     }
   },
   actions: {
+    clean: ({ commit }) => {
+      commit('CLEAN');
+    },
     create: async ({ commit }, { rbtcAddress, value }) => {
       commit('BEFORE_CREATE');
 
