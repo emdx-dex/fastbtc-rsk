@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { createOrder, getOrder } from '@/services';
+import { NAMES, set as setCookie } from '@/utils/cookies';
 
 export default {
   namespaced: true,
@@ -41,6 +42,8 @@ export default {
       try {
         const response = await createOrder({ rbtcAddress, value });
         const order = _.get(response, 'data.order');
+
+        setCookie(NAMES.ORDER, order.id);
 
         commit('SUCCESS_CREATE', order);
       } catch (error) {

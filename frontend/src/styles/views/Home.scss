@@ -1,0 +1,12 @@
+.home {
+  $TOP_MARGIN: 20px;
+
+  &__form {
+    &__submit {
+      margin-top: $TOP_MARGIN;
+    }
+  }
+  &__ordersummary {
+    margin-top: $TOP_MARGIN;
+  }
+}

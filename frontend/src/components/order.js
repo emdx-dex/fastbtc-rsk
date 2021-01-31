@@ -10,15 +10,15 @@ Vue.component('order', {
   },
   data: () => ({
     btcAddressUrl: '',
-    rbtcAddressUrl: ''
+    rbtcTransferAddressUrl: ''
   }),
-  props: ['btcDepositAddress', 'rbtcAddress', 'show', 'status', 'value'],
+  props: ['btcDepositAddress', 'rbtcTransferAddress', 'show', 'status', 'value'],
   watch: {
     btcDepositAddress: function (btcDepositAddress) {
       this.btcAddressUrl = getAddressUrl(btcDepositAddress);
     },
-    rbtcAddress: function (rbtcAddress) {
-      this.rbtcAddressUrl = getRSKAddressUrl(rbtcAddress);
+    rbtcTransferAddress: function (rbtcTransferAddress) {
+      this.rbtcTransferAddressUrl = getRSKAddressUrl(rbtcTransferAddress);
     },
   },
   template: `
@@ -57,8 +57,8 @@ Vue.component('order', {
         </p>
         
         <p class="font-weight-black headline">
-          <a :href="rbtcAddressUrl" target="_blank">
-            {{ rbtcAddress }}
+          <a :href="rbtcTransferAddressUrl" target="_blank">
+            {{ rbtcTransferAddress }}
           </a>
         </p>
       </v-card-text>

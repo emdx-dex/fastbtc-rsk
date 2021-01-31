@@ -27,10 +27,10 @@
     <div class="home__ordersummary">
       <order
         :btcDepositAddress="btcDepositAddress"
-        :rbtcAddress="rbtcAddress"
+        :rbtcTransferAddress="rbtcTransferAddress"
         :show="show"
         :status="status"
-        :value="value"
+        :value="transferValue"
       ></order>
     </div>
     <error-notification :error="error"></error-notification>
@@ -39,6 +39,7 @@
 
 <script>
 import _ from 'lodash';
+import { get as getCookie, NAMES } from '@/utils/cookies';
 import STATUS from '@/utils/status';
 
 export default {
@@ -46,11 +47,13 @@ export default {
   data: () => ({
     btcDepositAddress: '',
     error: '',
+    interval: null,
     rbtcAddress: '',
     rbtcAddressRule: [(v) => v !== '' || 'Address is required.'],
+    rbtcTransferAddress: '',
     show: false,
     status: '',
-    interval: null,
+    transferValue: '',
     valid: false,
     value: '',
     valueRule: [
@@ -69,6 +72,13 @@ export default {
       }
     },
   },
+  mounted: async function () {
+    const order = getCookie(NAMES.ORDER);
+
+    if (!_.isEmpty(order)) {
+      this.$store.dispatch('order/get', { id: order });
+    }
+  },
   watch: {
     '$store.state.order.error': function (error) {
       this.error = error;
@@ -78,14 +88,18 @@ export default {
     },
     '$store.state.order.order': function (order) {
       if (!_.isEmpty(order)) {
-        const { btcDepositAddress, id, status, value } = order;
+        const { btcDepositAddress, id, rbtcTransferAddress, status, value } = order;
 
         this.btcDepositAddress = btcDepositAddress;
+        this.rbtcTransferAddress = rbtcTransferAddress;
         this.show = true;
         this.status = status;
-        this.value = value;
+        this.transferValue = value;
 
-        if ((status === STATUS.OPEN || status === STATUS.PENDING) && _.isNull(this.interval)) {
+        if (
+          (status === STATUS.OPEN || status === STATUS.PENDING) &&
+          _.isNull(this.interval)
+        ) {
           this.interval = setInterval(() => {
             this.$store.dispatch('order/get', { id });
           }, 10000);
@@ -97,18 +111,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss" scoped>
-.home {
-  $TOP_MARGIN: 20px;
-
-  &__form {
-    &__submit {
-      margin-top: $TOP_MARGIN;
-    }
-  }
-  &__ordersummary {
-    margin-top: $TOP_MARGIN;
-  }
-}
-</style>
