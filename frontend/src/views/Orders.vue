@@ -66,7 +66,7 @@ export default {
           status,
         }) => {
           return {
-            createdAt: moment(createdAt).format('DD MM YYYY hh:mm:ss'),
+            createdAt: moment(createdAt).format('DD/MM/YYYY hh:mm:ss'),
             btcDepositAddress,
             rbtcTransferAddress,
             value,

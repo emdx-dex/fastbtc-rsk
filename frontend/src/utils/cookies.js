@@ -14,3 +14,7 @@ export function set(name, value) {
 export function get(name) {
   return Cookies.get(name, options);
 }
+
+export function remove(name) {
+  Cookies.remove(name);
+}
