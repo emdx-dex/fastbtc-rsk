@@ -1,13 +1,7 @@
 import { StatusIndicator } from 'vue-status-indicator';
 import { VTooltip } from 'vuetify/lib';
+import STATUS from '@/utils/status';
 import Vue from 'vue';
-
-const STATUS = Object.freeze({
-  OPEN: 'open',
-  PENDING: 'pending',
-  CONFIRMED: 'confirmed',
-  FAILED: 'failed'
-});
 
 Vue.component('status', {
   components: {
@@ -21,7 +15,6 @@ Vue.component('status', {
   props: ['status'],
   watch: {
     status: function (newStatus) {
-      console.log('newStatus ', newStatus);
       switch (newStatus) {
         case STATUS.OPEN:
           this.pulse = true;

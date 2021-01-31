@@ -39,6 +39,7 @@
 
 <script>
 import _ from 'lodash';
+import STATUS from '@/utils/status';
 
 export default {
   name: 'Home',
@@ -49,6 +50,7 @@ export default {
     rbtcAddressRule: [(v) => v !== '' || 'Address is required.'],
     show: false,
     status: '',
+    interval: null,
     valid: false,
     value: '',
     valueRule: [
@@ -62,6 +64,7 @@ export default {
       const valid = this.$refs.form.validate();
 
       if (valid) {
+        this.valid = false;
         this.$store.dispatch('order/create', { rbtcAddress, value });
       }
     },
@@ -75,12 +78,20 @@ export default {
     },
     '$store.state.order.order': function (order) {
       if (!_.isEmpty(order)) {
-        const { btcDepositAddress, status, value } = order;
+        const { btcDepositAddress, id, status, value } = order;
 
         this.btcDepositAddress = btcDepositAddress;
         this.show = true;
         this.status = status;
         this.value = value;
+
+        if ((status === STATUS.OPEN || status === STATUS.PENDING) && _.isNull(this.interval)) {
+          this.interval = setInterval(() => {
+            this.$store.dispatch('order/get', { id });
+          }, 10000);
+        } else if (status === STATUS.CONFIRMED || status === STATUS.FAILED) {
+          clearInterval(this.interval);
+        }
       }
     },
   },

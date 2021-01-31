@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { createOrder } from '@/services';
+import { createOrder, getOrder } from '@/services';
 
 export default {
   namespaced: true,
@@ -23,8 +23,7 @@ export default {
       state.error = error;
     },
     BEFORE_FETCH(state) {
-      state.creating = true;
-      state.order = {};
+      state.loading = true;
     },
     SUCCESS_FETCH(state, order) {
       state.loading = false;
@@ -47,6 +46,18 @@ export default {
       } catch (error) {
         commit('ERROR_CREATE', error);
       }
-    }
+    },
+    get: async ({ commit }, { id }) => {
+      commit('BEFORE_FETCH');
+
+      try {
+        const response = await getOrder({ id });
+        const order = _.get(response, 'data.order');
+
+        commit('SUCCESS_FETCH', order);
+      } catch (error) {
+        commit('ERROR_FETCH', error);
+      }
+    },
   }
 }
