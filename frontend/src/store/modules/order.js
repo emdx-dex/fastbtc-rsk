@@ -42,11 +42,11 @@ export default {
     clean: ({ commit }) => {
       commit('CLEAN');
     },
-    create: async ({ commit }, { rbtcAddress, value }) => {
+    create: async ({ commit }, request) => {
       commit('BEFORE_CREATE');
 
       try {
-        const response = await createOrder({ rbtcAddress, value });
+        const response = await createOrder(request);
         const order = _.get(response, 'data.order');
 
         setCookie(NAMES.ORDER, order.id);

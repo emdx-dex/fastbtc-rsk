@@ -11,16 +11,12 @@
             type="number"
             v-model="value"
           >
-            <div slot="append">
-              BTC
-            </div>
+            <div slot="append">{{ fromCoin }}</div>
           </v-text-field>
         </v-col>
         <v-col class="d-flex justify-center" cols="12" md="2">
           <v-btn @click="swapFlow" icon>
-            <v-icon color="darken-2" large>
-              mdi-cached
-            </v-icon>
+            <v-icon color="darken-2" large> mdi-cached </v-icon>
           </v-btn>
         </v-col>
         <v-col cols="12" md="5">
@@ -31,9 +27,7 @@
             type="number"
             v-model="value"
           >
-           <div slot="append">
-              rBTC
-            </div>
+            <div slot="append">{{ toCoin }}</div>
           </v-text-field>
         </v-col>
       </v-row>
@@ -73,7 +67,11 @@ import {
   NAMES,
   remove as removeCookie,
 } from '@/utils/cookies';
-import STATUS from '../../../common/status';
+import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../common/flows';
+import { CONFIRMED, FAILED, OPEN, PENDING } from '../../../common/status';
+
+const BTC = 'BTC';
+const rBTC = 'rBTC';
 
 export default {
   name: 'Home',
@@ -81,8 +79,11 @@ export default {
     address: '',
     addressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
     error: '',
+    flow: BTC_TO_RBTC,
+    fromCoin: '',
     interval: null,
     showConfirmationDialog: false,
+    toCoin: '',
     valid: false,
     value: '',
     valueRule: [
@@ -119,15 +120,41 @@ export default {
 
       if (valid) {
         this.valid = false;
-        this.$store.dispatch('order/create', { address, value });
+
+        const request = { flow: this.flow, value };
+
+        if (this.flow === BTC_TO_RBTC) {
+          request.rsk = {
+            address,
+          };
+        } else {
+          request.btc = {
+            address,
+          };
+        }
+
+        this.$store.dispatch('order/create', request);
+      }
+    },
+    setLabels() {
+      if (this.flow === BTC_TO_RBTC) {
+        this.fromCoin = BTC;
+        this.toCoin = rBTC;
+      } else {
+        this.fromCoin = rBTC;
+        this.toCoin = BTC;
       }
     },
     swapFlow() {
-      console.log('tu madre');
-    }
+      this.flow = this.flow === BTC_TO_RBTC ? RBTC_TO_BTC : BTC_TO_RBTC;
+
+      this.setLabels();
+    },
   },
   mounted: async function () {
     const order = getCookie(NAMES.ORDER);
+
+    this.setLabels();
 
     if (!_.isEmpty(order)) {
       this.$store.dispatch('order/get', { id: order });
@@ -135,6 +162,8 @@ export default {
   },
   watch: {
     '$store.state.order.error': function (error) {
+      removeCookie(NAMES.ORDER);
+      
       this.error = error;
     },
     '$store.state.order.loading': function (loading) {
@@ -147,13 +176,13 @@ export default {
         this.valid = false;
 
         if (
-          (status === STATUS.OPEN || status === STATUS.PENDING) &&
+          (status === OPEN || status === PENDING) &&
           _.isNull(this.interval)
         ) {
           this.interval = setInterval(() => {
             this.$store.dispatch('order/get', { id });
           }, 10000);
-        } else if (status === STATUS.CONFIRMED || status === STATUS.FAILED) {
+        } else if (status === CONFIRMED || status === FAILED) {
           this.removePooling();
         }
       } else {

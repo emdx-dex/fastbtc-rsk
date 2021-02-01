@@ -1,9 +1,8 @@
 const _ = require('lodash');
+const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../common/flows');
 const { registerAddress } = require('../../utils/blocknative');
 const express = require('express');
-const FLOWS = require('../../../common/flows');
 const orderModel = require('../../models/orders');
-const STATUS = require('../../../common/status');
 const web3 = require('web3');
 
 const router = express.Router();
@@ -11,16 +10,16 @@ const router = express.Router();
 require('dotenv').config();
 
 router.post('/', async (req, res) => {
-  const { btc, rsk, side, value } = req.body;
+  const { btc, flow, rsk, value } = req.body;
   const depositAddress = process.env.BTC_DEPOSIT_ADDRESS;
 
-  if (_.isEmpty(side)) {
+  if (_.isEmpty(flow)) {
     return res.status(400).json({
-      error: 'side is a required parameter.'
+      error: 'flow is a required parameter.'
     });
   }
 
-  if (!Object.values(FLOWS).includes(side)) {
+  if (![BTC_TO_RBTC, RBTC_TO_BTC].includes(flow)) {
     return res.status(400).json({
       error: 'Choose a valid conversion flow.'
     });
@@ -49,12 +48,11 @@ router.post('/', async (req, res) => {
   try {
     const order = new orderModel({
       rsk,
-      side,
-      status: STATUS.OPEN,
+      flow,
       value
     });
 
-    if (side === FLOWS.BTC_TO_RBTC) {
+    if (flow === BTC_TO_RBTC) {
       await registerAddress(depositAddress);
 
       order.btc = {

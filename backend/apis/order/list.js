@@ -1,7 +1,7 @@
 const { getLastBlock } = require('../../utils/block');
 const express = require('express');
 const orderModel = require('../../models/orders');
-const STATUS = require('../../../common/status');
+const { CONFIRMED } = require('../../../common/status');
 
 require('dotenv').config();
 
@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
     const { id: height } = await getLastBlock();
     const order = (await orderModel.findById(id)).toJSON();
     const blockDelta = height - order.btc.block;
-    const status = (blockDelta >= BLOCK_HEIGHT_CONFIRMATION) ? STATUS.CONFIRMED : order.btc.status;
+    const status = (blockDelta >= BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : order.btc.status;
 
 
     return res.json({
@@ -44,8 +44,9 @@ router.get('/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error });
+    return res.status(500).json({
+      error: 'Error fetching order'
+    });
   }
 });
 
