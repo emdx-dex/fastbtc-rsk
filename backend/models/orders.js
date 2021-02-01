@@ -1,4 +1,6 @@
 const { Schema, model } = require('mongoose');
+const FLOWS = require('../utils/flows');
+const STATUS = require('../utils/status');
 
 const schemaConfig = {
   toJSON: {
@@ -10,24 +12,34 @@ const schemaConfig = {
 };
 
 const ordersSchema = new Schema({
-  value: String,
   btc: {
     address: String,
     block: String,
-    status: String,
-    txId: String,
+    fee: String,
+    rawTransaction: Object,
+    status: {
+      default: STATUS.OPEN,
+      enum: Object.values(STATUS),
+      type: String
+    },
+    txId: String
+  },
+  flow: {
+    default: FLOWS.BTC_TO_RBTC,
+    enum : Object.values(FLOWS),
+    type: String
   },
   rsk: {
     address: String,
     block: String,
-    status: String,
+    status: {
+      default: STATUS.OPEN,
+      enum: Object.values(STATUS),
+      type: String
+    },
     txId: String
   },
-  side: {
-    type: String,
-    enum : ['btcToRbtc','RbtcToBtc'],
-    default: 'btcToRbtc'
-  }
+  value: String
 }, schemaConfig);
 
 const ordersModel = model('ordersModel', ordersSchema);

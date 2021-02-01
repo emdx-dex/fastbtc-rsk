@@ -25,6 +25,11 @@
     <div class="home__ordersummary">
       <order></order>
     </div>
+    <confirmation-dialog
+      :onCancel="handleCancel"
+      :onConfirm="handleConfirm"
+      :show="showConfirmationDialog"
+    ></confirmation-dialog>
     <error-notification :error="error"></error-notification>
   </page>
 </template>
@@ -45,6 +50,7 @@ export default {
     interval: null,
     rbtcAddress: '',
     rbtcAddressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
+    showConfirmationDialog: false,
     valid: false,
     value: '',
     valueRule: [
@@ -54,11 +60,18 @@ export default {
   }),
   methods: {
     async clear() {
+      this.showConfirmationDialog = true;
+    },
+    handleCancel() {
+      this.showConfirmationDialog = false;
+    },
+    handleConfirm() {
       removeCookie(NAMES.ORDER);
 
       this.$refs.form.reset();
       this.$refs.form.resetValidation();
       this.$store.dispatch('order/clean');
+      this.showConfirmationDialog = false;
       this.valid = true;
 
       this.removePooling();

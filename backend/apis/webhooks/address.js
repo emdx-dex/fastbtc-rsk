@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const express = require('express');
+const FLOWS = require('../../utils/flows');
 const orderModel = require('../../models/orders');
 const STATUS = require('../../utils/status');
 
@@ -10,6 +11,8 @@ require('dotenv').config();
 router.post('/', async (req, res) => {
   const {
     blockHeight,
+    fee,
+    rawTransaction,
     status,
     txid,
     watchedAddress
@@ -18,31 +21,37 @@ router.post('/', async (req, res) => {
   console.log(req.body);
 
   try {
-    const order = await orderModel.findOne({ btcDepositAddress: watchedAddress });
+    const order = await orderModel.findOne({
+      'btc.address': watchedAddress,
+      flow: FLOWS.BTC_TO_RBTC
+    });
 
-    //TODO: What happened if user trasnfer less?
+    // TODO: What happened if user trasnfer less?
     // const { delta } = netBalanceChanges.find(({ address }) => {
     //   return address.toLowerCase() === watchedAddress;
     // });
 
     if (_.isEmpty(order)) {
-      return res.sendStatus(500);
+      return res.sendStatus(404);
     }
 
     if (status === STATUS.PENDING) {
-      order.status = status;
-      order.txId = txid;
+      order.btc.fee = fee;
+      order.btc.rawTransaction = rawTransaction;
+      order.btc.status = status;
+      order.btc.txId = txid;
     }
 
     if (status === STATUS.CONFIRMED) {
-      order.block = blockHeight;
-      order.status = status;
+      order.btc.block = blockHeight;
+      order.btc.status = status;
     }
 
     await order.save();
 
     return res.sendStatus(200);
   } catch (error) {
+    console.log(error);
     return res.sendStatus(500);
   }
 });
