@@ -1,9 +1,9 @@
 const _ = require('lodash');
 const { registerAddress } = require('../../utils/blocknative');
 const express = require('express');
-const FLOWS = require('../../utils/flows');
+const FLOWS = require('../../../common/flows');
 const orderModel = require('../../models/orders');
-const STATUS = require('../../utils/status');
+const STATUS = require('../../../common/status');
 const web3 = require('web3');
 
 const router = express.Router();

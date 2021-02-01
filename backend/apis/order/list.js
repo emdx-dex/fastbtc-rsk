@@ -1,7 +1,7 @@
 const { getLastBlock } = require('../../utils/block');
 const express = require('express');
 const orderModel = require('../../models/orders');
-const STATUS = require('../../utils/status');
+const STATUS = require('../../../common/status');
 
 require('dotenv').config();
 

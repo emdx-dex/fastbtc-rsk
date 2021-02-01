@@ -1,8 +1,8 @@
 const _ = require('lodash');
 const express = require('express');
-const FLOWS = require('../../utils/flows');
+const FLOWS = require('../../../common/flows');
 const orderModel = require('../../models/orders');
-const STATUS = require('../../utils/status');
+const STATUS = require('../../../common/status');
 
 const router = express.Router();
 

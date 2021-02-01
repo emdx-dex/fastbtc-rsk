@@ -1,20 +1,52 @@
 <template>
   <page>
     <v-form ref="form" v-model="valid" lazy-validation>
-      <v-text-field
-        :rules="rbtcAddressRule"
-        label="RBTC address"
-        required
-        v-model="rbtcAddress"
-      ></v-text-field>
-      <v-text-field
-        :rules="valueRule"
-        label="Value"
-        required
-        single-line
-        type="number"
-        v-model="value"
-      ></v-text-field>
+      <v-row>
+        <v-col cols="12" md="5">
+          <v-text-field
+            :rules="valueRule"
+            label="Value"
+            required
+            single-line
+            type="number"
+            v-model="value"
+          >
+            <div slot="append">
+              BTC
+            </div>
+          </v-text-field>
+        </v-col>
+        <v-col class="d-flex justify-center" cols="12" md="2">
+          <v-btn @click="swapFlow" icon>
+            <v-icon color="darken-2" large>
+              mdi-cached
+            </v-icon>
+          </v-btn>
+        </v-col>
+        <v-col cols="12" md="5">
+          <v-text-field
+            label="Value"
+            readonly
+            single-line
+            type="number"
+            v-model="value"
+          >
+           <div slot="append">
+              rBTC
+            </div>
+          </v-text-field>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12" md="12">
+          <v-text-field
+            :rules="addressRule"
+            label="Address"
+            required
+            v-model="address"
+          ></v-text-field>
+        </v-col>
+      </v-row>
       <div class="home__form__footer">
         <v-btn :disabled="!valid" @click="submit" class="mr-4" color="success">
           submit
@@ -41,15 +73,15 @@ import {
   NAMES,
   remove as removeCookie,
 } from '@/utils/cookies';
-import STATUS from '@/utils/status';
+import STATUS from '../../../common/status';
 
 export default {
   name: 'Home',
   data: () => ({
+    address: '',
+    addressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
     error: '',
     interval: null,
-    rbtcAddress: '',
-    rbtcAddressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
     showConfirmationDialog: false,
     valid: false,
     value: '',
@@ -82,14 +114,17 @@ export default {
       this.interval = null;
     },
     async submit() {
-      const { rbtcAddress, value } = this;
+      const { address, value } = this;
       const valid = this.$refs.form.validate();
 
       if (valid) {
         this.valid = false;
-        this.$store.dispatch('order/create', { rbtcAddress, value });
+        this.$store.dispatch('order/create', { address, value });
       }
     },
+    swapFlow() {
+      console.log('tu madre');
+    }
   },
   mounted: async function () {
     const order = getCookie(NAMES.ORDER);

@@ -1,7 +1,4 @@
 module.exports = {
-  transpileDependencies: [
-    'vuetify'
-  ],
   devServer: {
     //open: process.platform === 'darwin',
     //host: '0.0.0.0',
@@ -12,5 +9,8 @@ module.exports = {
     //https: false,
     //hotOnly: false,
   },
+  transpileDependencies: [
+    'vuetify'
+  ],
   runtimeCompiler: true,
 }

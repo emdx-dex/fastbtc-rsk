@@ -2,6 +2,9 @@
   $TOP_MARGIN: 20px;
 
   &__form {
+    &__swap {
+      cursor: pointer;
+    }
     &__footer {
       margin-top: $TOP_MARGIN;
     }
