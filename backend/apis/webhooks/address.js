@@ -44,7 +44,7 @@ router.post('/', async (req, res) => {
 
     if (status === STATUS.CONFIRMED) {
       order.btc.block = blockHeight;
-      order.btc.status = status;
+      order.btc.status = STATUS.UNCONFIRMED;
     }
 
     await order.save();
