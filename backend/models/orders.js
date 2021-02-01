@@ -10,13 +10,24 @@ const schemaConfig = {
 };
 
 const ordersSchema = new Schema({
-  block: Number,
-  btcDepositAddress: String,
-  rbtcTransferAddress: String,
-  side: String,
-  status: String,
-  txId: String,
-  value: String
+  value: String,
+  btc: {
+    address: String,
+    block: String,
+    status: String,
+    txId: String,
+  },
+  rsk: {
+    address: String,
+    block: String,
+    status: String,
+    txId: String
+  },
+  side: {
+    type: String,
+    enum : ['btcToRbtc','RbtcToBtc'],
+    default: 'btcToRbtc'
+  }
 }, schemaConfig);
 
 const ordersModel = model('ordersModel', ordersSchema);

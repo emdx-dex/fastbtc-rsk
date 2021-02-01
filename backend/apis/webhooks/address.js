@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
   try {
     const order = await orderModel.findOne({ btcDepositAddress: watchedAddress });
 
-    // TODO: What happened if user trasnfer less?
+    //TODO: What happened if user trasnfer less?
     // const { delta } = netBalanceChanges.find(({ address }) => {
     //   return address.toLowerCase() === watchedAddress;
     // });
