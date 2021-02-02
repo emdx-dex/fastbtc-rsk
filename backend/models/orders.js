@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose');
-const FLOWS = require('../../common/flows');
-const STATUS = require('../../common/status');
+const FLOWS = require('../../shared/flows');
+const STATUS = require('../../shared/status');
 
 const schemaConfig = {
   toJSON: {

@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import { getAddressUrl, getTxUrl } from '@/utils/btc-urls';
-import { getAddressUrl as getRSKAddressUrl } from '@/utils/rsk-urls';
+import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
+import { getBTCAddressUrl, getBTCTxUrl } from '@/utils/btc-urls';
+import { getRSKAddressUrl, getRSKTxUrl } from '@/utils/rsk-urls';
 import { VCard, VCardText } from 'vuetify/lib';
 import Vue from 'vue';
 
@@ -10,34 +11,52 @@ Vue.component('order', {
     VCardText
   },
   data: () => ({
-    btcDepositAddress: '',
-    rbtcTransferAddress: '',
+    confirmations: '',
+    coin: '',
+    depositAddress: '',
+    flow: '',
+    requiredConfirmations: '',
     show: '',
     showOrder: false,
     status: '',
+    transferAddress: '',
     txId: '',
     value: '',
   }),
-  filters: {
-    btcAddressUrl: function (value) {
-      return getAddressUrl(value);
+  methods: {
+    fromAddressUrl: function (url) {
+      const method = (this.flow === BTC_TO_RBTC) ? getRSKAddressUrl : getBTCAddressUrl;
+
+      return method(url);
     },
-    btcTxUrl: function (value) {
-      return getTxUrl(value);
+    fromCoin: function () {
+      return (this.flow === BTC_TO_RBTC) ? 'BTC' : 'RBTC';
     },
-    rbtcAddressUrl: function (value) {
-      return getRSKAddressUrl(value);
+    toCoin: function () {
+      return (this.flow === BTC_TO_RBTC) ? 'RBTC' : 'BTC';
+    },
+    txUrl: function (url) {
+      const method = (this.flow === BTC_TO_RBTC) ? getBTCTxUrl : getRSKTxUrl;
+
+      return method(url);
+    },
+    toAddressUrl: function (url) {
+      const method = (this.flow === BTC_TO_RBTC) ? getBTCAddressUrl : getRSKAddressUrl;
+
+      return method(url);
     },
   },
   watch: {
     '$store.state.order.order': function (order) {
       if (!_.isEmpty(order)) {
-        const { btcDepositAddress, rbtcTransferAddress, status, txId, value } = order;
+        const { flow, txId, value } = order;
+        const fromChain = (flow === BTC_TO_RBTC) ? 'btc' : 'rsk';
+        const toChain = (flow === BTC_TO_RBTC) ? 'rsk' : 'btc';
 
-        this.btcDepositAddress = btcDepositAddress;
-        this.rbtcTransferAddress = rbtcTransferAddress;
+        this.depositAddress = order[fromChain].address;
+        this.transferAddress = order[toChain].address;
+        this.coin = (flow === BTC_TO_RBTC) ? 'BTC' : 'rBTC'
         this.showOrder = true;
-        this.status = status;
         this.txId = txId;
         this.value = value;
       } else {
@@ -59,12 +78,12 @@ Vue.component('order', {
         </p>
 
         <p class="subtitle-1 text--primary">
-          BTC deposit address
+          {{ fromCoin() }} deposit address
         </p>
         
         <p class="font-weight-black headline">
-          <a :href="btcDepositAddress | btcAddressUrl" target="_blank">
-            {{ btcDepositAddress }}
+          <a :href="fromAddressUrl(depositAddress)" target="_blank">
+            {{ depositAddress }}
           </a>
         </p>
 
@@ -73,16 +92,16 @@ Vue.component('order', {
         </p>
         
         <p class="font-weight-black headline">
-          {{ value }} BTC
+          {{ value }} {{ fromCoin() }}
         </p>
 
         <p class="subtitle-1 text--primary">
-          RBTC recipient address
+          {{ toCoin() }} recipient address
         </p>
         
         <p class="font-weight-black headline">
-          <a :href="rbtcTransferAddress | rbtcAddressUrl" target="_blank">
-            {{ rbtcTransferAddress }}
+          <a :href="toAddressUrl(transferAddress)" target="_blank">
+            {{ transferAddress }}
           </a>
         </p>
 
@@ -91,7 +110,7 @@ Vue.component('order', {
         </p>
         
         <p class="font-weight-black headline" v-if="txId">
-          <a :href="txId | btcTxUrl" target="_blank">
+          <a :href="txUrl(txId)" target="_blank">
             {{ txId }}
           </a>
         </p>

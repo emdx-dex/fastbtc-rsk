@@ -1,6 +1,6 @@
 import { StatusIndicator } from 'vue-status-indicator';
 import { VTooltip } from 'vuetify/lib';
-import STATUS from '../../../common/status';
+import STATUS from '../../../shared/status';
 import Vue from 'vue';
 
 Vue.component('status', {

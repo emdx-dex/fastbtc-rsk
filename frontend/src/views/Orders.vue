@@ -7,20 +7,32 @@
       :items="orders"
       :loading="loading"
       class="orders__table"
-    ></v-data-table>
+      item-key="id"
+      show-expand
+      single-expand
+    >
+      <template v-slot:expanded-item="{ headers, item }">
+        <td :colspan="headers.length">
+          More info about {{ item.depositAddress }}
+        </td>
+      </template>
+    </v-data-table>
     <error-notification :error="error"></error-notification>
   </page>
 </template>
 
 <script>
 import _ from 'lodash';
+import { BTC_TO_RBTC } from '../../../shared/flows';
 import moment from 'moment';
 
 export default {
   name: 'Orders',
   data: () => ({
+    expanded: [],
     error: '',
     headers: [
+      { text: '', value: 'data-table-expand' },
       {
         class: 'orders__table__row--date',
         text: 'Date',
@@ -28,18 +40,16 @@ export default {
         sortable: false,
       },
       {
-        text: 'BTC deposit address',
-        value: 'btcDepositAddress',
+        text: 'Order',
+        value: 'id',
         sortable: false,
       },
       {
-        text: 'RBTC Transfer Address',
-        value: 'rbtcTransferAddress',
+        text: 'Flow',
+        value: 'flow',
         sortable: false,
       },
       { text: 'Value', value: 'value', sortable: false },
-      { text: 'Tx ID', value: 'txId', sortable: false },
-      { text: 'Status', value: 'status', sortable: false },
     ],
     loading: false,
     orders: [],
@@ -55,21 +65,15 @@ export default {
       this.loading = loading;
     },
     '$store.state.orders.orders': function (orders) {
-      // TODO: Render address and txs as urls.
       const formattedOrders = orders.map(
-        ({
-          createdAt,
-          btcDepositAddress,
-          rbtcTransferAddress,
-          value,
-          txId,
-          status,
-        }) => {
+        ({ createdAt, btc, flow, id, rsk, value, txId, status }) => {
           return {
             createdAt: moment(createdAt).format('DD/MM/YYYY hh:mm:ss'),
-            btcDepositAddress,
-            rbtcTransferAddress,
+            depositAddress: flow === BTC_TO_RBTC ? btc.address : rsk.address,
+            flow: flow === BTC_TO_RBTC ? 'BTC -> RBTC' : 'RBTC -> BTC',
+            id,
             value,
+            transferAddress: flow === BTC_TO_RBTC ? rsk.address : btc.address,
             txId,
             status: _.capitalize(status),
           };
@@ -81,13 +85,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.orders {
-  &__table {
-    td {
-      white-space: nowrap !important;
-    }
-  }
-}
-</style>

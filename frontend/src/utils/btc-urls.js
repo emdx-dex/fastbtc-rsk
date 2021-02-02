@@ -1,9 +1,9 @@
 const BTC_EXPLORER_URL = process.env.VUE_APP_BTC_EXPLORER_URL
 
-export const getAddressUrl = (address) => {
+export const getBTCAddressUrl = (address) => {
   return `${BTC_EXPLORER_URL}/address/${address}/`;
 } 
 
-export const getTxUrl = (tx) => {
+export const getBTCTxUrl = (tx) => {
   return `${BTC_EXPLORER_URL}/tx/${tx}/`;
 }

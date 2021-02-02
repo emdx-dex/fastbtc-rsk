@@ -24,6 +24,7 @@
             label="Value"
             readonly
             single-line
+            tabindex="-1"
             type="number"
             v-model="value"
           >
@@ -35,7 +36,7 @@
         <v-col cols="12" md="12">
           <v-text-field
             :rules="addressRule"
-            label="Address"
+            label="Transfer address"
             required
             v-model="address"
           ></v-text-field>
@@ -67,8 +68,8 @@ import {
   NAMES,
   remove as removeCookie,
 } from '@/utils/cookies';
-import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../common/flows';
-import { CONFIRMED, FAILED, OPEN, PENDING } from '../../../common/status';
+import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
+import { CONFIRMED, FAILED, OPEN, PENDING } from '../../../shared/status';
 
 const BTC = 'BTC';
 const rBTC = 'rBTC';

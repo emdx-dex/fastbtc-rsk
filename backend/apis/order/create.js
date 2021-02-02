@@ -1,10 +1,11 @@
 const _ = require('lodash');
-const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../common/flows');
+const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
 const { registerAddress } = require('../../utils/blocknative');
 const express = require('express');
 const orderModel = require('../../models/orders');
 const web3 = require('web3');
 
+const BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BLOCK_HEIGHT_CONFIRMATION);
 const router = express.Router();
 
 require('dotenv').config();
@@ -57,7 +58,18 @@ router.post('/', async (req, res) => {
 
       order.btc = {
         ...order.btc,
-        address: depositAddress
+        address: depositAddress,
+        confirmations: 0,
+        requiredConfirmations: BLOCK_HEIGHT_CONFIRMATION
+      };
+    }
+
+    if (flow === RBTC_TO_BTC) {
+      await registerAddress(depositAddress);
+
+      order.btc = {
+        ...order.btc,
+        ...btc
       };
     }
 
