@@ -50,7 +50,9 @@
       </div>
     </v-form>
     <div class="home__ordersummary">
-      <order></order>
+      <v-card elevation="2">
+        <order :order="order"></order>
+      </v-card>
     </div>
     <confirmation-dialog
       :onCancel="handleCancel"
@@ -70,9 +72,7 @@ import {
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { CONFIRMED, FAILED, OPEN, PENDING } from '../../../shared/status';
-
-const BTC = 'BTC';
-const rBTC = 'rBTC';
+import SYMBOLS from '../../../shared/symbols';
 
 export default {
   name: 'Home',
@@ -83,6 +83,7 @@ export default {
     flow: BTC_TO_RBTC,
     fromCoin: '',
     interval: null,
+    order: {},
     showConfirmationDialog: false,
     toCoin: '',
     valid: false,
@@ -138,16 +139,11 @@ export default {
       }
     },
     setLabels() {
-      if (this.flow === BTC_TO_RBTC) {
-        this.fromCoin = BTC;
-        this.toCoin = rBTC;
-      } else {
-        this.fromCoin = rBTC;
-        this.toCoin = BTC;
-      }
+      this.fromCoin = (this.flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC;
+      this.toCoin = (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
     },
     swapFlow() {
-      this.flow = this.flow === BTC_TO_RBTC ? RBTC_TO_BTC : BTC_TO_RBTC;
+      this.flow = (this.flow === BTC_TO_RBTC) ? RBTC_TO_BTC : BTC_TO_RBTC;
 
       this.setLabels();
     },
@@ -164,7 +160,7 @@ export default {
   watch: {
     '$store.state.order.error': function (error) {
       removeCookie(NAMES.ORDER);
-      
+
       this.error = error;
     },
     '$store.state.order.loading': function (loading) {
@@ -174,6 +170,7 @@ export default {
       if (!_.isEmpty(order)) {
         const { id, status } = order;
 
+        this.order = order;
         this.valid = false;
 
         if (

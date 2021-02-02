@@ -13,7 +13,7 @@
     >
       <template v-slot:expanded-item="{ headers, item }">
         <td :colspan="headers.length">
-          More info about {{ item.depositAddress }}
+          <order :order="item"></order>
         </td>
       </template>
     </v-data-table>
@@ -66,16 +66,13 @@ export default {
     },
     '$store.state.orders.orders': function (orders) {
       const formattedOrders = orders.map(
-        ({ createdAt, btc, flow, id, rsk, value, txId, status }) => {
+        ({ createdAt, flow, id, value, ...order }) => {
           return {
+            ...order,
             createdAt: moment(createdAt).format('DD/MM/YYYY hh:mm:ss'),
-            depositAddress: flow === BTC_TO_RBTC ? btc.address : rsk.address,
             flow: flow === BTC_TO_RBTC ? 'BTC -> RBTC' : 'RBTC -> BTC',
             id,
             value,
-            transferAddress: flow === BTC_TO_RBTC ? rsk.address : btc.address,
-            txId,
-            status: _.capitalize(status),
           };
         }
       );
