@@ -1,33 +1,38 @@
+import { capitalize } from 'lodash';
 import { StatusIndicator } from 'vue-status-indicator';
 import { VTooltip } from 'vuetify/lib';
 import STATUS from '../../../shared/status';
 import Vue from 'vue';
 
 Vue.component('status', {
-  components: {
-    StatusIndicator,
-    VTooltip
-  },
+  components: { StatusIndicator, VTooltip },
   data: () => ({
     pulse: true,
+    showConfirmation: false,
     style: 'intermediary'
   }),
-  props: ['status'],
-  watch: {
-    status: function (newStatus) {
-      switch (newStatus) {
-        case STATUS.OPEN:
-          this.pulse = true;
-          this.style = 'intermediary';
-          break;
+  filters: {
+    capitalize: v => capitalize(v)
+  },
+  methods: {
+    initialize: function () {
+      const { status } = this.status;
 
+      switch (status) {
         case STATUS.PENDING:
           this.pulse = true;
           this.style = 'intermediary';
           break;
 
+        case STATUS.UNCONFIRMED:
+          this.pulse = true;
+          this.showConfirmation = true;
+          this.style = 'intermediary';
+          break;
+
         case STATUS.CONFIRMED:
           this.pulse = false;
+          this.showConfirmation = false;
           this.style = 'positive';
           break;
 
@@ -41,6 +46,15 @@ Vue.component('status', {
       }
     }
   },
+  mounted: function () {
+    this.initialize();
+  },
+  props: ['status'],
+  watch: {
+    'status.status': function () {
+      this.initialize();
+    }
+  },
   template: `
       <v-tooltip top>
         <template v-slot:activator="{ on, attrs }">
@@ -51,7 +65,12 @@ Vue.component('status', {
             <status-indicator :status="style" :pulse="pulse"></status-indicator>
           </span>
         </template>
-        {{ status }}
+        <span>
+          {{ status.status | capitalize }}
+        </span>
+        <span v-if="showConfirmation">
+          . Confirmations: {{ status.confirmations }} / {{ status.requiredConfirmations }}
+        </span>
       </v-tooltip>
   `
 });

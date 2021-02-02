@@ -22,8 +22,6 @@
 </template>
 
 <script>
-import _ from 'lodash';
-import { BTC_TO_RBTC } from '../../../shared/flows';
 import moment from 'moment';
 
 export default {
@@ -32,7 +30,6 @@ export default {
     expanded: [],
     error: '',
     headers: [
-      { text: '', value: 'data-table-expand' },
       {
         class: 'orders__table__row--date',
         text: 'Date',
@@ -50,6 +47,7 @@ export default {
         sortable: false,
       },
       { text: 'Value', value: 'value', sortable: false },
+      { text: '', value: 'data-table-expand' },
     ],
     loading: false,
     orders: [],
@@ -70,7 +68,7 @@ export default {
           return {
             ...order,
             createdAt: moment(createdAt).format('DD/MM/YYYY hh:mm:ss'),
-            flow: flow === BTC_TO_RBTC ? 'BTC -> RBTC' : 'RBTC -> BTC',
+            flow,
             id,
             value,
           };

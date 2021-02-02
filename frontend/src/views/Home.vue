@@ -71,7 +71,7 @@ import {
   remove as removeCookie,
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
-import { CONFIRMED, FAILED, OPEN, PENDING } from '../../../shared/status';
+import { CONFIRMED, FAILED, PENDING, UNCONFIRMED } from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 
 export default {
@@ -139,11 +139,11 @@ export default {
       }
     },
     setLabels() {
-      this.fromCoin = (this.flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC;
-      this.toCoin = (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
+      this.fromCoin = this.flow === BTC_TO_RBTC ? SYMBOLS.BTC : SYMBOLS.RBTC;
+      this.toCoin = this.flow === BTC_TO_RBTC ? SYMBOLS.RBTC : SYMBOLS.BTC;
     },
     swapFlow() {
-      this.flow = (this.flow === BTC_TO_RBTC) ? RBTC_TO_BTC : BTC_TO_RBTC;
+      this.flow = this.flow === BTC_TO_RBTC ? RBTC_TO_BTC : BTC_TO_RBTC;
 
       this.setLabels();
     },
@@ -159,22 +159,23 @@ export default {
   },
   watch: {
     '$store.state.order.error': function (error) {
-      removeCookie(NAMES.ORDER);
-
       this.error = error;
     },
     '$store.state.order.loading': function (loading) {
       this.loading = loading;
     },
     '$store.state.order.order': function (order) {
-      if (!_.isEmpty(order)) {
-        const { id, status } = order;
+      this.order = order;
 
-        this.order = order;
+      if (!_.isEmpty(order)) {
+        const { id } = order;
+        // TODO: Set this dianmic;
+        const status = order.btc.status;
+
         this.valid = false;
 
         if (
-          (status === OPEN || status === PENDING) &&
+          (status === PENDING || status === UNCONFIRMED) &&
           _.isNull(this.interval)
         ) {
           this.interval = setInterval(() => {

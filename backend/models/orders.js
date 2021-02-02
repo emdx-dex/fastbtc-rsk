@@ -18,7 +18,7 @@ const ordersSchema = new Schema({
     fee: String,
     rawTransaction: Object,
     status: {
-      default: STATUS.OPEN,
+      default: STATUS.PENDING,
       enum: Object.values(STATUS),
       type: String
     },
@@ -33,7 +33,7 @@ const ordersSchema = new Schema({
     address: String,
     block: String,
     status: {
-      default: STATUS.OPEN,
+      default: STATUS.PENDING,
       enum: Object.values(STATUS),
       type: String
     },

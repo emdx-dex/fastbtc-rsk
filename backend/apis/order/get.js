@@ -12,21 +12,27 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
+    let order = await orderModel.findById(id);
     const { id: height } = await getLastBlock();
-    const order = (await orderModel.findById(id)).toJSON();
     const blockDelta = order.btc.block ? height - order.btc.block : 0;
     const status = (blockDelta >= BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : order.btc.status;
+    // This ternary is because sometimes last block is behind the hook.
+    const confirmations = (blockDelta >= 0) ? blockDelta : 0;
 
+    if (order.btc.status !== CONFIRMED && status === CONFIRMED) {
+      order.btc.status = CONFIRMED;
+
+      order = await order.save();
+    }
 
     return res.json({
       data: {
         order: {
-          ...order,
+          ...order.toJSON(),
           btc: {
             ...order.btc,
-            confirmations: blockDelta,
-            requiredConfirmations: BLOCK_HEIGHT_CONFIRMATION,
-            status
+            confirmations,
+            requiredConfirmations: BLOCK_HEIGHT_CONFIRMATION
           }
         }
       }

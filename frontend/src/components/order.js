@@ -12,17 +12,20 @@ Vue.component('order', {
     confirmations: '',
     coin: '',
     depositAddress: '',
+    depositStatus: {},
+    depositTxId: '',
     flow: '',
     requiredConfirmations: '',
     show: '',
     showOrder: false,
-    status: '',
     transferAddress: '',
+    transferStatus: {},
+    transferTxId: '',
     txId: '',
     value: '',
   }),
   mounted: function () {
-    this.initialize();
+    this.initialize(this.order);
   },
   methods: {
     fromAddressUrl: function (url) {
@@ -30,31 +33,45 @@ Vue.component('order', {
 
       return method(url);
     },
-    fromCoin: function () {
-      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC;
-    },
-    initialize: function () {
-      const { order } = this
+    fromTxUrl: function (url) {
+      const method = (this.flow === BTC_TO_RBTC) ? getRSKTxUrl : getBTCTxUrl;
 
+      return method(url);
+    },
+    fromCoin: function () {
+      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
+    },
+    initialize: function (order) {
       if (!_.isEmpty(order)) {
-        const { flow, txId, value } = order;
+        const { flow, value } = order;
         const fromChain = (flow === BTC_TO_RBTC) ? 'btc' : 'rsk';
         const toChain = (flow === BTC_TO_RBTC) ? 'rsk' : 'btc';
 
-        this.depositAddress = order[fromChain].address;
-        this.transferAddress = order[toChain].address;
         this.coin = (flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC
+        this.depositAddress = order[fromChain].address;
+        this.depositStatus = {
+          confirmations: order[fromChain].confirmations,
+          requiredConfirmations: order[fromChain].requiredConfirmations,
+          status: order[fromChain].status
+        };
+        this.depositTxId = order[fromChain].txId;
         this.showOrder = true;
-        this.txId = txId;
+        this.transferAddress = order[toChain].address;
+        this.transferStatus = {
+          confirmations: order[toChain].confirmations,
+          requiredConfirmations: order[toChain].requiredConfirmations,
+          status: order[toChain].status
+        };
+        this.transferTxId = order[toChain].txId;
         this.value = value;
       } else {
         this.showOrder = false;
       }
     },
     toCoin: function () {
-      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
+      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC;
     },
-    txUrl: function (url) {
+    toTxUrl: function (url) {
       const method = (this.flow === BTC_TO_RBTC) ? getBTCTxUrl : getRSKTxUrl;
 
       return method(url);
@@ -67,22 +84,23 @@ Vue.component('order', {
   },
   props: ['order'],
   watch: {
-    'order': function () {
-      this.initialize();
+    'order': function (newOrder) {
+      this.initialize(newOrder);
     }
   },
   template: `
   <div class="order" v-if="showOrder">
     <v-card-text>
       <p class="title text--primary">
-        Order created succcessfully 
-        <span class="order__status">
-          <status :status="status" ></status>
-        </span>
+        Order created succcessfully
       </p>
 
-      <p class="subtitle-1 text--primary">
+      <p class="order__title subtitle-1 text--primary">
         {{ fromCoin() }} deposit address
+
+        <span class="order__title__status">
+          <status :status="depositStatus" ></status>
+        </span>
       </p>
       
       <p class="font-weight-black headline">
@@ -99,8 +117,12 @@ Vue.component('order', {
         {{ value }} {{ fromCoin() }}
       </p>
 
-      <p class="subtitle-1 text--primary">
+      <p class="order__title subtitle-1 text--primary">
         {{ toCoin() }} recipient address
+
+        <span class="order__title__status">
+          <status :status="transferStatus" ></status>
+        </span>
       </p>
       
       <p class="font-weight-black headline">
@@ -109,13 +131,23 @@ Vue.component('order', {
         </a>
       </p>
 
-      <p class="subtitle-1 text--primary" v-if="txId">
-        Transaction
+      <p class="subtitle-1 text--primary" v-if="depositTxId">
+        Deposit transaction
       </p>
       
-      <p class="font-weight-black headline" v-if="txId">
-        <a :href="txUrl(txId)" target="_blank">
-          {{ txId }}
+      <p class="font-weight-black headline" v-if="depositTxId">
+        <a :href="fromTxUrl(depositTxId)" target="_blank">
+          {{ depositTxId }}
+        </a>
+      </p>
+
+      <p class="subtitle-1 text--primary" v-if="transferTxId">
+        Recipient transaction
+      </p>
+      
+      <p class="font-weight-black headline" v-if="transferTxId">
+        <a :href="toTxUrl(transferTxId)" target="_blank">
+          {{ transferTxId }}
         </a>
       </p>
     </v-card-text>
