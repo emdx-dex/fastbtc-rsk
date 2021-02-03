@@ -3,6 +3,8 @@ const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
 const { registerAddress } = require('../../utils/blocknative');
 const express = require('express');
 const orderModel = require('../../models/orders');
+const addressesModel = require('../../models/addresses');
+
 const web3 = require('web3');
 
 const bitcoinjs = require('bitcoinjs-lib');
@@ -42,36 +44,79 @@ Addresses:
 const XPUB1 = 'xpub6B7tTKXGVjdH99zkrPzdA8ybm9cL2b3c9oRB7RCQn38oRrGQkgMWEoCBbfL3SK5vreU8bg4XvTWW2YefRdLNxQzstZ9JM4Rdc63xd2yec2y';
 const XPUB2 = "xpub6B1TUQ6VCqaNBdUA8u4ezd9SK2cYD2PZsqcJjYppgiwXBrGdrRTijvSU1DRfXPr5Lxo5EVKc6cDNt3Dok5PaWyuojyH9dWwEPwpvUMdBPxg";
 
-let pubkeyArray = [];
+function deriveAddresess(){
+  let pubkeyArray = [];
 
-const M_OF_N = 2;
-const GAP_LIMIT = 20;
+  const M_OF_N = 2;
+  const GAP_LIMIT = 20;
 
 
-for (let i = 0; i < GAP_LIMIT; i++) {
+  for (let i = 0; i < GAP_LIMIT; i++) {
+    
+    let arr = [];
+
+    arr[0] = bitcoinjs.payments.p2pkh({
+      pubkey: bip32.fromBase58(XPUB1).derive(0).derive(i).publicKey,
+    }).pubkey;
+
+    arr[1] = bitcoinjs.payments.p2pkh({
+      pubkey: bip32.fromBase58(XPUB2).derive(0).derive(i).publicKey,
+    }).pubkey;
+
+    pubkeyArray.push(sortBuffers(arr));
+    
+  }
+
+  let addresses = [];
+
+  pubkeyArray.forEach(pubArr => {
+
+    addresses.push(
+      bitcoinjs.payments.p2sh({
+        redeem: bitcoinjs.payments.p2ms({ m: M_OF_N, pubkeys: pubArr }),
+      }).address
+    )
+
+  });
+
+  return addresses
+};
+
+
+async function getAddrNextIndex(){
   
+  let addresses = await addressesModel.find({used:true});
+  
+  return addresses.length == 0 ? 0 : addresses.length+1;
+}
+
+function deriveAddrByIndex(_index){
+
   let arr = [];
 
   arr[0] = bitcoinjs.payments.p2pkh({
-    pubkey: bip32.fromBase58(XPUB1).derive(0).derive(i).publicKey,
+    pubkey: bip32.fromBase58(XPUB1).derive(0).derive(_index).publicKey,
   }).pubkey;
 
   arr[1] = bitcoinjs.payments.p2pkh({
-    pubkey: bip32.fromBase58(XPUB2).derive(0).derive(i).publicKey,
+    pubkey: bip32.fromBase58(XPUB2).derive(0).derive(_index).publicKey,
   }).pubkey;
 
-  pubkeyArray.push(sortBuffers(arr));
-  
+
+  let addr = bitcoinjs.payments.p2sh({
+    redeem: bitcoinjs.payments.p2ms({ m: 2, pubkeys: sortBuffers(arr) }),
+  }).address
+  return addr;
+
 }
 
 
-pubkeyArray.forEach(pubArr => {
+(async function(){
+  let idx = await getAddrNextIndex();
+  console.log(idx)
+  console.log(deriveAddrByIndex(idx));
+})()
 
-  console.log(bitcoinjs.payments.p2sh({
-    redeem: bitcoinjs.payments.p2ms({ m: M_OF_N, pubkeys: pubArr }),
-  }).address);
-
-});
 
 router.post('/', async (req, res) => {
   const { btc, flow, rsk, value } = req.body;

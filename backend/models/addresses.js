@@ -10,6 +10,17 @@ const schemaConfig = {
 };
 
 const addressesSchema = new Schema({
+  used: {
+    type: Boolean,
+    default: false
+  },
+  address: String,
+  pubkey: String,
+  derivationIndex: Number,
+  // orderId: {
+  //   type: mongoose.Types.ObjectId,
+  //   ref: 'orders'
+  // }
 }, schemaConfig);
 
 const addressesModel = model('addressesModel', addressesSchema);
