@@ -45,9 +45,10 @@ const XPUB2 = "xpub6B1TUQ6VCqaNBdUA8u4ezd9SK2cYD2PZsqcJjYppgiwXBrGdrRTijvSU1DRfX
 let pubkeyArray = [];
 
 const M_OF_N = 2;
+const GAP_LIMIT = 20;
 
 
-for (let i = 0; i < 20; i++) {
+for (let i = 0; i < GAP_LIMIT; i++) {
   
   let arr = [];
 
