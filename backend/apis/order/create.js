@@ -1,13 +1,11 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
+const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
 const { registerAddress } = require('../../utils/blocknative');
-const express = require('express');
-const orderModel = require('../../models/orders');
 const addressesModel = require('../../models/addresses');
-const {getAddrNextIndex, deriveAddrByIndex} = require('../../utils/address');
-
-const web3 = require('web3');
+const express = require('express');
 const ordersModel = require('../../models/orders');
+const web3 = require('web3');
 
 const BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BLOCK_HEIGHT_CONFIRMATION);
 const router = express.Router();
@@ -52,13 +50,13 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const order = new orderModel({
+    const order = new ordersModel({
       rsk,
       flow,
       value
     });
 
-    
+
     if (flow === BTC_TO_RBTC) {
 
       //getAddrNextIndex, deriveAddrByIndex
@@ -69,12 +67,12 @@ router.post('/', async (req, res) => {
       let newAddrDoc = new addressesModel();
 
       newAddrDoc.orderId = order._id;
-      
+
       newAddrDoc.address = depositAddr;
       newAddrDoc.deriveAddrByIndex = idx;
 
       await newAddrDoc.save();
-      
+
       await registerAddress(depositAddr);
 
       order.btc = {

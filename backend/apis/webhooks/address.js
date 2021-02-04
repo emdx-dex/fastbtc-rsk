@@ -1,9 +1,9 @@
 const _ = require('lodash');
+const addressesModel = require('../../models/addresses');
 const express = require('express');
 const FLOWS = require('../../../shared/flows');
-const orderModel = require('../../models/orders');
+const ordersModel = require('../../models/orders');
 const STATUS = require('../../../shared/status');
-const addressesModel = require('../../models/addresses');
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
   console.log(req.body);
 
   try {
-    const order = await orderModel.findOne({
+    const order = await ordersModel.findOne({
       'btc.address': watchedAddress,
       flow: FLOWS.BTC_TO_RBTC
     });

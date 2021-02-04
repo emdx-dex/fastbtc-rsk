@@ -1,6 +1,6 @@
 const { getLastBlock } = require('../../utils/block');
 const express = require('express');
-const orderModel = require('../../models/orders');
+const ordersModel = require('../../models/orders');
 const { CONFIRMED } = require('../../../shared/status');
 
 require('dotenv').config();
@@ -12,7 +12,7 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    let order = await orderModel.findById(id);
+    let order = await ordersModel.findById(id);
     const { id: height } = await getLastBlock();
     const blockDelta = order.btc.block ? height - order.btc.block : 0;
     const status = (blockDelta >= BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : order.btc.status;

@@ -1,5 +1,5 @@
 const express = require('express');
-const orderModel = require('../../models/orders');
+const ordersModel = require('../../models/orders');
 
 require('dotenv').config();
 
@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const orders = await orderModel.find();
+    const orders = await ordersModel.find();
 
     return res.json({
       data: { orders }
