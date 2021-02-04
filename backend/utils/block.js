@@ -1,15 +1,16 @@
 const _ = require('lodash');
 const axios = require('axios');
 
-const BLOCKCHAIN_INFO_URL = process.env.BLOCKCHAIN_INFO;
+const BTC_INFO_URL = process.env.BTC_INFO_URL;
 
-async function getLastBlock() {
-  const response = await axios.get(`${BLOCKCHAIN_INFO_URL}/blocks?limit=1`);
+async function getBlockNumber() {
+  const response = await axios.get(`${BTC_INFO_URL}/blocks?limit=1`);
+  const blockNumber = _.get(response, 'data.data[0].id', {});
 
-  return _.get(response, 'data.data[0]', {});
+  return blockNumber;
 }
 
 module.exports = {
-  getLastBlock
+  getBlockNumber
 };
 
