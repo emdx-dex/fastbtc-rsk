@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
 
 const schemaConfig = {
   toJSON: {
@@ -9,20 +9,19 @@ const schemaConfig = {
   timestamps: true
 };
 
-const addressesSchema = new Schema({
+const addressesSchema = new mongoose.Schema({
   used: {
     type: Boolean,
     default: false
   },
   address: String,
-  pubkey: String,
   derivationIndex: Number,
-  // orderId: {
-  //   type: mongoose.Types.ObjectId,
-  //   ref: 'orders'
-  // }
+  orderId: {
+    type: mongoose.Types.ObjectId,
+    ref: 'orders'
+  }
 }, schemaConfig);
 
-const addressesModel = model('addressesModel', addressesSchema);
+const addressesModel = mongoose.model('addressesModel', addressesSchema);
 
 module.exports = addressesModel;

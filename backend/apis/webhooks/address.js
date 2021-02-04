@@ -3,6 +3,7 @@ const express = require('express');
 const FLOWS = require('../../../shared/flows');
 const orderModel = require('../../models/orders');
 const STATUS = require('../../../shared/status');
+const addressesModel = require('../../models/addresses');
 
 const router = express.Router();
 
@@ -46,6 +47,13 @@ router.post('/', async (req, res) => {
       order.btc.block = blockHeight;
       order.btc.status = STATUS.UNCONFIRMED;
     }
+
+    let addressDoc = await addressesModel.findOne({
+      orderId: order._id
+    });
+    
+    addressDoc.used = true;
+    await addressDoc.save();
 
     await order.save();
 
