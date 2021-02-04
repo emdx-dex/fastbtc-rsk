@@ -10,26 +10,10 @@ contract FastSwap is Ownable, AccessControl {
 
     uint256 maxAmount;
     uint256 minAmount;
-    /*
-    struct SwapInStruct {
-        bytes32 source;
-        address destiny;
-        uint256 amount;
-    }
 
-    struct SwapOutStruct {
-        address source;
-        bytes32 destiny;
-        uint256 amount;
-    }
-
-    mapping(bytes32 => SwapInStruct) public inputSwaps;
-    mapping(bytes32 => SwapOutStruct) public outboundSwaps;
-*/
     event FundDeposit(address from, uint256 amount);
     event FundWithdraw(address from, uint256 amount);
-    event RBTCSwapIn(bytes32 source, address destiny, uint256 amount);
-    //event RBTCSwapOut(address source, bytes32 destiny, uint256 amount);
+    event RBTCSwapIn(address destiny, uint256 amount);
     event RBTCSwapOut(address source, uint256 amount);
 
     modifier onlyOperator() {
@@ -57,6 +41,9 @@ contract FastSwap is Ownable, AccessControl {
     /* Swap out
      **/
     receive() external payable {
+      if (msg.sender == owner()) {
+        emit FundDeposit(msg.sender, msg.value);
+      } else {
         require(
             msg.value <= maxAmount,
             "msg.value exceeds the maximum required"
@@ -67,14 +54,10 @@ contract FastSwap is Ownable, AccessControl {
         );
 
         emit RBTCSwapOut(msg.sender, msg.value);
-    }
-
-    function depositFunds() external payable onlyOwner {
-        emit FundDeposit(msg.sender, msg.value);
+      }
     }
 
     function rbtcSwapIn(
-        bytes32 _source,
         address payable _destiny,
         uint256 _amount
     ) external onlyOperator {
@@ -90,7 +73,7 @@ contract FastSwap is Ownable, AccessControl {
 
         _destiny.transfer(_amount);
 
-        emit RBTCSwapIn(_source, _destiny, _amount);
+        emit RBTCSwapIn(_destiny, _amount);
     }
 
     function withdrawFunds(uint256 _amount) external onlyOwner {
