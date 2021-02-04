@@ -33,6 +33,16 @@
         </v-col>
       </v-row>
       <v-row>
+        <v-col cols="12" md="12" v-if="isRbtcToBtc">
+          <v-text-field
+            :required="isRbtcToBtc"
+            :rules="senderAddressRule"
+            label="Sender address"
+            v-model="senderAddress"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+      <v-row>
         <v-col cols="12" md="12">
           <v-text-field
             :rules="addressRule"
@@ -71,7 +81,12 @@ import {
   remove as removeCookie,
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
-import { CONFIRMED, FAILED, PENDING, UNCONFIRMED } from '../../../shared/status';
+import {
+  CONFIRMED,
+  FAILED,
+  PENDING,
+  UNCONFIRMED,
+} from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 
 export default {
@@ -83,7 +98,10 @@ export default {
     flow: BTC_TO_RBTC,
     fromCoin: '',
     interval: null,
+    isRbtcToBtc: false,
     order: {},
+    senderAddress: '',
+    senderAddressRule: [(v) => !_.isEmpty(v) || 'Sender address is required.'],
     showConfirmationDialog: false,
     toCoin: '',
     valid: false,
@@ -117,7 +135,7 @@ export default {
       this.interval = null;
     },
     async submit() {
-      const { address, value } = this;
+      const { address, senderAddress, value } = this;
       const valid = this.$refs.form.validate();
 
       if (valid) {
@@ -133,6 +151,9 @@ export default {
           request.btc = {
             address,
           };
+          request.rsk = {
+            senderAddress,
+          };
         }
 
         this.$store.dispatch('order/create', request);
@@ -144,6 +165,7 @@ export default {
     },
     swapFlow() {
       this.flow = this.flow === BTC_TO_RBTC ? RBTC_TO_BTC : BTC_TO_RBTC;
+      this.isRbtcToBtc = this.flow === RBTC_TO_BTC;
 
       this.setLabels();
     },

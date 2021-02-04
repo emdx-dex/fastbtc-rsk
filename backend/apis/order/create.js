@@ -56,9 +56,7 @@ router.post('/', async (req, res) => {
       value
     });
 
-
     if (flow === BTC_TO_RBTC) {
-
       //getAddrNextIndex, deriveAddrByIndex
       let idx = await getAddrNextIndex();
 
@@ -84,8 +82,6 @@ router.post('/', async (req, res) => {
     }
 
     if (flow === RBTC_TO_BTC) {
-      await registerAddress(depositAddress);
-
       order.btc = {
         ...order.btc,
         ...btc

@@ -15,6 +15,7 @@ Vue.component('order', {
     depositStatus: {},
     depositTxId: '',
     flow: '',
+    rbtcSenderAddress: false,
     requiredConfirmations: '',
     show: '',
     showOrder: false,
@@ -29,18 +30,19 @@ Vue.component('order', {
   },
   methods: {
     fromAddressUrl: function (url) {
-      const method = (this.flow === BTC_TO_RBTC) ? getRSKAddressUrl : getBTCAddressUrl;
+      const method = (this.flow === BTC_TO_RBTC) ? getBTCAddressUrl : getRSKAddressUrl;
 
       return method(url);
     },
     fromTxUrl: function (url) {
-      const method = (this.flow === BTC_TO_RBTC) ? getRSKTxUrl : getBTCTxUrl;
+      const method = (this.flow === BTC_TO_RBTC) ? getBTCTxUrl : getRSKTxUrl;
 
       return method(url);
     },
     fromCoin: function () {
-      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
+      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC;
     },
+    getRSKAddressUrl,
     initialize: function (order) {
       if (!_.isEmpty(order)) {
         const { flow, value } = order;
@@ -55,6 +57,8 @@ Vue.component('order', {
           status: order[fromChain].status
         };
         this.depositTxId = order[fromChain].txId;
+        this.flow = flow;
+        this.rbtcSenderAddress = (flow === RBTC_TO_BTC) ? order.rsk.senderAddress : false;
         this.showOrder = true;
         this.transferAddress = order[toChain].address;
         this.transferStatus = {
@@ -69,15 +73,16 @@ Vue.component('order', {
       }
     },
     toCoin: function () {
-      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.BTC : SYMBOLS.RBTC;
+      console.log(this);
+      return (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
     },
     toTxUrl: function (url) {
-      const method = (this.flow === BTC_TO_RBTC) ? getBTCTxUrl : getRSKTxUrl;
+      const method = (this.flow === BTC_TO_RBTC) ? getRSKTxUrl : getBTCTxUrl;
 
       return method(url);
     },
     toAddressUrl: function (url) {
-      const method = (this.flow === BTC_TO_RBTC) ? getBTCAddressUrl : getRSKAddressUrl;
+      const method = (this.flow === BTC_TO_RBTC) ? getRSKAddressUrl : getBTCAddressUrl;
 
       return method(url);
     },
@@ -93,6 +98,16 @@ Vue.component('order', {
     <v-card-text>
       <p class="title text--primary">
         Order created succcessfully
+      </p>
+
+      <p class="order__title subtitle-1 text--primary" v-if="rbtcSenderAddress">
+        RBTC sender address
+      </p>
+      
+      <p class="font-weight-black headline" v-if="rbtcSenderAddress">
+        <a :href="getRSKAddressUrl(rbtcSenderAddress)" target="_blank">
+          {{ rbtcSenderAddress }}
+        </a>
       </p>
 
       <p class="order__title subtitle-1 text--primary">
