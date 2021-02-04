@@ -2,12 +2,12 @@ import _ from 'lodash';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { getBTCAddressUrl, getBTCTxUrl } from '@/utils/btc-urls';
 import { getRSKAddressUrl, getRSKTxUrl } from '@/utils/rsk-urls';
-import { VCardText } from 'vuetify/lib';
+import { VCardText, VIcon } from 'vuetify/lib';
 import SYMBOLS from '../../../shared/symbols';
 import Vue from 'vue';
 
 Vue.component('order', {
-  components: { VCardText },
+  components: { VCardText, VIcon },
   data: () => ({
     confirmations: '',
     coin: '',
@@ -73,7 +73,6 @@ Vue.component('order', {
       }
     },
     toCoin: function () {
-      console.log(this);
       return (this.flow === BTC_TO_RBTC) ? SYMBOLS.RBTC : SYMBOLS.BTC;
     },
     toTxUrl: function (url) {
@@ -129,7 +128,11 @@ Vue.component('order', {
       </p>
       
       <p class="font-weight-black headline">
-        {{ value }} {{ fromCoin() }}
+        {{ value }} {{ fromCoin() }}  
+        
+        <v-icon color="black" large> mdi-arrow-right-thick </v-icon>
+        
+        {{ value }} {{ toCoin() }}
       </p>
 
       <p class="order__title subtitle-1 text--primary">
