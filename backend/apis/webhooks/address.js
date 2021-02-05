@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const { swapIn } = require('../../rsk/index');
 const addressesModel = require('../../models/addresses');
 const express = require('express');
 const FLOWS = require('../../../shared/flows');
@@ -27,7 +28,7 @@ router.post('/', async (req, res) => {
       flow: FLOWS.BTC_TO_RBTC
     });
 
-    // TODO: What happened if user trasnfer less?
+    // TODO: What happened if user transfer less?
     // const { delta } = netBalanceChanges.find(({ address }) => {
     //   return address.toLowerCase() === watchedAddress;
     // });
@@ -36,6 +37,7 @@ router.post('/', async (req, res) => {
       return res.sendStatus(404);
     }
 
+    // Se incluyo en el bloque de BTC pero no se mino
     if (status === STATUS.PENDING) {
       order.btc.fee = fee;
       order.btc.rawTransaction = rawTransaction;
@@ -43,15 +45,23 @@ router.post('/', async (req, res) => {
       order.btc.txId = txid;
     }
 
+    // Confirmado en blocknative
     if (status === STATUS.CONFIRMED) {
       order.btc.block = blockHeight;
       order.btc.status = STATUS.UNCONFIRMED;
+
+      // TODO: Moverlo al polling cuando ya hay 2 bloques confirmados.
+      const { confirmationNumber, receipt } = await swapIn(order.rsk.address, order.value);
+
+      order.rsk.block = receipt.blockNumber;
+      order.rsk.status = STATUS.CONFIRMED;
+      order.rsk.txId = receipt.transactionHash;
     }
 
     let addressDoc = await addressesModel.findOne({
       orderId: order._id
     });
-    
+
     addressDoc.used = true;
     await addressDoc.save();
 

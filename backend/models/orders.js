@@ -32,6 +32,7 @@ const ordersSchema = new Schema({
   rsk: {
     address: String,
     block: String,
+    senderAddress: String,
     status: {
       default: STATUS.PENDING,
       enum: Object.values(STATUS),

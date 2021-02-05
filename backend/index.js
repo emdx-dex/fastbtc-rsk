@@ -1,3 +1,4 @@
+const { listenRBTCSwapOut } = require('./rsk/index');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
@@ -36,11 +37,11 @@ app.use(logger('dev'));
 app.use(cors());
 app.use(bodyParser.json());
 
-//MongoDB connection
 require('./utils/connection');
 
+listenRBTCSwapOut();
+
 //Routes
-//=====================================================================
 const order = require('./apis/order');
 const webhooks = require('./apis/webhooks');
 

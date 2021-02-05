@@ -1,43 +1,59 @@
-const { getLastBlock } = require('../../utils/block');
+const _ = require('lodash');
+const { BTC, RSK } = require('../../../shared/chains');
+const { CONFIRMED } = require('../../../shared/status');
+const { getBlockNumber } = require('../../utils/block');
+const { getBlockNumber: getRSKBlockNumber } = require('../../rsk/index');
 const express = require('express');
 const ordersModel = require('../../models/orders');
-const { CONFIRMED } = require('../../../shared/status');
 
 require('dotenv').config();
 
-const BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BLOCK_HEIGHT_CONFIRMATION);
+const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
+const RBTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RBTC_BLOCK_HEIGHT_CONFIRMATION);
 const router = express.Router();
+
+async function getConfirmations(order, chain) {
+  if (_.isEmpty(chain)) return {};
+
+  const heightConfirmation = chain === BTC ? BTC_BLOCK_HEIGHT_CONFIRMATION : RBTC_BLOCK_HEIGHT_CONFIRMATION;
+  const getHeight = chain === BTC ? getBlockNumber : getRSKBlockNumber;
+  const height = await getHeight();
+  const blockDelta = order[chain].block ? height - order[chain].block : 0;
+  const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
+  const confirmations = (blockDelta >= 0) ? blockDelta : 0;
+
+  if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
+    order[chain].status = CONFIRMED;
+
+    order = await order.save();
+  }
+
+  return {
+    ...order[chain],
+    confirmations,
+    requiredConfirmations: heightConfirmation
+  }
+}
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    let order = await ordersModel.findById(id);
-    const { id: height } = await getLastBlock();
-    const blockDelta = order.btc.block ? height - order.btc.block : 0;
-    const status = (blockDelta >= BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : order.btc.status;
-    // This ternary is because sometimes last block is behind the hook.
-    const confirmations = (blockDelta >= 0) ? blockDelta : 0;
-
-    if (order.btc.status !== CONFIRMED && status === CONFIRMED) {
-      order.btc.status = CONFIRMED;
-
-      order = await order.save();
-    }
+    const order = await ordersModel.findById(id);
+    const btc = await getConfirmations(order, BTC);
+    const rsk = await getConfirmations(order, RSK);
 
     return res.json({
       data: {
         order: {
           ...order.toJSON(),
-          btc: {
-            ...order.btc,
-            confirmations,
-            requiredConfirmations: BLOCK_HEIGHT_CONFIRMATION
-          }
+          btc,
+          rsk
         }
       }
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error: 'Error fetching order'
     });

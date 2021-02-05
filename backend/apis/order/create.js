@@ -7,15 +7,16 @@ const express = require('express');
 const ordersModel = require('../../models/orders');
 const web3 = require('web3');
 
-const BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BLOCK_HEIGHT_CONFIRMATION);
+const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
+const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
+const RBTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RBTC_BLOCK_HEIGHT_CONFIRMATION);
+
 const router = express.Router();
 
 require('dotenv').config();
 
-
 router.post('/', async (req, res) => {
   const { btc, flow, rsk, value } = req.body;
-  //const depositAddress = process.env.BTC_DEPOSIT_ADDRESS_TESTNET;
 
   if (_.isEmpty(flow)) {
     return res.status(400).json({
@@ -56,40 +57,37 @@ router.post('/', async (req, res) => {
       value
     });
 
-
     if (flow === BTC_TO_RBTC) {
-
-      //getAddrNextIndex, deriveAddrByIndex
       let idx = await getAddrNextIndex();
-
       let depositAddr = deriveAddrByIndex(idx);
-
       let newAddrDoc = new addressesModel();
 
       newAddrDoc.orderId = order._id;
-
       newAddrDoc.address = depositAddr;
       newAddrDoc.deriveAddrByIndex = idx;
 
       await newAddrDoc.save();
-
       await registerAddress(depositAddr);
 
       order.btc = {
         ...order.btc,
         address: depositAddr,
         confirmations: 0,
-        requiredConfirmations: BLOCK_HEIGHT_CONFIRMATION
+        requiredConfirmations: BTC_BLOCK_HEIGHT_CONFIRMATION
       };
     }
 
     if (flow === RBTC_TO_BTC) {
-      await registerAddress(depositAddress);
-
       order.btc = {
         ...order.btc,
         ...btc
       };
+      order.rsk = {
+        ...order.rsk,
+        address: FAST_SWAP_ADDRESS,
+        confirmations: 0,
+        requiredConfirmations: RBTC_BLOCK_HEIGHT_CONFIRMATION
+      }
     }
 
     await order.save();

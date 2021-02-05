@@ -33,10 +33,20 @@
         </v-col>
       </v-row>
       <v-row>
+        <v-col cols="12" md="12" v-if="isRbtcToBtc">
+          <v-text-field
+            :required="isRbtcToBtc"
+            :rules="senderAddressRule"
+            label="Sender address"
+            v-model="senderAddress"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+      <v-row>
         <v-col cols="12" md="12">
           <v-text-field
             :rules="addressRule"
-            label="Transfer address"
+            label="Recipient address"
             required
             v-model="address"
           ></v-text-field>
@@ -49,8 +59,11 @@
         <v-btn @click="clear" class="mr-4"> clear order </v-btn>
       </div>
     </v-form>
-    <div class="home__ordersummary">
+    <div class="home__ordersummary" v-if="showOrderSummary">
       <v-card elevation="2">
+        <v-card-title class="title text--primary">
+          Order details
+        </v-card-title>
         <order :order="order"></order>
       </v-card>
     </div>
@@ -71,7 +84,12 @@ import {
   remove as removeCookie,
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
-import { CONFIRMED, FAILED, PENDING, UNCONFIRMED } from '../../../shared/status';
+import {
+  CONFIRMED,
+  FAILED,
+  PENDING,
+  UNCONFIRMED,
+} from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 
 export default {
@@ -83,8 +101,12 @@ export default {
     flow: BTC_TO_RBTC,
     fromCoin: '',
     interval: null,
+    isRbtcToBtc: false,
     order: {},
+    senderAddress: '',
+    senderAddressRule: [(v) => !_.isEmpty(v) || 'Sender address is required.'],
     showConfirmationDialog: false,
+    showOrderSummary: false,
     toCoin: '',
     valid: false,
     value: '',
@@ -107,6 +129,7 @@ export default {
       this.$refs.form.resetValidation();
       this.$store.dispatch('order/clean');
       this.showConfirmationDialog = false;
+      this.showOrderSummary = false;
       this.valid = true;
 
       this.removePooling();
@@ -117,7 +140,7 @@ export default {
       this.interval = null;
     },
     async submit() {
-      const { address, value } = this;
+      const { address, senderAddress, value } = this;
       const valid = this.$refs.form.validate();
 
       if (valid) {
@@ -133,6 +156,9 @@ export default {
           request.btc = {
             address,
           };
+          request.rsk = {
+            senderAddress,
+          };
         }
 
         this.$store.dispatch('order/create', request);
@@ -144,6 +170,7 @@ export default {
     },
     swapFlow() {
       this.flow = this.flow === BTC_TO_RBTC ? RBTC_TO_BTC : BTC_TO_RBTC;
+      this.isRbtcToBtc = this.flow === RBTC_TO_BTC;
 
       this.setLabels();
     },
@@ -169,13 +196,13 @@ export default {
 
       if (!_.isEmpty(order)) {
         const { id } = order;
-        // TODO: Set this dianmic;
-        const status = order.btc.status;
+        const status = [order.btc.status, order.rsk.status];
 
+        this.showOrderSummary = true;
         this.valid = false;
 
         if (
-          (status === PENDING || status === UNCONFIRMED) &&
+          (status.includes(PENDING) || status.includes(UNCONFIRMED)) &&
           _.isNull(this.interval)
         ) {
           this.interval = setInterval(() => {
