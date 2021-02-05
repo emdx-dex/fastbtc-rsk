@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const { swapIn } = require('../../rsk/index');
 const addressesModel = require('../../models/addresses');
 const express = require('express');
 const FLOWS = require('../../../shared/flows');
@@ -46,12 +47,18 @@ router.post('/', async (req, res) => {
     if (status === STATUS.CONFIRMED) {
       order.btc.block = blockHeight;
       order.btc.status = STATUS.UNCONFIRMED;
+
+      const { confirmationNumber, receipt } = await swapIn(order.rsk.address, order.value);
+
+      order.rsk.block = receipt.blockNumber;
+      order.rsk.status = STATUS.CONFIRMED;
+      order.rsk.txId = receipt.transactionHash;
     }
 
     let addressDoc = await addressesModel.findOne({
       orderId: order._id
     });
-    
+
     addressDoc.used = true;
     await addressDoc.save();
 

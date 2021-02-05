@@ -37,40 +37,39 @@ async function getBlockNumber() {
 }
 
 async function swapIn(destiny, _amount) {
-  const contract = getContract();
-  const web3 = getInstance();
-  const amount = web3.utils.toWei(_amount);
+  return new Promise(async (resolve, reject) => {
+    const contract = getContract();
+    const web3 = getInstance();
+    const amount = web3.utils.toWei(_amount);
 
-  contract.defaultChain = 'kovan';
+    try {
+      const method = contract.methods.rbtcSwapIn(destiny, amount);
+      const gas = await method.estimateGas({ from: operatorAddress });
+      const gasPrice = await web3.eth.getGasPrice();
+      const nonce = await web3.eth.getTransactionCount(operatorAddress);
+      const rawTx = {
+        data: method.encodeABI(),
+        from: operatorAddress,
+        gas: web3.utils.toHex(gas),
+        gasPrice: web3.utils.toHex(gasPrice),
+        nonce: web3.utils.toHex(nonce),
+        to: fastSwapAddress
+      };
+      const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
-  try {
-    const method = contract.methods.rbtcSwapIn(destiny, amount);
-    const gas = await method.estimateGas({ from: operatorAddress });
-    const gasPrice = await web3.eth.getGasPrice();
-    const nonce = await web3.eth.getTransactionCount(operatorAddress);
-    const rawTx = {
-      data: method.encodeABI(),
-      from: operatorAddress,
-      gas,
-      gasPrice,
-      nonce: nonce + 1,
-      to: fastSwapAddress
-    };
+      return web3.eth.sendSignedTransaction(rawTransaction)
+        .on('confirmation', (confirmationNumber, receipt) => {
+          resolve({ confirmationNumber, receipt });
+        })
+        .on('error', (error) => {
+          reject(error);
+        });
+    } catch (error) {
+      console.log(`[ERROR] On Create signed transaction. ${error}`);
 
-    console.log(rawTx);
-
-    const { rawTransaction, ...rest } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
-
-    console.log('rawTransaction', rawTransaction);
-    console.log(rest);
-
-    web3.eth.sendSignedTransaction(rawTransaction)
-      .on('receipt', (...data) => {
-        console.log('receipt ', data);
-      });
-  } catch (error) {
-    console.log(`[ERROR] On Create signed transaction. ${error}`);
-  }
+      reject(error);
+    }
+  });
 }
 
 function listenRBTCSwapOut() {
