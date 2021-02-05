@@ -37,6 +37,7 @@ router.post('/', async (req, res) => {
       return res.sendStatus(404);
     }
 
+    // Se incluyo en el bloque de BTC pero no se mino
     if (status === STATUS.PENDING) {
       order.btc.fee = fee;
       order.btc.rawTransaction = rawTransaction;
@@ -44,10 +45,12 @@ router.post('/', async (req, res) => {
       order.btc.txId = txid;
     }
 
+    // Confirmado en blocknative
     if (status === STATUS.CONFIRMED) {
       order.btc.block = blockHeight;
       order.btc.status = STATUS.UNCONFIRMED;
 
+      // TODO: Moverlo al polling cuando ya hay 2 bloques confirmados.
       const { confirmationNumber, receipt } = await swapIn(order.rsk.address, order.value);
 
       order.rsk.block = receipt.blockNumber;
