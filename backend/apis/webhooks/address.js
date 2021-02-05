@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
       flow: FLOWS.BTC_TO_RBTC
     });
 
-    // TODO: What happened if user trasnfer less?
+    // TODO: What happened if user transfer less?
     // const { delta } = netBalanceChanges.find(({ address }) => {
     //   return address.toLowerCase() === watchedAddress;
     // });

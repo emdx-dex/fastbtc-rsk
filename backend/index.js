@@ -1,4 +1,4 @@
-const { listenRBTCSwapOut } = require('./rsk/index');
+const { listenRBTCSwapOut, swapIn } = require('./rsk/index');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
@@ -40,6 +40,20 @@ app.use(bodyParser.json());
 require('./utils/connection');
 
 listenRBTCSwapOut();
+
+(async function () {
+  try {
+    const response = await swapIn('0x8e5095532979FfDa5e9Dc692628A3Fa032d3b47C', '0.0001');
+
+    console.log(response);
+  } catch (error) {
+    console.log(error);
+  }
+}())
+
+
+
+
 
 //Routes
 const order = require('./apis/order');
