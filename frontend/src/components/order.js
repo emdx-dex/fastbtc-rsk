@@ -2,12 +2,12 @@ import _ from 'lodash';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { getBTCAddressUrl, getBTCTxUrl } from '@/utils/btc-urls';
 import { getRSKAddressUrl, getRSKTxUrl } from '@/utils/rsk-urls';
-import { VCardText, VIcon } from 'vuetify/lib';
+import { VCard, VCardText, VCol, VContainer, VIcon, VRow, VSpacer } from 'vuetify/lib';
 import SYMBOLS from '../../../shared/symbols';
 import Vue from 'vue';
 
 Vue.component('order', {
-  components: { VCardText, VIcon },
+  components: { VCard, VCardText, VCol, VContainer, VIcon, VRow, VSpacer },
   data: () => ({
     confirmations: '',
     coin: '',
@@ -17,8 +17,6 @@ Vue.component('order', {
     flow: '',
     rbtcSenderAddress: false,
     requiredConfirmations: '',
-    show: '',
-    showOrder: false,
     transferAddress: '',
     transferStatus: {},
     transferTxId: '',
@@ -59,7 +57,6 @@ Vue.component('order', {
         this.depositTxId = order[fromChain].txId;
         this.flow = flow;
         this.rbtcSenderAddress = (flow === RBTC_TO_BTC) ? order.rsk.senderAddress : false;
-        this.showOrder = true;
         this.transferAddress = order[toChain].address;
         this.transferStatus = {
           confirmations: order[toChain].confirmations,
@@ -68,8 +65,6 @@ Vue.component('order', {
         };
         this.transferTxId = order[toChain].txId;
         this.value = value;
-      } else {
-        this.showOrder = false;
       }
     },
     toCoin: function () {
@@ -93,82 +88,90 @@ Vue.component('order', {
     }
   },
   template: `
-  <div class="order" v-if="showOrder">
-    <v-card-text>
-      <p class="title text--primary">
-        Order created succcessfully
-      </p>
-
-      <p class="order__title subtitle-1 text--primary" v-if="rbtcSenderAddress">
-        RBTC sender address
-      </p>
-      
-      <p class="font-weight-black headline" v-if="rbtcSenderAddress">
-        <a :href="getRSKAddressUrl(rbtcSenderAddress)" target="_blank">
-          {{ rbtcSenderAddress }}
-        </a>
-      </p>
-
-      <p class="order__title subtitle-1 text--primary">
-        {{ fromCoin() }} deposit address
-
-        <span class="order__title__status">
-          <status :status="depositStatus" ></status>
-        </span>
-      </p>
-      
-      <p class="font-weight-black headline">
-        <a :href="fromAddressUrl(depositAddress)" target="_blank">
-          {{ depositAddress }}
-        </a>
-      </p>
-
-      <p class="subtitle-1 text--primary">
-        Value
-      </p>
-      
-      <p class="font-weight-black headline">
-        {{ value }} {{ fromCoin() }}  
+    <div class="order">
+      <v-container class="lighten-5">
+        <v-row>
+          <v-col cols="12" md="6">
+              <p class="order__title subtitle-1 text--primary" v-if="rbtcSenderAddress">
+                RBTC sender address
+              </p>
+              
+              <p class="font-weight-black headline" v-if="rbtcSenderAddress">
+                <a :href="getRSKAddressUrl(rbtcSenderAddress)" target="_blank">
+                  {{ rbtcSenderAddress }}
+                </a>
+              </p>
         
-        <v-icon color="black" large> mdi-arrow-right-thick </v-icon>
+              <p class="order__title subtitle-1 text--primary">
+                {{ fromCoin() }} deposit address
         
-        {{ value }} {{ toCoin() }}
-      </p>
+                <span class="order__title__status">
+                  <status :status="depositStatus" ></status>
+                </span>
+              </p>
+              
+              <p class="font-weight-black headline">
+                <a :href="fromAddressUrl(depositAddress)" target="_blank">
+                  {{ depositAddress }}
+                </a>
+              </p>
+        
+              <p class="subtitle-1 text--primary" v-if="depositTxId">
+                Deposit transaction
+              </p>
+              
+              <p class="font-weight-black headline" v-if="depositTxId">
+                <a :href="fromTxUrl(depositTxId)" target="_blank">
+                  {{ depositTxId }}
+                </a>
+              </p>
+        
+              <p class="subtitle-1 text--primary">
+                Value
+              </p>
+              
+              <p class="font-weight-black headline">
+                {{ value }} {{ fromCoin() }}                
+              </p>
+          </v-col>
 
-      <p class="order__title subtitle-1 text--primary">
-        {{ toCoin() }} recipient address
+          <v-spacer></v-spacer>
 
-        <span class="order__title__status">
-          <status :status="transferStatus" ></status>
-        </span>
-      </p>
-      
-      <p class="font-weight-black headline">
-        <a :href="toAddressUrl(transferAddress)" target="_blank">
-          {{ transferAddress }}
-        </a>
-      </p>
+          <v-col cols="12" md="6">
+            <p class="order__title subtitle-1 text--primary">
+              {{ toCoin() }} recipient address
 
-      <p class="subtitle-1 text--primary" v-if="depositTxId">
-        Deposit transaction
-      </p>
-      
-      <p class="font-weight-black headline" v-if="depositTxId">
-        <a :href="fromTxUrl(depositTxId)" target="_blank">
-          {{ depositTxId }}
-        </a>
-      </p>
+              <span class="order__title__status">
+                <status :status="transferStatus" ></status>
+              </span>
+            </p>
+            
+            <p class="font-weight-black headline">
+              <a :href="toAddressUrl(transferAddress)" target="_blank">
+                {{ transferAddress }}
+              </a>
+            </p>
 
-      <p class="subtitle-1 text--primary" v-if="transferTxId">
-        Recipient transaction
-      </p>
-      
-      <p class="font-weight-black headline" v-if="transferTxId">
-        <a :href="toTxUrl(transferTxId)" target="_blank">
-          {{ transferTxId }}
-        </a>
-      </p>
-    </v-card-text>
-  </div>
+            <p class="subtitle-1 text--primary" v-if="transferTxId">
+              Recipient transaction
+            </p>
+            
+            <p class="font-weight-black headline" v-if="transferTxId">
+              <a :href="toTxUrl(transferTxId)" target="_blank">
+                {{ transferTxId }}
+              </a>
+            </p>
+
+            <p class="subtitle-1 text--primary">
+              Value
+            </p>
+            
+            <p class="font-weight-black headline">
+              {{ value }} {{ toCoin() }}
+            </p>
+          </v-col>
+        </v-row>
+      </v-container>
+    </div>
   `
 });
