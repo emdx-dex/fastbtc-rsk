@@ -72,6 +72,7 @@ async function swapIn(destiny, _amount) {
   });
 }
 
+//TODO: cambiar por WS de RSK
 function listenRBTCSwapOut() {
   const contract = getContract();
 

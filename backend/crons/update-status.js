@@ -25,6 +25,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
     if (order.flow === BTC_TO_RBTC && chain === RSK && _.isEmpty(order.rsk.txId)) {
       console.log(`Sending transaction. Id: ${order.id}.`);
 
+      //TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
       const { receipt } = await swapIn(order.rsk.address, order.value);
 
       order.rsk.block = receipt.blockNumber;
