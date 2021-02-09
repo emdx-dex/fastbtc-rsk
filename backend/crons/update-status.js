@@ -43,9 +43,7 @@ async function updateStatus() {
   try {
     const orders = await ordersModel.find({
       '$or': [
-        { 'btc.status': PENDING },
         { 'btc.status': UNCONFIRMED },
-        { 'rsk.status': PENDING },
         { 'rsk.status': UNCONFIRMED }
       ]
     });
@@ -56,7 +54,8 @@ async function updateStatus() {
         try {
           await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
           await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
-
+          //Si la tx tiene => confirmaciones que el BTC_BLOCK_HEIGHT_CONFIRMATION
+          // unwatch de la addr del hook.
           resolve();
         } catch (error) {
           reject(error);
