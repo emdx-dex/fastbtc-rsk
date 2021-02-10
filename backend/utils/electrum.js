@@ -1,6 +1,7 @@
 const ElectrumClient = require('@codewarriorr/electrum-client-js');
 const bitcoinjs = require('bitcoinjs-lib');
 const coinSelect = require('coinselect')
+const axios = require('axios');
 
 require('dotenv').config();
 
@@ -24,17 +25,128 @@ async function connect() {
   }
 }
 
+/**
+   * Validates any address, including legacy, p2sh and bech32
+   * @param address
+   * @returns {boolean}
+   */
+function isAddressValid(address, _network) {
+    try {
+      bitcoinjs.address.toOutputScript(address, _network);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+/**
+ * 
+ * @param {address from send funds} _FROM base58
+ * @param {adress(s)  to send} _TO base58
+ * @param {value to send} _VALUE integer in SATS
+ * @param {boolean} _IS_SEGWIT to construct inputs/outputs
+ * @param {testnet|mainnet} _NETWORK string
+ */
+async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWORK='testnet'){
+
+  try {
+    
+    let network;
+    _NETWORK=='testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
+
+    if(!_FROM || !_TO || !_VALUE)
+      return "Missing Parameters";
+    
+    if(!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
+      return "Invalid Address";
+    
+    let client = await connect();//TODO: check network/testnet before this
+    
+    const script = bitcoinjs.address.toOutputScript(_FROM, network);
+    const hash = bitcoinjs.crypto.sha256(script);
+    const reversedHash = new Buffer.from(hash.reverse());
+    const rScriptHash = reversedHash.toString('hex');
+
+    const UTXOs = await client.blockchain_scripthash_listunspent(rScriptHash);
+
+    let feeRate;
+    let binfoFees = await axios.get('https://bitcoinfees.earn.com/api/v1/fees/recommended');
+    
+    feeRate = binfoFees.data.fastestFee;//TODO: select better option
+
+    let proccessedUTXOs =  [];
+    let bufferRawTx;
+
+    await Promise.all(UTXOs.map(async (i) => {
+      
+      bufferRawTx = Buffer.from(await client.blockchain_transaction_get(i.tx_hash), 'hex');
+
+      proccessedUTXOs.push({
+        txId: i.tx_hash,
+        vout: i.tx_pos,
+        value: i.value,
+        nonWitnessUtxo: bufferRawTx
+      })
+      
+    }));
+
+    let targets = [
+      {
+        address: _TO,
+        value: _VALUE
+      }
+    ];//TODO: multiple targets?
+
+    let { inputs, outputs, fee } = coinSelect(proccessedUTXOs, targets, feeRate);
+    
+    //console.log("inp", inputs)
+    //console.log("out", outputs)
+    //console.log("fees", fee/100000000*45000)
+
+    if (!inputs || !outputs)
+      return "No coin selection solution found; check if enough balance"
+
+    let psbt = new bitcoinjs.Psbt({network: network});
+
+    inputs.forEach(input =>
+      psbt.addInput({
+        hash: input.txId,
+        index: input.vout,
+        nonWitnessUtxo: input.nonWitnessUtxo,
+        // OR (not both)
+        //witnessUtxo: input.witnessUtxo,
+      })
+    )
+    
+    outputs.forEach(output => {
+      // watch out, outputs may have been added that you need to provide
+      // an output address/script for
+      if (!output.address) {
+        output.address = _FROM;
+        //wallet.nextChangeAddress()
+      }
+  
+      psbt.addOutput({
+        address: output.address,
+        value: output.value,
+      })
+    })
+    let unsignedRawTx = psbt.toHex();
+    
+    return unsignedRawTx;
+    
+  } catch (error) {
+    console.log(error);
+  }
+
+}
+
 (async function(){
 
-  
-  let client = await connect();
 
-  network = bitcoinjs.networks.testnet;
-  
-  const script = bitcoinjs.address.toOutputScript("n2CXXfYf7hJJHoqwjhLaj7LTWGM1q4jaFs", network);
-  const hash = bitcoinjs.crypto.sha256(script);
-  const reversedHash = new Buffer.from(hash.reverse());
-  const rScriptHash = reversedHash.toString('hex');
+
+  console.log(await createUnsignedRawtx("n2CXXfYf7hJJHoqwjhLaj7LTWGM1q4jaFs", "mh4LubQYEcJowCWWiLYerbHeavhPKsyntf", 15653602546546));
+  return;
 
 //https://testnet.smartbit.com.au/api PARA LOS UNSPENTS
   /*
@@ -59,24 +171,47 @@ async function connect() {
    https://testnet.blockchain.info/rawtx/12edc018031fef88758c7010ac29e5c443741fa12873e6585add7c2cabde0940?format=hex
    https://github.com/bitcoinjs/bitcoinjs-lib/issues/1658
 
+   FEE APIS:
+   https://api.blockchain.info/mempool/fees*
+   https://bitcoinfees.earn.com/api/v1/fees/recommended
+
   */
   
   try {
-    let feeRate = 55 // satoshis per byte
+
+
+  let binfoFees = await axios.get('https://api.blockchain.info/mempool/fees');
+  let regularFees = binfoFees.data.regular;
+
+  const BTC_UNIT = 100000000;
+  let feeRate = 55 // satoshis per byte
   
   log = console.log;
   
   const UTXOs = await client.blockchain_scripthash_listunspent(rScriptHash);
-  //const RAW_HEX_TX = await client.blockchain_transaction_get(UTXOs[0].tx_hash);
   
   let finalUTXOs = [];
-  let RAW_HEX_TX_0 = Buffer.from(await client.blockchain_transaction_get(UTXOs[0].tx_hash), 'hex');
-  let RAW_HEX_TX_1 = Buffer.from(await client.blockchain_transaction_get(UTXOs[1].tx_hash), 'hex');
+  
+  // let RAW_HEX_TX_0 = Buffer.from(await client.blockchain_transaction_get(UTXOs[0].tx_hash), 'hex');
+  // let RAW_HEX_TX_1 = Buffer.from(await client.blockchain_transaction_get(UTXOs[1].tx_hash), 'hex');
 
   let tempUTXOs =  [];
 
+  let addrBalance = 0;
+
+
+  await Promise.all(UTXOs.map(async (i) => {
+    //log(i)
+    log((await client.blockchain_transaction_get(i.tx_hash)))
+    log("\n");
+  }));
+
+ 
+  return;
+  
+
   UTXOs.forEach(utxo => {
-    
+    addrBalance+=utxo.value;
     tempUTXOs.push({
       txId: utxo.tx_hash,
       vout: utxo.tx_pos,
@@ -85,7 +220,15 @@ async function connect() {
       // not needed for coinSelect, but will be passed on to inputs later
       //nonWitnessUtxo: Buffer.from(RAW_HEX_TX, 'hex'),
     })
+    let targets = [
+      {
+        address: 'mnmMhuMkURyu2Cn4K2A1TQiZCv6CN6FzRw',
+        value: 3176315
+      }
+    ]
   });
+
+  log("addrBalanace:", addrBalance/BTC_UNIT);
 
   finalUTXOs[0] = {
     txId: tempUTXOs[0].txId,
@@ -114,8 +257,38 @@ async function connect() {
   let { inputs, outputs, fee } = coinSelect(finalUTXOs, targets, feeRate)
   
 
-  //log(inputs, outputs, fee);
+  let CHANGE_FROM_CS;
+  
+  let estimatedFee = await client.blockchain_transaction_broadcast(2312);
+  log("ESTIMATED FEE ELECTRUMX", estimatedFee);
+  return;
 
+    
+  //log(outputs);
+  log("TARGET_VALUE:", 3176315/BTC_UNIT)
+  outputs.forEach(out => {
+    log(out);
+    if(!out.address){
+      CHANGE_FROM_CS = out.value/BTC_UNIT;
+      log("OUTPUT CHANGE FROM CS:", CHANGE_FROM_CS);
+      log("OUTPUT ADDR CHANGE:", out.address);
+    }
+    else{
+      log("OUTPUT VALUE:",out.value/BTC_UNIT);
+      log("OUTPUT ADDR:", out.address);
+    }
+  })
+  log("FEE",fee/BTC_UNIT);
+
+
+  log("Balance - Target:", (addrBalance -3176315)/BTC_UNIT);
+
+  let calculatedChange = (addrBalance -3176315-fee)/BTC_UNIT;
+  log("CHANGE (Balance - Target - Fee):", calculatedChange);
+
+  log(CHANGE_FROM_CS == calculatedChange);
+
+  return;
 
   //inputs and .outputs will be undefined if no solution was found
   if (!inputs || !outputs) return
