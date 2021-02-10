@@ -21,19 +21,22 @@ async function connect() {
     
     return client;  
   } catch (error) {
-    console.log(error);    
+    console.log(error);
+    return error;
   }
 }
 /**
  * Get feeRate in Satothis to calculate total fee
  */
 async function getFeeRates() {
-
-  let feeRate;
-  let binfoFees = await axios.get('https://bitcoinfees.earn.com/api/v1/fees/recommended');
-  feeRate = binfoFees.data.fastestFee;//TODO: select better option
-  return feeRate;
-  
+  try {
+    let feeRate;
+    let binfoFees = await axios.get('https://bitcoinfees.earn.com/api/v1/fees/recommended');
+    feeRate = binfoFees.data.fastestFee;//TODO: select better option
+    return feeRate;
+  } catch (error) {
+    return error;
+  }
 }
 
 /**
@@ -147,6 +150,7 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWOR
     
   } catch (error) {
     console.log(error);
+    return error;
   }
 
 }
@@ -256,6 +260,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _
     
   } catch (error) {
     console.log(error);
+    return error;
   }
   
 }
@@ -275,13 +280,11 @@ async function relaySignedTx(hexTx){
     return broadcastResult;
 
   } catch (error) {
+    console.log(error);
     return error;
   }
 
 };
-
-
-(async function(){
 
   /*
   Examples
@@ -306,10 +309,7 @@ async function relaySignedTx(hexTx){
   console.log(broadcastTx);
     */
 
-})()
-
 module.exports = {
-  isAddressValid: isAddressValid,
   createUnsignedRawtx: createUnsignedRawtx,
   createAndSignTx: createAndSignTx,
   relaySignedTx: relaySignedTx
