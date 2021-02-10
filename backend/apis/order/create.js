@@ -9,7 +9,7 @@ const web3 = require('web3');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
-const RBTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RBTC_BLOCK_HEIGHT_CONFIRMATION);
+const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
 
 const router = express.Router();
 
@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
         ...order.rsk,
         address: FAST_SWAP_ADDRESS,
         confirmations: 0,
-        requiredConfirmations: RBTC_BLOCK_HEIGHT_CONFIRMATION
+        requiredConfirmations: RSK_BLOCK_HEIGHT_CONFIRMATION
       }
     }
 
