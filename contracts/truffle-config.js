@@ -39,6 +39,7 @@ module.exports = {
 //  plugins: ["solidity-coverage"],
 
   mocha: {
+    timeout: '4000',
     reporter: 'nyan'
   },
 
