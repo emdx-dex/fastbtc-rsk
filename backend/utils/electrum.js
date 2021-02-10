@@ -24,31 +24,31 @@ async function connect() {
     console.log(error);    
   }
 }
-
+/**
+ * Get feeRate in Satothis to calculate total fee
+ */
 async function getFeeRates() {
 
   let feeRate;
   let binfoFees = await axios.get('https://bitcoinfees.earn.com/api/v1/fees/recommended');
-  
   feeRate = binfoFees.data.fastestFee;//TODO: select better option
-
   return feeRate;
   
 }
 
 /**
-   * Validates any address, including legacy, p2sh and bech32
-   * @param address
-   * @returns {boolean}
-   */
+ * Validates any address, including legacy, p2sh and bech32
+ * @param address
+ * @returns {boolean}
+ */
 function isAddressValid(address, _network) {
-    try {
-      bitcoinjs.address.toOutputScript(address, _network);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  try {
+    bitcoinjs.address.toOutputScript(address, _network);
+    return true;
+  } catch (e) {
+    return false;
   }
+}
 
 /**
  * 
@@ -151,7 +151,15 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWOR
 
 }
 
-
+/**
+ * 
+ * @param {base58 addr} _FROM string
+ * @param {base58 addr} _TO string
+ * @param {target value in SATOSHIS} _VALUE integer
+ * @param {bitcoinlib-js keypair format} _KEYPAIR object
+ * @param {if segwit for UTXO processing} _IS_SEGWIT boolean
+ * @param {testnet|mainnet} _NETWORK string
+ */
 async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _NETWORK='testnet'){
 
   try {
@@ -251,7 +259,10 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _
   }
   
 }
-
+/**
+ * 
+ * @param {complete raw tx to relay in hex} hexTx hex
+ */
 async function relaySignedTx(hexTx){
 
   try {
@@ -296,3 +307,10 @@ async function relaySignedTx(hexTx){
     */
 
 })()
+
+module.exports = {
+  isAddressValid: isAddressValid,
+  createUnsignedRawtx: createUnsignedRawtx,
+  createAndSignTx: createAndSignTx,
+  relaySignedTx: relaySignedTx
+}
