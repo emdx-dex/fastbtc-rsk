@@ -40,7 +40,6 @@ router.post('/', async (req, res) => {
     if (status === STATUS.PENDING) {
       order.btc.fee = fee;
       order.btc.rawTransaction = rawTransaction;
-      order.btc.status = STATUS.UNCONFIRMED;
       order.btc.txId = txid;
     }
 
