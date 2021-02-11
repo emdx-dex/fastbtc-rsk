@@ -67,22 +67,25 @@ async function updateStatus() {
 
     Promise
       .all(promises)
-      .then(() => {
-        process.exit(0);
-      })
+      .then(() => {})
       .catch((error) => {
         console.log(error);
         process.exit(1);
+      })
+      .finally(() => {
+        console.log('Finish update process.');
       });
 
   } catch (error) {
     console.log(`[ERROR] Update status cron: ${error}`);
+    process.exit(1);
   }
 }
 
 // TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
   require('../utils/connection');
+  await updateStatus();
 
   setInterval(async () => {
     await updateStatus();

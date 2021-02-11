@@ -32,16 +32,18 @@ function unwatchAddress(address) {
   return new Promise(async (resolve, reject) => {
     try {
       const options = {
-        'Content-Type': 'application/json;charset=UTF-8'
-      };
-      const params = {
-        address,
-        apiKey: process.env.BLOCKNATIVE_APIKEY,
-        blockchain: 'bitcoin',
-        networks: [process.env.BTC_NETWORK]
+        data: {
+          address,
+          apiKey: process.env.BLOCKNATIVE_APIKEY,
+          blockchain: 'bitcoin',
+          networks: [process.env.BTC_NETWORK]
+        },
+        headers: {
+          'Content-Type': 'application/json;charset=UTF-8'
+        }
       };
 
-      const response = await axios.delete(process.env.BLOCKNATIVE_ADDRESS, params, options);
+      const response = await axios.delete(process.env.BLOCKNATIVE_ADDRESS, options);
       const msg = _.get(response, 'data.msg');
 
       resolve(msg);

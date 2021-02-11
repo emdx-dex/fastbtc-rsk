@@ -52,6 +52,7 @@ async function swapIn(destiny, _amount) {
         from: operatorAddress,
         value: web3.utils.toHex(amount)
       });
+      console.log('gas ---> ', gas);
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
       const rawTx = {

@@ -92,6 +92,11 @@ import {
 } from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 
+const TRANSFER_MAX = process.env.VUE_APP_TRANSFER_MAX;
+const TRANSFER_MIN = process.env.VUE_APP_TRANSFER_MIN;
+
+console.log(TRANSFER_MAX, TRANSFER_MIN);
+
 export default {
   name: 'Home',
   data: () => ({
@@ -113,6 +118,8 @@ export default {
     valueRule: [
       (v) => !_.isEmpty(v) || 'Value is required.',
       (v) => v > 0 || 'Value should be greater than 0.',
+      (v) => v <= TRANSFER_MAX || `Value should be lower than ${TRANSFER_MAX}.`,
+      (v) => v >= TRANSFER_MIN || `Value should be greater than ${TRANSFER_MIN}.`,
     ],
   }),
   methods: {
