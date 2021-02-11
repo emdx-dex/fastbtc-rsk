@@ -137,9 +137,9 @@ async function updateStatus() {
   require('../utils/connection');
   await updateStatus();
 
-  // setInterval(async () => {
-  //   await updateStatus();
-  // }, 60000)
+  setInterval(async () => {
+    await updateStatus();
+  }, 60000)
 }());
 
 module.exports = {
