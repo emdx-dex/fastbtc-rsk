@@ -89,6 +89,7 @@ function listenRBTCSwapOut() {
 
   contract.events.RBTCSwapOut().on('data', async function (event) {
     const blockNumber = _.get(event, 'blockNumber');
+    const transactionHash = _.get(event, 'transactionHash');
     const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
     const amount = web3.utils.fromWei(value);
 
@@ -106,6 +107,7 @@ function listenRBTCSwapOut() {
       } else {
         order.rsk.block = blockNumber;
         order.rsk.status = UNCONFIRMED;
+        order.rsk.txId = transactionHash;
       }
 
       await order.save();
