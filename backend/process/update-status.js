@@ -1,11 +1,13 @@
 const _ = require('lodash');
-const { BTC_TO_RBTC } = require('../../shared/flows');
+const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
 const { CONFIRMED, UNCONFIRMED } = require('../../shared/status');
+const { createAndSignTx, getTxInfo, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
 const { getBlockNumber } = require('../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
+const bitcoinjs = require('bitcoinjs-lib');
 const ordersModel = require('../models/orders');
 const bitcoinjs = require('bitcoinjs-lib');
 const { createAndSignTx, getTxInfo, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
@@ -28,61 +30,51 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       if (chain === RSK && _.isEmpty(order.rsk.txId)) {
         console.log(`Sending transaction. Id: ${order.id}.`);
 
-        //TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
+        // TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
         const { receipt } = await swapIn(order.rsk.address, order.value);
 
+        // TODO: Para confirmar la orden debería escuchar el transaction hash.
         order.rsk.block = receipt.blockNumber;
         order.rsk.status = CONFIRMED;
         order.rsk.txId = receipt.transactionHash;
-      }
 
-      if (chain === BTC) {
-        await unwatchAddress(order.btc.address);
+        if (chain === BTC) {
+          await unwatchAddress(order.btc.address);
+        }
       }
     }
 
     //RBTC -> BTC FLOW
     if (order.flow === RBTC_TO_BTC) {
-
-
-      if (pasa_las_confirmaciones) {//AGU
-        order.rsk.status = CONFIRMED;
-
-      }
-
-      // Maxi
-
       /* 
         Esto triggerea cuando del lado de RSK se confirma la tx al contrato pero todavia no se hizo la tx del lado de BTC
       */
-      if (order.rsk.status == "CONFIRMED" && !order.btc.txId) {
+      if (chain === RSK && _.isEmpty(order.btc.txId)) {
+        order.rsk.status = CONFIRMED;
 
-        let _FROM = process.env.BTC_HOT_WALLET_TESTNET_ADDR;
-        let _TO = order.btc.address;
-        let _VALUE_SATS = order.value * 100000000;
-        let _PRIVKEY = process.env.BTC_HOT_WALLET_TESTNET_PRIVKEY;
+        //   let _FROM = process.env.BTC_HOT_WALLET_TESTNET_ADDR;
+        //   let _TO = order.btc.address;
+        //   let _VALUE_SATS = order.value * 100000000;
+        //   let _PRIVKEY = process.env.BTC_HOT_WALLET_TESTNET_PRIVKEY;
 
-        let network = bitcoinjs.networks.testnet;
-        const RSKKeypair = bitcoinjs.ECPair.fromWIF(
-          _PRIVKEY,
-          network
-        );
+        //   let network = bitcoinjs.networks.testnet;
+        //   const RSKKeypair = bitcoinjs.ECPair.fromWIF(
+        //     _PRIVKEY,
+        //     network
+        //   );
 
-        let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+        //   let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
 
-        if (!createdSignedTx.signedRawTx)
-          throw "Error creating signedRawTx";
+        //   if (!createdSignedTx.signedRawTx)
+        //     throw "Error creating signedRawTx";
 
-        let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
+        //   let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
 
-        if (!broadcastedTxId)
-          throw "Error broadcasting transaction";
+        //   if (!broadcastedTxId)
+        //     throw "Error broadcasting transaction";
 
-        order.btc.txId = broadcastedTxId;
-
+        //   order.btc.txId = broadcastedTxId;
       }
-
-
     }
 
   }
@@ -97,6 +89,16 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
     if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION)
       order.btc.status = CONFIRMED;
   }
+  /* 
+    Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
+  */
+  // if (order.flow === RBTC_TO_BTC && order.rsk.status === CONFIRMED && order.btc.txId) {
+
+  //   let confirmations = await getBTCTxConfirmations(order.btc.txId);
+
+  //   if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION)
+  //     order.btc.status = CONFIRMED;
+  // }
 }
 
 async function updateStatus() {

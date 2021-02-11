@@ -13,8 +13,10 @@ const FastSwap = contract.fromArtifact('FastSwap');
 
 describe('FastSwap contract', () => {
   const [owner, operator, otherAccount] = accounts;
-  const MAX_AMOUNT = new BN("10000000000000000000");
-  const MIN_AMOUNT = new BN("1000000000000000000");
+  // 1 ether
+  const MAX_AMOUNT = new BN("1000000000000000000");
+  // 0.1 ether
+  const MIN_AMOUNT = new BN("100000000000000000");
 
   describe('constructor parameters', async () => {
     it('check operator', async () => {
@@ -135,23 +137,27 @@ describe('FastSwap contract', () => {
     });
 
     it('check requiremend on swap out', async () => {
-      const UNDER_MIN_AMOUNT = new BN("100000000000000000");
-      const ABOVE_MAX_AMOUNT = new BN("20000000000000000000");
-      const RIGHT_AMOUNT =     new BN("2000000000000000000");
+      // 0.001 ether
+      const UNDER_MIN_AMOUNT = new BN("10000000000000000");
+      // 2 ether
+      const ABOVE_MAX_AMOUNT = new BN("2000000000000000000");
+      // 0.3 ether
+      const RIGHT_AMOUNT = new BN("300000000000000000");
       await expectRevert(
         this.contract.send(UNDER_MIN_AMOUNT, { from: otherAccount }),
         "amount does not reach the minimum required"
       );
+
       await expectRevert(
         this.contract.send(ABOVE_MAX_AMOUNT, { from: otherAccount }),
         "amount exceeds the maximum required"
       );
+
       const { logs } = await this.contract.send(RIGHT_AMOUNT, { from: otherAccount });
       expectEvent.inLogs(logs, 'RBTCSwapOut', {
         source: otherAccount,
         amount: RIGHT_AMOUNT,
       });
-
       await this.contract.send(MIN_AMOUNT, { from: otherAccount });
       await this.contract.send(MAX_AMOUNT, { from: otherAccount });
     });
