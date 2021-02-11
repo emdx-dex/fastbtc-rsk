@@ -286,6 +286,55 @@ async function relaySignedTx(hexTx){
 
 };
 
+/**
+ * Function to get txId status, used to get confirmations
+ * @param {transaction hash id} txId string
+ */
+async function getTxInfo(txId){
+
+  if(!txId)
+    return "Missing txId (hash) parameter";
+
+  try {
+    
+    let client = await connect();//TODO: check network/testnet before this
+    let txInformation = await client.blockchain_transaction_get(txId, true);
+    
+    return txInformation;
+    
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+  
+}
+
+async function getBTCTxConfirmations(txId){
+
+  try {
+  
+  if(!txId)
+    return "Missing txId (hash) parameter";
+
+  let client = await connect();//TODO: check network/testnet before this
+  let txInformation = await client.blockchain_transaction_get(txId, true);
+  
+  let confirmations;
+
+  txInformation.confirmations ? confirmations = txInformation.confirmations : 0;
+  
+  return confirmations;
+  
+  } catch (error) {
+    console.log(error);
+    return error;  
+  }
+}
+
+
+// (async function(){
+//   console.log(await getTxInfo("d753823f71b39e334d31928834eb52137eefecd1265b948a212c25a869118fb8"));
+// })()
   /*
   Examples
   Unsigned Raw Tx
@@ -296,11 +345,7 @@ async function relaySignedTx(hexTx){
   rawTx signed with KeyPair
   
   
-  let network = bitcoinjs.networks.testnet;
-  const RSKKeypair = bitcoinjs.ECPair.fromWIF(
-  'cMzvMy9A1J4vWdgnm9UwfvzhCrDZXqEgYdYcXM7dx26cERnKgrKX',
-  network
-  );
+  _
 
   let getSignedRawTx = await createAndSignTx("n2CXXfYf7hJJHoqwjhLaj7LTWGM1q4jaFs", "n3xP42DuRgoKFCULocue3HnvTVB8bsyqjj", 100000, RSKKeypair);
 
@@ -312,5 +357,7 @@ async function relaySignedTx(hexTx){
 module.exports = {
   createUnsignedRawtx: createUnsignedRawtx,
   createAndSignTx: createAndSignTx,
-  relaySignedTx: relaySignedTx
+  relaySignedTx: relaySignedTx,
+  getTxInfo: getTxInfo,
+  getBTCTxConfirmations: getBTCTxConfirmations
 }
