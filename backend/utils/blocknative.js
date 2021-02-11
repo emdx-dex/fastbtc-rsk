@@ -28,6 +28,32 @@ function registerAddress(address) {
   });
 }
 
+function unwatchAddress(address) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const options = {
+        'Content-Type': 'application/json;charset=UTF-8'
+      };
+      const params = {
+        address,
+        apiKey: process.env.BLOCKNATIVE_APIKEY,
+        blockchain: 'bitcoin',
+        networks: [process.env.BTC_NETWORK]
+      };
+
+      const response = await axios.delete(process.env.BLOCKNATIVE_ADDRESS, params, options);
+      const msg = _.get(response, 'data.msg');
+
+      resolve(msg);
+    } catch (error) {
+      console.error(error);
+
+      resolve('Error removing hook');
+    }
+  });
+}
+
 module.exports = {
-  registerAddress
+  registerAddress,
+  unwatchAddress
 };

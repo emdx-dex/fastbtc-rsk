@@ -8,7 +8,7 @@ require('dotenv').config();
 
 let web3;
 
-const fastSwapAddress = process.env.FAST_SWAP_ADDRESS;
+const fastSwapAddress = process.env.FAST_SWAP_ADDRESS.toLowerCase();
 const operatorAddress = process.env.FAST_SWAP_OPERATOR_ADDRESS;
 const operatorPrivateKey = process.env.FAST_SWAP_OPERATOR_PRIV_KEY;
 
@@ -30,10 +30,14 @@ function getContract() {
 }
 
 async function getBlockNumber() {
-  const web3 = getInstance();
-  const blockNumber = await web3.eth.getBlockNumber();
+  try {
+    const web3 = getInstance();
+    const blockNumber = await web3.eth.getBlockNumber();
 
-  return blockNumber;
+    return blockNumber;
+  } catch (error) {
+    return 0;
+  }
 }
 
 async function swapIn(destiny, _amount) {
@@ -44,13 +48,17 @@ async function swapIn(destiny, _amount) {
 
     try {
       const method = contract.methods.rbtcSwapIn(destiny, amount);
-      const gas = await method.estimateGas({ from: operatorAddress });
+      const gas = await method.estimateGas({
+        from: operatorAddress,
+        value: web3.utils.toHex(amount)
+      });
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
-        gas: web3.utils.toHex(gas),
+        // TODO: Chequear tema gas
+        gas: web3.utils.toHex(100000), // web3.utils.toHex(gas),
         gasPrice: web3.utils.toHex(gasPrice),
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
@@ -58,6 +66,9 @@ async function swapIn(destiny, _amount) {
       const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
       return web3.eth.sendSignedTransaction(rawTransaction)
+        .on('transactionHash', (hash) => {
+          console.log(`Transaction hash: ${hash}`)
+        })
         .on('confirmation', (confirmationNumber, receipt) => {
           resolve({ confirmationNumber, receipt });
         })

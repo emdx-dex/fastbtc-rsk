@@ -5,5 +5,5 @@ export const getBTCAddressUrl = (address) => {
 } 
 
 export const getBTCTxUrl = (tx) => {
-  return `${BTC_EXPLORER_URL}/transaction/${tx}/`;
+  return `${BTC_EXPLORER_URL}/tx/${tx}/`;
 }

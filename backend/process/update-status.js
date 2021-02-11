@@ -1,11 +1,11 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, PENDING, UNCONFIRMED } = require('../../shared/status');
+const { CONFIRMED, UNCONFIRMED } = require('../../shared/status');
 const { getBlockNumber } = require('../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
-const cron = require('node-cron');
+const { unwatchAddress } = require('../utils/blocknative');
 const ordersModel = require('../models/orders');
 
 require('dotenv').config();
@@ -33,12 +33,14 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       order.rsk.txId = receipt.transactionHash;
     }
 
-    await order.save();
+    if (order.flow === BTC_TO_RBTC && chain === BTC) {
+      await unwatchAddress(order.btc.address);
+    }
   }
 }
 
 async function updateStatus() {
-  require('../utils/connection');
+  console.log('Running update process...');
 
   try {
     const orders = await ordersModel.find({
@@ -54,8 +56,8 @@ async function updateStatus() {
         try {
           await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
           await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
-          //Si la tx tiene => confirmaciones que el BTC_BLOCK_HEIGHT_CONFIRMATION
-          // unwatch de la addr del hook.
+          await order.save();
+
           resolve();
         } catch (error) {
           reject(error);
@@ -78,13 +80,14 @@ async function updateStatus() {
   }
 }
 
-updateStatus();
+(async function () {
+  // setInterval(async () => {
+  require('../utils/connection');
 
-// This run the cron every minute.
-// const task = cron.schedule('* * * * *', updateStatus);
+  await updateStatus();
+  // }, 60000)
+}());
 
-// task.start();
-
-
-
-
+module.exports = {
+  updateStatus
+};
