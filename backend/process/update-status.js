@@ -80,12 +80,13 @@ async function updateStatus() {
   }
 }
 
+// TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
-  // setInterval(async () => {
   require('../utils/connection');
 
-  await updateStatus();
-  // }, 60000)
+  setInterval(async () => {
+    await updateStatus();
+  }, 60000)
 }());
 
 module.exports = {
