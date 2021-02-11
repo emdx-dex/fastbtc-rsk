@@ -36,9 +36,9 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         order.rsk.status = CONFIRMED;
         order.rsk.txId = receipt.transactionHash;
 
-        if (chain === BTC) {
-          await unwatchAddress(order.btc.address);
-        }
+      }
+      if (chain === BTC) {
+        await unwatchAddress(order.btc.address);
       }
     }
 
