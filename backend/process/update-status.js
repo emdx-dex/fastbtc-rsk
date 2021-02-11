@@ -2,14 +2,12 @@ const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
 const { CONFIRMED, UNCONFIRMED } = require('../../shared/status');
-const { createAndSignTx, getTxInfo, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
 const { getBlockNumber } = require('../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
 const bitcoinjs = require('bitcoinjs-lib');
 const ordersModel = require('../models/orders');
-const bitcoinjs = require('bitcoinjs-lib');
 const { createAndSignTx, getTxInfo, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
 
 require('dotenv').config();
@@ -20,7 +18,7 @@ const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIR
 async function checkConfirmations(chain, height, heightConfirmation, order) {
   const blockDelta = order[chain].block ? height - order[chain].block : 0;
   const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
-
+  
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
     console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
 
@@ -52,53 +50,42 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
         order.rsk.status = CONFIRMED;
 
-        //   let _FROM = process.env.BTC_HOT_WALLET_TESTNET_ADDR;
-        //   let _TO = order.btc.address;
-        //   let _VALUE_SATS = order.value * 100000000;
-        //   let _PRIVKEY = process.env.BTC_HOT_WALLET_TESTNET_PRIVKEY;
+        let _FROM = process.env.BTC_HOT_WALLET_TESTNET_ADDR;
+        let _TO = order.btc.address;
+        let _VALUE_SATS = order.value * 100000000;
+        let _PRIVKEY = process.env.BTC_HOT_WALLET_TESTNET_PRIVKEY;
 
-        //   let network = bitcoinjs.networks.testnet;
-        //   const RSKKeypair = bitcoinjs.ECPair.fromWIF(
-        //     _PRIVKEY,
-        //     network
-        //   );
+        let network = bitcoinjs.networks.testnet;
+        const RSKKeypair = bitcoinjs.ECPair.fromWIF(
+          _PRIVKEY,
+          network
+        );
 
-        //   let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+        let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
 
-        //   if (!createdSignedTx.signedRawTx)
-        //     throw "Error creating signedRawTx";
+        if (!createdSignedTx.signedRawTx)
+          throw "Error creating signedRawTx";
 
-        //   let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
+        let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
 
-        //   if (!broadcastedTxId)
-        //     throw "Error broadcasting transaction";
+        if (!broadcastedTxId)
+          throw "Error broadcasting transaction";
 
-        //   order.btc.txId = broadcastedTxId;
+        order.btc.txId = broadcastedTxId;
       }
     }
-
   }
 
   /* 
     Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
   */
+  //TODO: Esto no se ejecuta porque el find en el updateStatus() es uncofirmed
   if (order.flow === RBTC_TO_BTC && order.rsk.status === CONFIRMED && order.btc.txId) {
-
     let confirmations = await getBTCTxConfirmations(order.btc.txId);
-
     if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION)
       order.btc.status = CONFIRMED;
   }
-  /* 
-    Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
-  */
-  // if (order.flow === RBTC_TO_BTC && order.rsk.status === CONFIRMED && order.btc.txId) {
 
-  //   let confirmations = await getBTCTxConfirmations(order.btc.txId);
-
-  //   if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION)
-  //     order.btc.status = CONFIRMED;
-  // }
 }
 
 async function updateStatus() {
@@ -150,9 +137,9 @@ async function updateStatus() {
   require('../utils/connection');
   await updateStatus();
 
-  setInterval(async () => {
-    await updateStatus();
-  }, 60000)
+  // setInterval(async () => {
+  //   await updateStatus();
+  // }, 60000)
 }());
 
 module.exports = {
