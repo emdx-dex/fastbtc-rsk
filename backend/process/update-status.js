@@ -120,7 +120,7 @@ async function updateStatus() {
       .then(() => { })
       .catch((error) => {
         console.log(error);
-        process.exit(1);
+        //process.exit(1);
       })
       .finally(() => {
         console.log('Finish update process.');
@@ -128,7 +128,7 @@ async function updateStatus() {
 
   } catch (error) {
     console.log(`[ERROR] Update status cron: ${error}`);
-    process.exit(1);
+    //process.exit(1);
   }
 }
 
