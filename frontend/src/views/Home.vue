@@ -37,7 +37,7 @@
           <v-text-field
             :required="isRbtcToBtc"
             :rules="senderAddressRule"
-            label="Sender address"
+            :label="fromCoin + ' Sender address (Source funds)'"
             v-model="senderAddress"
           ></v-text-field>
         </v-col>
@@ -46,7 +46,7 @@
         <v-col cols="12" md="12">
           <v-text-field
             :rules="addressRule"
-            label="Recipient address"
+            :label="toCoin + ' Recipient address '  + (toCoin === 'RBTC' ? '(To deposit)' : '')"
             required
             v-model="address"
           ></v-text-field>
@@ -94,8 +94,6 @@ import SYMBOLS from '../../../shared/symbols';
 
 const TRANSFER_MAX = process.env.VUE_APP_TRANSFER_MAX;
 const TRANSFER_MIN = process.env.VUE_APP_TRANSFER_MIN;
-
-console.log(TRANSFER_MAX, TRANSFER_MIN);
 
 export default {
   name: 'Home',
