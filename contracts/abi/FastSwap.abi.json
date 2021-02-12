@@ -440,6 +440,11 @@
   {
     "inputs": [
       {
+        "internalType": "address payable",
+        "name": "_destiny",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
@@ -451,7 +456,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "_destiny",
+        "type": "address"
+      }
+    ],
     "name": "withdrawAllFunds",
     "outputs": [],
     "stateMutability": "nonpayable",
