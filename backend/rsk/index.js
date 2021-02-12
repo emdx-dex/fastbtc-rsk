@@ -48,18 +48,13 @@ async function swapIn(destiny, _amount) {
 
     try {
       const method = contract.methods.rbtcSwapIn(destiny, amount);
-      const gas = await method.estimateGas({
-        from: operatorAddress,
-        value: web3.utils.toHex(amount)
-      });
-      console.log('gas ---> ', gas);
+      const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
-        // TODO: Chequear tema gas
-        gas: web3.utils.toHex(100000), // web3.utils.toHex(gas),
+        gas: web3.utils.toHex(gas),
         gasPrice: web3.utils.toHex(gasPrice),
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
