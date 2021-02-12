@@ -47,27 +47,27 @@ contract FastSwap is Ownable, AccessControl {
     /// @notice SwapOut function: to initialize the swap out (rBTC > BTC)
     /// @dev Payable fallback function who receives the amount of rBTC to convert
     receive() external payable {
-      if (msg.sender != owner()) {
-        require(
-            msg.value <= maxAmount,
-            "amount exceeds the maximum required"
-        );
-        require(
-            msg.value >= minAmount,
-            "amount does not reach the minimum required"
-        );
+        if (msg.sender != owner()) {
+            require(
+                msg.value <= maxAmount,
+                "amount exceeds the maximum required"
+            );
+            require(
+                msg.value >= minAmount,
+                "amount does not reach the minimum required"
+            );
 
-        emit RBTCSwapOut(msg.sender, msg.value);
-      }
+            emit RBTCSwapOut(msg.sender, msg.value);
+        }
     }
 
     /// @notice SwapIn function: releases rBTC funds for previous BTC deposits
     /// @param _destiny rBTC recipient address
     /// @param _amount Amount of rBTC to be transferred
-    function rbtcSwapIn(
-        address payable _destiny,
-        uint256 _amount
-    ) external onlyOperator {
+    function rbtcSwapIn(address payable _destiny, uint256 _amount)
+        external
+        onlyOperator
+    {
         require(_amount <= maxAmount, "_amount exceeds the maximum required");
         require(
             _amount >= minAmount,
@@ -82,25 +82,32 @@ contract FastSwap is Ownable, AccessControl {
     }
 
     /// @notice Withdraw rBTC funds from contract balance
+    /// @param _destiny rBTC recipient address
     /// @param _amount Amount of rBTC to be withdraw
-    function withdrawFunds(uint256 _amount) external onlyOwner {
+    function withdrawFunds(address payable _destiny, uint256 _amount)
+        external
+        onlyOwner
+    {
         require(_amount != 0, "_amount is required");
         require(
             _amount <= address(this).balance,
             "The withdrawal value is greater than the contract fund"
         );
 
-        msg.sender.transfer(_amount);
+        _destiny.transfer(_amount);
 
-        emit FundWithdraw(msg.sender, _amount);
+        emit FundWithdraw(_destiny, _amount);
     }
 
     /// @notice Withdraw all rBTC funds from contract balance
-    function withdrawAllFunds() external onlyOwner {
+    /// @param _destiny rBTC recipient address
+    function withdrawAllFunds(address payable _destiny) external onlyOwner {
         uint256 amount = address(this).balance;
-        msg.sender.transfer(amount);
+        require(amount != 0, "Contract balance is 0");
 
-        emit FundWithdraw(msg.sender, amount);
+        _destiny.transfer(amount);
+
+        emit FundWithdraw(_destiny, amount);
     }
 
     /// @notice Set max amount of rBTC allowed per swap

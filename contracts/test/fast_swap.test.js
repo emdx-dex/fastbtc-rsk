@@ -1,11 +1,13 @@
 require('chai').should();
+const { expect } = require('chai');
 const { accounts, contract } = require('@openzeppelin/test-environment');
 const {
   BN,
   expectEvent,
   expectRevert,
   constants,
-  ether
+  balance,
+  send
 } = require('@openzeppelin/test-helpers');
 const { ZERO_ADDRESS } = constants;
 
@@ -17,6 +19,10 @@ describe('FastSwap contract', () => {
   const MAX_AMOUNT = new BN("1000000000000000000");
   // 0.1 ether
   const MIN_AMOUNT = new BN("100000000000000000");
+  // 0.001 ether
+  const UNDER_MIN_AMOUNT = new BN("10000000000000000");
+  // 2 ether
+  const ABOVE_MAX_AMOUNT = new BN("2000000000000000000");
 
   describe('constructor parameters', async () => {
     it('check operator', async () => {
@@ -126,7 +132,9 @@ describe('FastSwap contract', () => {
     });
   });
 
-  describe('swap in and swap out', async () => {
+  describe('swap out', async () => {
+    // 0.3 ether
+    const RIGHT_AMOUNT = new BN("300000000000000000");
     beforeEach(async () => {
       this.contract = await FastSwap.new(
         operator,
@@ -137,12 +145,6 @@ describe('FastSwap contract', () => {
     });
 
     it('check requiremend on swap out', async () => {
-      // 0.001 ether
-      const UNDER_MIN_AMOUNT = new BN("10000000000000000");
-      // 2 ether
-      const ABOVE_MAX_AMOUNT = new BN("2000000000000000000");
-      // 0.3 ether
-      const RIGHT_AMOUNT = new BN("300000000000000000");
       await expectRevert(
         this.contract.send(UNDER_MIN_AMOUNT, { from: otherAccount }),
         "amount does not reach the minimum required"
@@ -160,6 +162,64 @@ describe('FastSwap contract', () => {
       });
       await this.contract.send(MIN_AMOUNT, { from: otherAccount });
       await this.contract.send(MAX_AMOUNT, { from: otherAccount });
+    });
+  });
+
+  describe('swap in', async () => {
+    beforeEach(async () => {
+      this.contract = await FastSwap.new(
+        operator,
+        MAX_AMOUNT,
+        MIN_AMOUNT,
+        { from: owner }
+      );
+    });
+
+    it('check contract balance before fund', async () => {
+      const balanceTracker = await balance.tracker(this.contract.address);
+      const beforeBalance = await balanceTracker.get()
+      beforeBalance.should.be.bignumber.equal(new BN('0'));
+
+      await send.ether(owner, this.contract.address, MIN_AMOUNT);
+      (await balanceTracker.get()).should.be.bignumber.equal(MIN_AMOUNT);
+    });
+
+    it('check role', async () => {
+      await send.ether(owner, this.contract.address, MAX_AMOUNT);
+      await expectRevert(
+        this.contract.rbtcSwapIn(otherAccount, MIN_AMOUNT, { from: otherAccount }),
+        "Caller is not a operator"
+      );
+    });
+
+    it('check underfunded', async () => {
+      await send.ether(owner, this.contract.address, MIN_AMOUNT);
+      await expectRevert(
+        this.contract.rbtcSwapIn(otherAccount, MAX_AMOUNT, { from: operator }),
+        "_amount is greater than the contract fund"
+      );
+    });
+
+    it('check amount limits', async () => {
+      await send.ether(owner, this.contract.address, MAX_AMOUNT);
+      await expectRevert(
+        this.contract.rbtcSwapIn(otherAccount, UNDER_MIN_AMOUNT, { from: operator }),
+        "_amount does not reach the minimum required"
+      );
+
+      await expectRevert(
+        this.contract.rbtcSwapIn(otherAccount, ABOVE_MAX_AMOUNT, { from: operator }),
+        "_amount exceeds the maximum required"
+      );
+    });
+
+    it('check balances after swap in', async () => {
+      await send.ether(owner, this.contract.address, MAX_AMOUNT);
+      const contractTracker = await balance.tracker(this.contract.address);
+      const accountTracker = await balance.tracker(otherAccount);
+
+      await this.contract.rbtcSwapIn(otherAccount, MIN_AMOUNT, { from: operator });
+      (await accountTracker.delta()).should.be.bignumber.equal((await contractTracker.delta()).abs());
     });
   });
 });
