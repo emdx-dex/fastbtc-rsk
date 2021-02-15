@@ -54,7 +54,7 @@ async function swapIn(destiny, _amount) {
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
-        gas: web3.utils.toHex(gas),
+        gas: web3.utils.toHex(100000),
         gasPrice: web3.utils.toHex(gasPrice),
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
