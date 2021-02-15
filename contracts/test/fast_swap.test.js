@@ -1,5 +1,4 @@
 require('chai').should();
-const { expect } = require('chai');
 const { accounts, contract } = require('@openzeppelin/test-environment');
 const {
   BN,
@@ -220,6 +219,70 @@ describe('FastSwap contract', () => {
 
       await this.contract.rbtcSwapIn(otherAccount, MIN_AMOUNT, { from: operator });
       (await accountTracker.delta()).should.be.bignumber.equal((await contractTracker.delta()).abs());
+    });
+  });
+
+  describe('withdraw function', async () => {
+    beforeEach(async () => {
+      this.contract = await FastSwap.new(
+        operator,
+        MAX_AMOUNT,
+        MIN_AMOUNT,
+        { from: owner }
+      );
+    });
+
+    it('withdraw funds', async () => {
+      await expectRevert(
+        this.contract.withdrawFunds(operator, "0", { from: owner }),
+        "_amount is require"
+      );
+      await expectRevert(
+        this.contract.withdrawFunds(operator, MAX_AMOUNT, { from: owner }),
+        "The withdrawal value is greater than the contract fun"
+      );
+
+      const oneEthers = new BN("1000000000000000000");
+      const twoEthers = new BN("2000000000000000000");
+      await send.ether(owner, this.contract.address, twoEthers);
+      const contractTracker = await balance.tracker(this.contract.address);
+      const operatorTracker = await balance.tracker(operator);
+      await contractTracker.get();
+      await operatorTracker.get();
+
+      await expectRevert(
+        this.contract.withdrawFunds(operator, twoEthers, { from: otherAccount }),
+        "Ownable: caller is not the owne"
+      );
+
+      await this.contract.withdrawFunds(operator, oneEthers, { from: owner });
+
+      (await operatorTracker.delta()).should.be.bignumber.equal(oneEthers);
+      ((await contractTracker.delta()).abs()).should.be.bignumber.equal(oneEthers);
+    });
+
+    it('withdraw all funds', async () => {
+      await expectRevert(
+        this.contract.withdrawAllFunds(operator, { from: owner }),
+        "Contract balance is 0"
+      );
+
+      const twoEthers = new BN("2000000000000000000");
+      await send.ether(owner, this.contract.address, twoEthers);
+      const contractTracker = await balance.tracker(this.contract.address);
+      const operatorTracker = await balance.tracker(operator);
+      await contractTracker.get();
+      await operatorTracker.get();
+
+      await expectRevert(
+        this.contract.withdrawAllFunds(operator, { from: otherAccount }),
+        "Ownable: caller is not the owne"
+      );
+
+      await this.contract.withdrawAllFunds(operator, { from: owner });
+
+      (await operatorTracker.delta()).should.be.bignumber.equal(twoEthers);
+      ((await contractTracker.delta()).abs()).should.be.bignumber.equal(twoEthers);
     });
   });
 });
