@@ -18,7 +18,7 @@ const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIR
 async function checkConfirmations(chain, height, heightConfirmation, order) {
   const blockDelta = order[chain].block ? height - order[chain].block : 0;
   const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
-  
+
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
     console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
 
@@ -50,10 +50,10 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
         order.rsk.status = CONFIRMED;
 
-        let _FROM = process.env.BTC_HOT_WALLET_TESTNET_ADDR;
+        let _FROM = process.env.BTC_HOT_WALLET_ADDR;
         let _TO = order.btc.address;
         let _VALUE_SATS = order.value * 100000000;
-        let _PRIVKEY = process.env.BTC_HOT_WALLET_TESTNET_PRIVKEY;
+        let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
 
         let network = bitcoinjs.networks.testnet;
         const RSKKeypair = bitcoinjs.ECPair.fromWIF(
@@ -63,13 +63,20 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
         let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
 
-        if (!createdSignedTx.signedRawTx)
+
+        if (!createdSignedTx.signedRawTx) {
+          console.log(createdSignedTx);
+
           throw "Error creating signedRawTx";
+        }
 
         let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
 
-        if (!broadcastedTxId)
+        if (!broadcastedTxId) {
+          console.log(broadcastedTxId);
+
           throw "Error broadcasting transaction";
+        }
 
         order.btc.txId = broadcastedTxId;
       }

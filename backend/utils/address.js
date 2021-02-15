@@ -1,6 +1,6 @@
-const bitcoinjs = require('bitcoinjs-lib');
-const bip32 = require('bip32');
 const addressesModel = require('../models/addresses');
+const bip32 = require('bip32');
+const bitcoinjs = require('bitcoinjs-lib');
 
 require('dotenv').config();
 
@@ -20,22 +20,10 @@ Addresses:
   5. 3MBU9y8TG8CGzMMFTa9udpUQrQNhtgn2YL
 */
 
-let XPUB1, XPUB2;
-let NETWORK;
-
-
-if (process.env.BLOCKCHAIN_ENV == 'testnet') {
-  bitcoinjs.networks.testnet;
-  NETWORK = bitcoinjs.networks.testnet;
-  XPUB1 = process.env.BTC_MULTISIG_TESTNET_XPUB1;
-  XPUB2 = process.env.BTC_MULTISIG_TESTNET_XPUB2;
-} else {
-  NETWORK = bitcoinjs.networks.bitcoin;
-  XPUB1 = process.env.BTC_MULTISIG_XPUB1;
-  XPUB2 = process.env.BTC_MULTISIG_XPUB2;
-}
-
 const M_OF_N = process.env.BTC_MULTISIG_M;
+const NETWORK = (process.env.BLOCKCHAIN_ENV === 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
+const XPUB1 = process.env.BTC_MULTISIG_XPUB1;
+const XPUB2 = process.env.BTC_MULTISIG_XPUB2;
 
 /* 
   Based on BIP-67 pubkeys must be lexographically sorted to create the multisig redeem script

@@ -48,18 +48,14 @@ async function swapIn(destiny, _amount) {
 
     try {
       const method = contract.methods.rbtcSwapIn(destiny, amount);
-      const gas = await method.estimateGas({
-        from: operatorAddress,
-        value: web3.utils.toHex(amount)
-      });
-      console.log('gas ---> ', gas);
+      const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
+      const txCost = 23000;
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
-        // TODO: Chequear tema gas
-        gas: web3.utils.toHex(100000), // web3.utils.toHex(gas),
+        gas: web3.utils.toHex(gas + txCost),
         gasPrice: web3.utils.toHex(gasPrice),
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
@@ -93,6 +89,8 @@ function listenRBTCSwapOut() {
     const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
     const amount = web3.utils.fromWei(value);
 
+    console.log(`[RBTCSwapOut] Tx received: ${transactionHash}`);
+
     try {
       const order = await ordersModel.findOne({
         'rsk.senderAddress': senderAddress,
@@ -101,10 +99,16 @@ function listenRBTCSwapOut() {
 
       if (_.isEmpty(order)) return;
 
+      console.log(`[RBTCSwapOut] Order found: ${order._id}`);
+
       // TODO: Check this with tx fees.
       if (amount < order.value) {
+        console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.`);
+
         order.rsk.status = FAILED;
       } else {
+        console.log(`[RBTCSwapOut] Order ${order._id}: sent correct amount.`);
+
         order.rsk.block = blockNumber;
         order.rsk.status = UNCONFIRMED;
         order.rsk.txId = transactionHash;
