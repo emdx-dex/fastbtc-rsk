@@ -51,10 +51,11 @@ async function swapIn(destiny, _amount) {
       const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
+      const txCost = 23000;
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
-        gas: web3.utils.toHex(100000),
+        gas: web3.utils.toHex(gas + txCost),
         gasPrice: web3.utils.toHex(gasPrice),
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
