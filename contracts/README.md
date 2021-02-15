@@ -1,4 +1,4 @@
-# FastSwap Token
+# FastSwap Contract
 
 ## Unit test
 
