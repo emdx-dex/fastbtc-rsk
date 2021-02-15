@@ -88,7 +88,7 @@ function listenRBTCSwapOut() {
     const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
     const amount = web3.utils.fromWei(value);
 
-    console.log(`[RBTCSwapOut] Tx received: ${RBTCSwapOut}`);
+    console.log(`[RBTCSwapOut] Tx received: ${transactionHash}`);
 
     try {
       const order = await ordersModel.findOne({
