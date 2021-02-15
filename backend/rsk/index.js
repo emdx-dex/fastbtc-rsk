@@ -88,6 +88,8 @@ function listenRBTCSwapOut() {
     const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
     const amount = web3.utils.fromWei(value);
 
+    console.log(`[RBTCSwapOut] Tx received: ${RBTCSwapOut}`);
+
     try {
       const order = await ordersModel.findOne({
         'rsk.senderAddress': senderAddress,
@@ -96,10 +98,16 @@ function listenRBTCSwapOut() {
 
       if (_.isEmpty(order)) return;
 
+      console.log(`[RBTCSwapOut] Order found: ${order._id}`);
+
       // TODO: Check this with tx fees.
       if (amount < order.value) {
+        console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.`);
+
         order.rsk.status = FAILED;
       } else {
+        console.log(`[RBTCSwapOut] Order ${order._id}: sent correct amount.`);
+
         order.rsk.block = blockNumber;
         order.rsk.status = UNCONFIRMED;
         order.rsk.txId = transactionHash;
