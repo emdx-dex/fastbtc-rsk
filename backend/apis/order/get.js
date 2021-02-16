@@ -1,4 +1,6 @@
 const _ = require('lodash');
+const { BTC, RSK } = require('../../../shared/chains');
+const { getBlockHeight } = require('../../utils/block-height');
 const { getBlockNumber } = require('../../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../../rsk/index');
 const express = require('express');
