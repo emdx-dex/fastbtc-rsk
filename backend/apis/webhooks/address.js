@@ -19,7 +19,11 @@ router.post('/', async (req, res) => {
     watchedAddress
   } = req.body;
 
-  console.log(req.body);
+  console.log("\n### Blocknative webhook received");
+  console.log("WatchedAdress:", watchedAddress);
+  console.log("Status:", status);
+  console.log("TxId: ", txid);
+  console.log("Block:", blockHeight);
 
   try {
     const order = await ordersModel.findOne({
@@ -33,7 +37,10 @@ router.post('/', async (req, res) => {
     // });
 
     if (_.isEmpty(order)) {
-      return res.sendStatus(404);
+      /**
+       * Si no encuentra la orden, igual le devuelvo 200 status al webhook para que no siga llegando.
+       */
+      return res.sendStatus(200);
     }
 
     // Se incluyo en el bloque de BTC pero no se mino
