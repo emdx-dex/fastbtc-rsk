@@ -150,7 +150,7 @@ function deriveAddrByIndex(_index) {
  * @param {base58 Bitcoin address} _address string
  * @param {testnet|mainnet} _network string
  */
-function getAddressBalance(_address, _network = 'testnet') {
+async function getAddressBalance(_address, _network = 'testnet') {
 
   if (!isAddressValid(_address, _network))
     return "Invalid Address";
