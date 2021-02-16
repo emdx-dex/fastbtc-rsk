@@ -16,7 +16,7 @@ const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIR
 const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
-  const blockDelta = order[chain].block ? height - order[chain].block : -1;
+  const blockDelta = order[chain].block ? height - order[chain].block : 0;
   const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
 
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
@@ -75,19 +75,8 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         }
 
         order.btc.txId = broadcastedTxId;
+        order.btc.status = UNCONFIRMED;
       }
-    }
-  }
-
-  /* 
-    Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
-  */
-  //TODO: Esto no se ejecuta porque el find en el updateStatus() es uncofirmed
-  if (order.flow === RBTC_TO_BTC && order.rsk.status === CONFIRMED && order.btc.txId) {
-    const confirmations = await getBTCTxConfirmations(order.btc.txId);
-
-    if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION) {
-      order.btc.status = CONFIRMED;
     }
   }
 }
@@ -110,16 +99,38 @@ async function updateStatus() {
           await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
           await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
 
-          if (order.flow === BTC_TO_RBTC && order.btc.status === CONFIRMED && order.rsk.txId) {
-            const { blockNumber, status } = await getTransactionReceipt(order.rsk.txId);
+          if (
+            order.flow === BTC_TO_RBTC &&
+            order.btc.status === CONFIRMED &&
+            order.rsk.status === UNCONFIRMED &&
+            order.rsk.txId
+          ) {
+            const receipt = await getTransactionReceipt(order.rsk.txId);
+            const blockNumber = _.get(receipt, 'blockNumber');
+            const status = _.get(receipt, 'status');
 
-            if (blockNumber >= RSK_BLOCK_HEIGHT_CONFIRMATION) {
-              order.rsk.block = blockNumber;
-              order.rsk.status = (status) ? CONFIRMED : FAILED;
-            }
+
+            order.rsk.block = blockNumber;
+            order.rsk.status = (status) ?
+              ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
+              : FAILED;
           }
 
-          // TODO: We should validate the same ^ but in the RBTC_TO_BTC flow.
+          /* 
+            Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
+          */
+          if (
+            order.flow === RBTC_TO_BTC &&
+            order.rsk.status === CONFIRMED &&
+            order.btc.status === UNCONFIRMED &&
+            order.btc.txId
+          ) {
+            const confirmations = await getBTCTxConfirmations(order.btc.txId);
+
+            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+              order.btc.status = CONFIRMED;
+            }
+          }
 
           resolve();
         } catch (error) {
