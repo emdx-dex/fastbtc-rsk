@@ -46,7 +46,11 @@
         <v-col cols="12" md="12">
           <v-text-field
             :rules="addressRule"
-            :label="toCoin + ' Recipient address '  + (toCoin === 'RBTC' ? '(To deposit)' : '')"
+            :label="
+              toCoin +
+              ' Recipient address ' +
+              (toCoin === 'RBTC' ? '(To deposit)' : '')
+            "
             required
             v-model="address"
           ></v-text-field>
@@ -62,7 +66,7 @@
     <div class="home__ordersummary" v-if="showOrderSummary">
       <v-card elevation="2">
         <v-card-title class="title text--primary">
-          Order details - {{order._id}}
+          Order details - {{ order._id }}
         </v-card-title>
         <order :order="order"></order>
       </v-card>
@@ -74,7 +78,8 @@
       elevation="2"
       class="mt-8"
     >
-      In case you need assistance or have any questions you can write to us: <a :href="'mailto:'+supportEmail">{{ supportEmail }}</a>
+      In case you need assistance or have any questions you can write to us:
+      <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>
     </v-alert>
     <confirmation-dialog
       :onCancel="handleCancel"
@@ -126,9 +131,10 @@ export default {
       (v) => !_.isEmpty(v) || 'Value is required.',
       (v) => v > 0 || 'Value should be greater than 0.',
       (v) => v <= TRANSFER_MAX || `Value should be lower than ${TRANSFER_MAX}.`,
-      (v) => v >= TRANSFER_MIN || `Value should be greater than ${TRANSFER_MIN}.`,
+      (v) =>
+        v >= TRANSFER_MIN || `Value should be greater than ${TRANSFER_MIN}.`,
     ],
-    supportEmail: "support@rsk.co"
+    supportEmail: 'support@rsk.co',
   }),
   methods: {
     async clear() {
@@ -220,9 +226,11 @@ export default {
           (status.includes(PENDING) || status.includes(UNCONFIRMED)) &&
           _.isNull(this.interval)
         ) {
+          const ONE_MINUTE_IN_MILISECONDS = 60000;
+
           this.interval = setInterval(() => {
             this.$store.dispatch('order/get', { id });
-          }, 10000);
+          }, ONE_MINUTE_IN_MILISECONDS);
         } else if (status === CONFIRMED || status === FAILED) {
           this.removePooling();
         }
