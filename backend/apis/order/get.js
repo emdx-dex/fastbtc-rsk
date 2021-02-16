@@ -8,8 +8,8 @@ const ordersModel = require('../../models/orders');
 
 require('dotenv').config();
 
-const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
-const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
+const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
+const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
 const router = express.Router();
 
 router.get('/:id', async (req, res) => {
