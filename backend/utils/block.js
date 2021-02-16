@@ -7,11 +7,12 @@ const BTC_INFO_URL = process.env.BTC_INFO_URL;
 
 async function getBlockNumber() {
   try {
-    const response = await axios.get(`${BTC_INFO_URL}/blocks?limit=1`);
-    const blockNumber = _.get(response, 'data.data[0].id', {});
+    const response = await axios.get(`${BTC_INFO_URL}`);
+    const blockNumber = response.height;
 
     return blockNumber;
   } catch (error) {
+    console.log(error);
     return 0;
   }
 }
