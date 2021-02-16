@@ -1,14 +1,14 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, UNCONFIRMED } = require('../../shared/status');
+const { CONFIRMED, FAILED, UNCONFIRMED } = require('../../shared/status');
+const { createAndSignTx, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
 const { getBlockNumber } = require('../utils/block');
-const { getBlockNumber: getRSKBlockNumber } = require('../rsk/index');
+const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
 const bitcoinjs = require('bitcoinjs-lib');
 const ordersModel = require('../models/orders');
-const { createAndSignTx, getTxInfo, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
 
 require('dotenv').config();
 
@@ -16,7 +16,7 @@ const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIR
 const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
-  const blockDelta = order[chain].block ? height - order[chain].block : 0;
+  const blockDelta = order[chain].block ? height - order[chain].block : -1;
   const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
 
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
@@ -25,20 +25,16 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
     order[chain].status = CONFIRMED;
 
     if (order.flow === BTC_TO_RBTC) {
-      if (chain === RSK && _.isEmpty(order.rsk.txId)) {
+      if (chain === BTC && _.isEmpty(order.rsk.txId)) {
+        await unwatchAddress(order.btc.address);
+
         console.log(`Sending transaction. Id: ${order.id}.`);
 
         // TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
-        const { receipt } = await swapIn(order.rsk.address, order.value);
+        const transactionHash = await swapIn(order.rsk.address, order.value);
 
-        // TODO: Para confirmar la orden debería escuchar el transaction hash.
-        order.rsk.block = receipt.blockNumber;
-        order.rsk.status = CONFIRMED;
-        order.rsk.txId = receipt.transactionHash;
-
-      }
-      if (chain === BTC) {
-        await unwatchAddress(order.btc.address);
+        order.rsk.status = UNCONFIRMED;
+        order.rsk.txId = transactionHash;
       }
     }
 
@@ -67,7 +63,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         if (!createdSignedTx.signedRawTx) {
           console.log(createdSignedTx);
 
-          throw "Error creating signedRawTx";
+          throw 'Error creating signedRawTx';
         }
 
         let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
@@ -75,7 +71,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         if (!broadcastedTxId) {
           console.log(broadcastedTxId);
 
-          throw "Error broadcasting transaction";
+          throw 'Error broadcasting transaction';
         }
 
         order.btc.txId = broadcastedTxId;
@@ -88,11 +84,12 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
   */
   //TODO: Esto no se ejecuta porque el find en el updateStatus() es uncofirmed
   if (order.flow === RBTC_TO_BTC && order.rsk.status === CONFIRMED && order.btc.txId) {
-    let confirmations = await getBTCTxConfirmations(order.btc.txId);
-    if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION)
-      order.btc.status = CONFIRMED;
-  }
+    const confirmations = await getBTCTxConfirmations(order.btc.txId);
 
+    if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION) {
+      order.btc.status = CONFIRMED;
+    }
+  }
 }
 
 async function updateStatus() {
@@ -113,13 +110,22 @@ async function updateStatus() {
           await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
           await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
 
-          await order.save();
+          if (order.flow === BTC_TO_RBTC && order.btc.status === CONFIRMED && order.rsk.txId) {
+            const { blockNumber, status } = await getTransactionReceipt(order.rsk.txId);
+
+            order.rsk.block = blockNumber;
+            order.rsk.status = (status) ? CONFIRMED : FAILED;
+          }
+
+          // TODO: We should validate the same ^ but in the RBTC_TO_BTC flow.
 
           resolve();
         } catch (error) {
           reject(error);
+        } finally {
+          await order.save();
         }
-      })
+      });
     });
 
     Promise
@@ -127,7 +133,6 @@ async function updateStatus() {
       .then(() => { })
       .catch((error) => {
         console.log(error);
-        //process.exit(1);
       })
       .finally(() => {
         console.log('Finish update process.');
@@ -135,18 +140,20 @@ async function updateStatus() {
 
   } catch (error) {
     console.log(`[ERROR] Update status cron: ${error}`);
-    //process.exit(1);
   }
 }
 
 // TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
   require('../utils/connection');
+
+  const ONE_MINUTE_IN_MILISECONDS = 60000;
+
   await updateStatus();
 
   setInterval(async () => {
     await updateStatus();
-  }, 60000)
+  }, ONE_MINUTE_IN_MILISECONDS);
 }());
 
 module.exports = {
