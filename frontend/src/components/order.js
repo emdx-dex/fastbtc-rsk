@@ -2,12 +2,12 @@ import _ from 'lodash';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { getBTCAddressUrl, getBTCTxUrl } from '@/utils/btc-urls';
 import { getRSKAddressUrl, getRSKTxUrl } from '@/utils/rsk-urls';
-import { VCard, VCardText, VCol, VContainer, VIcon, VRow, VSpacer } from 'vuetify/lib';
+import { VCard, VCardText, VCol, VContainer, VIcon, VRow, VSpacer, VBtn } from 'vuetify/lib';
 import SYMBOLS from '../../../shared/symbols';
 import Vue from 'vue';
 
 Vue.component('order', {
-  components: { VCard, VCardText, VCol, VContainer, VIcon, VRow, VSpacer },
+  components: { VCard, VCardText, VCol, VContainer, VIcon, VRow, VSpacer, VBtn},
   data: () => ({
     confirmations: '',
     coin: '',
@@ -80,6 +80,11 @@ Vue.component('order', {
 
       return method(url);
     },
+    copyToClipboard: async function(text) {
+      const method = await navigator.clipboard.writeText(text)
+
+      return method(text)
+    }
   },
   props: ['order'],
   watch: {
@@ -115,6 +120,22 @@ Vue.component('order', {
                   {{ depositAddress }}
                 </a>
               </p>
+
+              <v-row class="d-flex align-center mb-2 light-grey">
+                <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
+                  {{ depositAddress }}
+                </v-col>
+                <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
+                    <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(depositAddress)">
+                      <v-icon size="18">mdi-content-copy</v-icon>
+                    </v-btn>
+                  <a :href="fromAddressUrl(depositAddress)" target="_blank" style="text-decoration: none">
+                    <v-btn x-small>
+                      <v-icon size="18">mdi-arrow-top-right</v-icon>
+                    </v-btn>
+                  </a>
+                </v-col>
+              </v-row>
         
               <p class="subtitle-1 text--primary" v-if="depositTxId">
                 Deposit transaction
@@ -145,6 +166,22 @@ Vue.component('order', {
                 <status :status="transferStatus" ></status>
               </span>
             </p>
+
+            <v-row class="d-flex align-center mb-2 light-grey">
+                <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
+                  {{ transferAddress }}
+                </v-col>
+                <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
+                    <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferAddress)">
+                      <v-icon size="18">mdi-content-copy</v-icon>
+                    </v-btn>
+                  <a :href="fromAddressUrl(transferAddress)" target="_blank" style="text-decoration: none">
+                    <v-btn x-small>
+                      <v-icon size="18">mdi-arrow-top-right</v-icon>
+                    </v-btn>
+                  </a>
+                </v-col>
+              </v-row>
             
             <p class="font-weight-black headline">
               <a :href="toAddressUrl(transferAddress)" target="_blank">

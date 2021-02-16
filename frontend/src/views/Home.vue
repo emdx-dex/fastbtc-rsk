@@ -59,7 +59,7 @@
         <v-btn @click="clear" class="mr-4"> clear order </v-btn>
       </div>
     </v-form>
-    <div class="home__ordersummary" v-if="showOrderSummary">
+    <div class="home__ordersummary" v-if="!showOrderSummary">
       <v-card elevation="2">
         <v-card-title class="title text--primary">
           Order details
@@ -67,6 +67,15 @@
         <order :order="order"></order>
       </v-card>
     </div>
+    <v-alert
+      border="left"
+      colored-border
+      type="warning"
+      elevation="2"
+      class="mt-8"
+    >
+      Por dudas, consultas o problemas tecnicos comunicarse a <a :href="'mailto:'+supportEmail">{{ supportEmail }}</a>
+    </v-alert>
     <confirmation-dialog
       :onCancel="handleCancel"
       :onConfirm="handleConfirm"
@@ -119,6 +128,7 @@ export default {
       (v) => v <= TRANSFER_MAX || `Value should be lower than ${TRANSFER_MAX}.`,
       (v) => v >= TRANSFER_MIN || `Value should be greater than ${TRANSFER_MIN}.`,
     ],
+    supportEmail: "soporte@dominio.com"
   }),
   methods: {
     async clear() {
