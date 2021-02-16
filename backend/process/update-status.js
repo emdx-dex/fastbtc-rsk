@@ -3,6 +3,7 @@ const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
 const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING } = require('../../shared/status');
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
+const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
@@ -12,8 +13,8 @@ const ordersModel = require('../models/orders');
 
 require('dotenv').config();
 
-const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
-const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
+const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
+const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
   const blockDelta = order[chain].block ? height - order[chain].block : 0;

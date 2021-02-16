@@ -1,14 +1,16 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
+const { BTC, RSK } = require('../../../shared/chains');
 const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
+const { getBlockHeight } = require('../../utils/block-height');
 const { registerAddress } = require('../../utils/blocknative');
 const addressesModel = require('../../models/addresses');
 const express = require('express');
 const ordersModel = require('../../models/orders');
 
-const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
+const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
-const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
+const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
 const router = express.Router();
 

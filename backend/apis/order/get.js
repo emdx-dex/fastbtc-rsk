@@ -1,4 +1,6 @@
 const _ = require('lodash');
+const { BTC, RSK } = require('../../../shared/chains');
+const { getBlockHeight } = require('../../utils/block-height');
 const { getBlockNumber } = require('../../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../../rsk/index');
 const express = require('express');
@@ -6,8 +8,8 @@ const ordersModel = require('../../models/orders');
 
 require('dotenv').config();
 
-const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
-const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
+const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
+const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 const router = express.Router();
 
 router.get('/:id', async (req, res) => {
