@@ -80,8 +80,8 @@ Vue.component('order', {
 
       return method(url);
     },
-    copyToClipboard: async function(text) {
-      const method = await navigator.clipboard.writeText(text)
+    copyToClipboard: function(text) {
+      const method = async (text) => await navigator.clipboard.writeText(text)
 
       return method(text)
     }
@@ -134,12 +134,22 @@ Vue.component('order', {
               <p class="subtitle-1 text--primary" v-if="depositTxId">
                 Deposit transaction
               </p>
-              
-              <p class="font-weight-black headline" v-if="depositTxId">
-                <a :href="fromTxUrl(depositTxId)" target="_blank">
+
+              <v-row class="d-flex align-center mb-2 light-grey">
+                <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
                   {{ depositTxId }}
-                </a>
-              </p>
+                </v-col>
+                <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
+                    <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(depositTxId)">
+                      <v-icon size="18">mdi-content-copy</v-icon>
+                    </v-btn>
+                  <a :href="fromTxUrl(depositTxId)" target="_blank" style="text-decoration: none">
+                    <v-btn x-small>
+                      <v-icon size="18">mdi-arrow-top-right</v-icon>
+                    </v-btn>
+                  </a>
+                </v-col>
+              </v-row>
         
               <p class="subtitle-1 text--primary">
                 Value
@@ -180,12 +190,23 @@ Vue.component('order', {
             <p class="subtitle-1 text--primary" v-if="transferTxId">
               Recipient transaction
             </p>
-            
-            <p class="font-weight-black headline" v-if="transferTxId">
-              <a :href="toTxUrl(transferTxId)" target="_blank">
+
+            <v-row class="d-flex align-center mb-2 light-grey">
+              <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
                 {{ transferTxId }}
-              </a>
-            </p>
+              </v-col>
+              <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
+                  <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferTxId)">
+                    <v-icon size="18">mdi-content-copy</v-icon>
+                  </v-btn>
+                <a :href="toTxUrl(transferTxId)" target="_blank" style="text-decoration: none">
+                  <v-btn x-small>
+                    <v-icon size="18">mdi-arrow-top-right</v-icon>
+                  </v-btn>
+                </a>
+              </v-col>
+            </v-row>
+            
 
             <p class="subtitle-1 text--primary">
               Value
