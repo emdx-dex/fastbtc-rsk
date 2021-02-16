@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { get } from '../shared';
 
 export default () => {
@@ -6,6 +7,8 @@ export default () => {
       return data;
     })
     .catch(({ response }) => {
-      throw (response.data.error);
+      const error = _.get(response, 'data.error', 'Error getting the offers');
+
+      throw (error);
     });
 }

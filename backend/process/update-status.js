@@ -1,14 +1,14 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, UNCONFIRMED } = require('../../shared/status');
+const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING } = require('../../shared/status');
+const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockNumber } = require('../utils/block');
-const { getBlockNumber: getRSKBlockNumber } = require('../rsk/index');
+const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
 const bitcoinjs = require('bitcoinjs-lib');
 const ordersModel = require('../models/orders');
-const { createAndSignTx, getTxInfo, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
 
 require('dotenv').config();
 
@@ -25,20 +25,16 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
     order[chain].status = CONFIRMED;
 
     if (order.flow === BTC_TO_RBTC) {
-      if (chain === RSK && _.isEmpty(order.rsk.txId)) {
+      if (chain === BTC && _.isEmpty(order.rsk.txId)) {
+        await unwatchAddress(order.btc.address);
+
         console.log(`Sending transaction. Id: ${order.id}.`);
 
         // TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
-        const { receipt } = await swapIn(order.rsk.address, order.value);
+        const transactionHash = await swapIn(order.rsk.address, order.value);
 
-        // TODO: Para confirmar la orden debería escuchar el transaction hash.
-        order.rsk.block = receipt.blockNumber;
-        order.rsk.status = CONFIRMED;
-        order.rsk.txId = receipt.transactionHash;
-
-      }
-      if (chain === BTC) {
-        await unwatchAddress(order.btc.address);
+        order.rsk.status = UNCONFIRMED;
+        order.rsk.txId = transactionHash;
       }
     }
 
@@ -50,50 +46,109 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
         order.rsk.status = CONFIRMED;
 
-        let _FROM = process.env.BTC_HOT_WALLET_ADDR;
-        let _TO = order.btc.address;
-        let _VALUE_SATS = order.value * 100000000;
-        let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
+        /* 
+        
+          automatico	0.02
+          manual	0.1
+          multi-sig	0.2
 
+          if(order.value <= 0.02){
+            signedTx && relayAutomático
+          }else if(order.value > 0.02 && order.value <= 0.1){
+            rawUnsignedTx de hot wallet && guardo en base para posterior firma y envio
+          }else if(order.value > 0.1){
+            rawUnsignedTx de MultiSig && guardo en base para posterior firma(s) y relay.
+          }
+
+        */
+        const BTC_UNIT = 100000000;
         let network = bitcoinjs.networks.testnet;
-        const RSKKeypair = bitcoinjs.ECPair.fromWIF(
-          _PRIVKEY,
-          network
-        );
+        let _VALUE_BTC = order.value;
+        let _VALUE_SATS = order.value * BTC_UNIT;//TODO: proper handle of stas.
+        let _TO = order.btc.address;
+        /**
+         * Si el valor total de la orden es menor a 0.02 se puede hacer la
+         * firma y relay automático de la tx
+         */
+        if (_VALUE_BTC <= 0.02) {
 
-        let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+          try {
 
+            //Uso la HOT_WALLET definida en .ENV como origen de los fondos.
+            let _FROM = process.env.BTC_HOT_WALLET_ADDR;
+            let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
 
-        if (!createdSignedTx.signedRawTx) {
-          console.log(createdSignedTx);
+            const RSKKeypair = bitcoinjs.ECPair.fromWIF(
+              _PRIVKEY,
+              network
+            );
 
-          throw "Error creating signedRawTx";
+            let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+
+            if (!createdSignedTx.signedRawTx) {
+              console.log(createdSignedTx);
+              throw 'Error creating signedRawTx';
+            }
+
+            let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
+
+            if (!broadcastedTxId) {
+              console.log(broadcastedTxId);
+              throw 'Error broadcasting transaction';
+            }
+
+            order.btc.txId = broadcastedTxId;
+            order.btc.status = UNCONFIRMED;
+
+          } catch (error) {
+            console.log(error);
+            throw ("Error creating or relaying signed transaction")
+          }
+
+          /**
+           * Si el order.value es mayor a 0.02 y menor o igual a 0.1 
+           * entonces también sale desde la hotwallet pero se guarda la 
+           * rawHex cruda en base, se ĺevantará después de Electrum u otra 
+           * wallet para confirmar valores, revisar tx en general, firmar y 
+           * enviar.
+           */
+        } else if (_VALUE_BTC > 0.02 && _VALUE_BTC <= 0.1) {
+
+          try {
+
+            let _FROM = process.env.BTC_HOT_WALLET_ADDR;
+
+            let unsignedRawHexTx = await createUnsignedRawtx(
+              _FROM,
+              _TO,
+              _VALUE_SATS
+            );
+
+            order.btc.status = SIGNATURE_PENDING;
+            order.btc.unsignedRawHexTx = unsignedRawHexTx;
+
+          } catch (error) {
+            console.log(error);
+            throw ("Error creating unsignedRawTx");
+          }
+
+          /**
+           * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
+           */
+        } else if (_VALUE_BTC > 0.1) {
+          /**
+           * Acá hay un tema: cómo manejar los UTXO de los fondos, porque al no ser una address particular hay que escanear todos los UTXOs asociados a todas las direcciones derivadas que alguna vez recibieron fondos.
+           */
         }
 
-        let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
 
-        if (!broadcastedTxId) {
-          console.log(broadcastedTxId);
+      }// if chain === RSK && _.isEmpty(order.btc.txId))
 
-          throw "Error broadcasting transaction";
-        }
+    }// if order.flow === RBTC_TO_BTC
 
-        order.btc.txId = broadcastedTxId;
-      }
-    }
-  }
+  }// if (order[chain].status !== CONFIRMED && status === CONFIRMED)
 
-  /* 
-    Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
-  */
-  //TODO: Esto no se ejecuta porque el find en el updateStatus() es uncofirmed
-  if (order.flow === RBTC_TO_BTC && order.rsk.status === CONFIRMED && order.btc.txId) {
-    let confirmations = await getBTCTxConfirmations(order.btc.txId);
-    if (confirmations >= process.env.BTC_BLOCK_HEIGHT_CONFIRMATION)
-      order.btc.status = CONFIRMED;
-  }
-
-}
+}// function checkConfirmations();
 
 async function updateStatus() {
   console.log('Running update process...');
@@ -113,13 +168,65 @@ async function updateStatus() {
           await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
           await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
 
-          await order.save();
+          if (
+            order.flow === BTC_TO_RBTC &&
+            order.btc.status === CONFIRMED &&
+            order.rsk.status === UNCONFIRMED &&
+            order.rsk.txId
+          ) {
+            const receipt = await getTransactionReceipt(order.rsk.txId);
+            const blockNumber = _.get(receipt, 'blockNumber');
+            const status = _.get(receipt, 'status');
+
+
+            order.rsk.block = blockNumber;
+            order.rsk.status = (status) ?
+              ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
+              : FAILED;
+          }
+
+          /* 
+            Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
+          */
+          if (
+            order.flow === RBTC_TO_BTC &&
+            order.rsk.status === CONFIRMED &&
+            order.btc.status === UNCONFIRMED &&
+            order.btc.txId
+          ) {//caso 1 order value con txSigned hot_wallet y relay automático.
+            const confirmations = await getBTCTxConfirmations(order.btc.txId);
+
+            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+              order.btc.status = CONFIRMED;
+            }
+          } else if (//caso 2: order value unsignedRawtx desde hot_wallet sin relay automático.
+            order.flow === RBTC_TO_BTC &&
+            order.rsk.status === CONFIRMED &&
+            order.btc.status === SIGNATURE_PENDING
+          ) {
+
+            /**
+             *TODO:// Acá el problema de esto es que no puedo chequear los btcConfirmations porque no tengo el order.btc.txId (el hash de cuando
+             * se hace relay) y por lo tanto no puedo ver cuantas confirmaciones pasaron desde el envio.
+             * Opciones:
+             * 1. Hacerlo manual, cuando el admin haga la tx, damos un input en el form de ordenes que le pega a un endpoint que setea el id
+             * 2. Buscar alguna combinación de from/to/utxos, etc que me permita tener el txId y ver las confirmaciones
+             */
+
+            // const confirmations = await getBTCTxConfirmations(order.btc.txId);
+            // if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+            //   order.btc.status = CONFIRMED;
+            // }
+
+          }
 
           resolve();
         } catch (error) {
           reject(error);
+        } finally {
+          await order.save();
         }
-      })
+      });
     });
 
     Promise
@@ -127,7 +234,6 @@ async function updateStatus() {
       .then(() => { })
       .catch((error) => {
         console.log(error);
-        //process.exit(1);
       })
       .finally(() => {
         console.log('Finish update process.');
@@ -135,18 +241,20 @@ async function updateStatus() {
 
   } catch (error) {
     console.log(`[ERROR] Update status cron: ${error}`);
-    //process.exit(1);
   }
 }
 
 // TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
   require('../utils/connection');
+
+  const ONE_MINUTE_IN_MILISECONDS = 60000;
+
   await updateStatus();
 
   setInterval(async () => {
     await updateStatus();
-  }, 60000)
+  }, ONE_MINUTE_IN_MILISECONDS);
 }());
 
 module.exports = {

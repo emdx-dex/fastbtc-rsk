@@ -1,6 +1,7 @@
 const addressesModel = require('../models/addresses');
 const bip32 = require('bip32');
 const bitcoinjs = require('bitcoinjs-lib');
+const ElectrumClient = require('@codewarriorr/electrum-client-js');
 
 require('dotenv').config();
 
@@ -31,6 +32,40 @@ const XPUB2 = process.env.BTC_MULTISIG_XPUB2;
 */
 function sortBuffers(bufArr) {
   return bufArr.sort(Buffer.compare);
+}
+
+async function connect() {
+  try {
+
+    const client = new ElectrumClient(
+      "tn.not.fyi",
+      55002,
+      "ssl"
+    );
+
+    await client.connect();
+
+    console.log('------------------------------------------------');
+
+    return client;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
+/**
+ * Validates any address, including legacy, p2sh and bech32
+ * @param address
+ * @returns {boolean}
+ */
+function isAddressValid(address, _network) {
+  try {
+    bitcoinjs.address.toOutputScript(address, _network);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 /* 
@@ -110,10 +145,43 @@ function deriveAddrByIndex(_index) {
   return addr;
 }
 
+/**
+ * 
+ * @param {base58 Bitcoin address} _address string
+ * @param {testnet|mainnet} _network string
+ */
+function getAddressBalance(_address, _network = 'testnet') {
+
+  if (!isAddressValid(_address, _network))
+    return "Invalid Address";
+
+  try {
+
+    let client = await connect();//TODO: check network/testnet before this
+
+    const script = bitcoinjs.address.toOutputScript(_address, network);
+    const hash = bitcoinjs.crypto.sha256(script);
+    const reversedHash = new Buffer.from(hash.reverse());
+    const rScriptHash = reversedHash.toString('hex');
+
+    let balance = await client.blockchain_scripthash_get_balance(rScriptHash);
+
+    await client.close();
+
+    return balance;
+
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+
+}
+
 module.exports = {
   sortBuffers: sortBuffers,
   deriveAddresess: deriveAddresess,
   getAddrNextIndex: getAddrNextIndex,
+  getAddressBalance: getAddressBalance,
   deriveAddrByIndex: deriveAddrByIndex
 };
 

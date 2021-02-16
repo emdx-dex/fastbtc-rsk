@@ -40,6 +40,17 @@ async function getBlockNumber() {
   }
 }
 
+async function getTransactionReceipt(txId) {
+  try {
+    const web3 = getInstance();
+    const receipt = await web3.eth.getTransactionReceipt(txId);
+
+    return receipt;
+  } catch (error) {
+    return {};
+  }
+}
+
 async function swapIn(destiny, _amount) {
   return new Promise(async (resolve, reject) => {
     const contract = getContract();
@@ -51,6 +62,7 @@ async function swapIn(destiny, _amount) {
       const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
+      // TODO: Change this for a safe gas margin and move to .env
       const txCost = 23000;
       const rawTx = {
         data: method.encodeABI(),
@@ -65,9 +77,8 @@ async function swapIn(destiny, _amount) {
       return web3.eth.sendSignedTransaction(rawTransaction)
         .on('transactionHash', (hash) => {
           console.log(`Transaction hash: ${hash}`)
-        })
-        .on('confirmation', (confirmationNumber, receipt) => {
-          resolve({ confirmationNumber, receipt });
+
+          resolve(hash);
         })
         .on('error', (error) => {
           reject(error);
@@ -123,6 +134,7 @@ function listenRBTCSwapOut() {
 
 module.exports = {
   getBlockNumber,
+  getTransactionReceipt,
   listenRBTCSwapOut,
   swapIn
 };

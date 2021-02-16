@@ -13,6 +13,7 @@
 * Functions to fetch Hot/MultiSig on BTC wallet and RSK contrat balance.
 * Sanitize client side inputs and validate base58/ETH address type to avoid user entering wrong address type or garbage
 * Fine grain RSK Contract consumption calculation
+* On front end show an estimate time for conversion completion depending on the total order.value (given the routing order transaction depending on order.value)
 
 ## Infrastructure overview
 

@@ -8,18 +8,18 @@ require('dotenv').config();
 // Public Electrum server list: https://1209k.com/bitcoin-eye/ele.php?chain=btc
 async function connect() {
   try {
-    
+
     const client = new ElectrumClient(
       "tn.not.fyi",
       55002,
       "ssl"
     );
-  
+
     await client.connect();
-  
+
     console.log('------------------------------------------------');
-    
-    return client;  
+
+    return client;
   } catch (error) {
     console.log(error);
     return error;
@@ -61,21 +61,21 @@ function isAddressValid(address, _network) {
  * @param {boolean} _IS_SEGWIT to construct inputs/outputs
  * @param {testnet|mainnet} _NETWORK string
  */
-async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWORK='testnet'){
+async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT = false, _NETWORK = 'testnet') {
 
   try {
-    
-    let network;
-    _NETWORK=='testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
 
-    if(!_FROM || !_TO || !_VALUE)
+    let network;
+    _NETWORK == 'testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
+
+    if (!_FROM || !_TO || !_VALUE)
       return "Missing Parameters";
-    
-    if(!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
+
+    if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
-    
+
     let client = await connect();//TODO: check network/testnet before this
-    
+
     const script = bitcoinjs.address.toOutputScript(_FROM, network);
     const hash = bitcoinjs.crypto.sha256(script);
     const reversedHash = new Buffer.from(hash.reverse());
@@ -84,15 +84,15 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWOR
     const UTXOs = await client.blockchain_scripthash_listunspent(rScriptHash);
 
     let feeRate = await getFeeRates();
-    
-    if(!feeRate)
+
+    if (!feeRate)
       return "Unable to fetch fee rates, aborting";
 
-    let proccessedUTXOs =  [];
+    let proccessedUTXOs = [];
     let bufferRawTx;
 
     await Promise.all(UTXOs.map(async (i) => {
-      
+
       bufferRawTx = Buffer.from(await client.blockchain_transaction_get(i.tx_hash), 'hex');
 
       proccessedUTXOs.push({
@@ -115,7 +115,7 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWOR
     if (!inputs || !outputs)
       return "No coin selection solution found; check if enough balance"
 
-    let psbt = new bitcoinjs.Psbt({network: network});
+    let psbt = new bitcoinjs.Psbt({ network: network });
 
     inputs.forEach(input =>
       psbt.addInput({
@@ -126,28 +126,28 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWOR
         //witnessUtxo: input.witnessUtxo,
       })
     )
-    
+
     outputs.forEach(output => {
       // watch out, outputs may have been added that you need to provide
       // an output address/script for
-      if (!output.address) 
+      if (!output.address)
         output.address = _FROM;//CHANGE_ADDRESS
-  
+
       psbt.addOutput({
         address: output.address,
         value: output.value,
       })
     });
-    
+
     let unsignedRawTx = {
       inputs: inputs,
       outputs: outputs,
       fees: fee,
       rawTx: psbt.toHex(),
     }
-    
+    await client.close();
     return unsignedRawTx;
-    
+
   } catch (error) {
     console.log(error);
     return error;
@@ -164,21 +164,21 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT=false, _NETWOR
  * @param {if segwit for UTXO processing} _IS_SEGWIT boolean
  * @param {testnet|mainnet} _NETWORK string
  */
-async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _NETWORK='testnet'){
+async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT = false, _NETWORK = 'testnet') {
 
   try {
-    
-    let network;
-    _NETWORK=='testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
 
-    if(!_FROM || !_TO || !_VALUE)
+    let network;
+    _NETWORK == 'testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
+
+    if (!_FROM || !_TO || !_VALUE)
       return "Missing Parameters";
-    
-    if(!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
+
+    if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
-    
+
     let client = await connect();//TODO: check network/testnet before this
-    
+
     const script = bitcoinjs.address.toOutputScript(_FROM, network);
     const hash = bitcoinjs.crypto.sha256(script);
     const reversedHash = new Buffer.from(hash.reverse());
@@ -188,14 +188,14 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _
 
     let feeRate = await getFeeRates();
 
-    if(!feeRate)
+    if (!feeRate)
       return "Unable to fetch fee rates, aborting";
 
-    let proccessedUTXOs =  [];
+    let proccessedUTXOs = [];
     let bufferRawTx;
 
     await Promise.all(UTXOs.map(async (i) => {
-      
+
       bufferRawTx = Buffer.from(await client.blockchain_transaction_get(i.tx_hash), 'hex');
 
       proccessedUTXOs.push({
@@ -219,7 +219,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _
     if (!inputs || !outputs)
       return "No coin selection solution found; check if enough balance"
 
-    let psbt = new bitcoinjs.Psbt({network: network});
+    let psbt = new bitcoinjs.Psbt({ network: network });
 
     inputs.forEach(input =>
       psbt.addInput({
@@ -230,13 +230,13 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _
         //witnessUtxo: input.witnessUtxo,
       })
     )
-    
+
     outputs.forEach(output => {
       // watch out, outputs may have been added that you need to provide
       // an output address/script for
-      if (!output.address) 
+      if (!output.address)
         output.address = _FROM;//CHANGE_ADDRESS
-  
+
       psbt.addOutput({
         address: output.address,
         value: output.value,
@@ -252,31 +252,33 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT=false, _
       inputs: inputs,
       outputs: outputs,
       fees: fee,
-      size: Buffer.byteLength(rawSignedTx, 'hex')+ " bytes",
+      size: Buffer.byteLength(rawSignedTx, 'hex') + " bytes",
       signedRawTx: rawSignedTx
     }
-    
+
+    await client.close();
     return signedRawTx;
-    
+
   } catch (error) {
     console.log(error);
     return error;
   }
-  
+
 }
 /**
  * 
  * @param {complete raw tx to relay in hex} hexTx hex
  */
-async function relaySignedTx(hexTx){
+async function relaySignedTx(hexTx) {
 
   try {
     let client = await connect();//TODO: check network/testnet before this
 
-    if(!hexTx)
+    if (!hexTx)
       return "Missing rawHexTx parameter";
-  
+
     let broadcastResult = await client.blockchain_transaction_broadcast(hexTx);
+    await client.close();
     return broadcastResult;
 
   } catch (error) {
@@ -290,69 +292,50 @@ async function relaySignedTx(hexTx){
  * Function to get txId status, used to get confirmations
  * @param {transaction hash id} txId string
  */
-async function getTxInfo(txId){
+async function getTxInfo(txId) {
 
-  if(!txId)
+  if (!txId)
     return "Missing txId (hash) parameter";
 
   try {
-    
+
     let client = await connect();//TODO: check network/testnet before this
     let txInformation = await client.blockchain_transaction_get(txId, true);
-    
+
+    await client.close();
+
     return txInformation;
-    
+
   } catch (error) {
     console.log(error);
     return error;
   }
-  
+
 }
 
-async function getBTCTxConfirmations(txId){
+async function getBTCTxConfirmations(txId) {
 
   try {
-  
-  if(!txId)
-    return "Missing txId (hash) parameter";
 
-  let client = await connect();//TODO: check network/testnet before this
-  let txInformation = await client.blockchain_transaction_get(txId, true);
-  
-  let confirmations;
+    if (!txId)
+      return "Missing txId (hash) parameter";
 
-  txInformation.confirmations ? confirmations = txInformation.confirmations : 0;
-  
-  return confirmations;
-  
+    let client = await connect();//TODO: check network/testnet before this
+    let txInformation = await client.blockchain_transaction_get(txId, true);
+
+    let confirmations;
+
+    txInformation.confirmations ? confirmations = txInformation.confirmations : 0;
+
+    await client.close();
+
+    return confirmations;
+
   } catch (error) {
     console.log(error);
-    return error;  
+    return error;
   }
 }
-
-
-// (async function(){
-//   console.log(await getTxInfo("d753823f71b39e334d31928834eb52137eefecd1265b948a212c25a869118fb8"));
-// })()
-  /*
-  Examples
-  Unsigned Raw Tx
-  
-  console.log(await createUnsignedRawtx("n2CXXfYf7hJJHoqwjhLaj7LTWGM1q4jaFs", "mtjtgipED7zKRpSFTZMJ6jAvGs65o2TVTY", 6948));
-  */
-  /*
-  rawTx signed with KeyPair
-  
-  
-  _
-
-  let getSignedRawTx = await createAndSignTx("n2CXXfYf7hJJHoqwjhLaj7LTWGM1q4jaFs", "n3xP42DuRgoKFCULocue3HnvTVB8bsyqjj", 100000, RSKKeypair);
-
-  let broadcastTx = await relaySignedTx(getSignedRawTx.signedRawTx);
-  
-  console.log(broadcastTx);
-    */
 
 module.exports = {
   createUnsignedRawtx: createUnsignedRawtx,
