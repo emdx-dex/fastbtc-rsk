@@ -9,7 +9,7 @@ async function getBlockNumber() {
   try {
     const response = await axios.get(`${BTC_INFO_URL}`);
     const blockNumber = response.height;
-
+    console.log("BlockNumber:", blockNumber);
     return blockNumber;
   } catch (error) {
     console.log(error);
