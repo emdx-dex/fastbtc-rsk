@@ -2,7 +2,7 @@ const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
 const { CONFIRMED, FAILED, UNCONFIRMED } = require('../../shared/status');
-const { createAndSignTx, getBTCTxConfirmations, relaySignedTx } = require('../utils/transaction');
+const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockNumber } = require('../utils/block');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
@@ -46,40 +46,115 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
         order.rsk.status = CONFIRMED;
 
-        let _FROM = process.env.BTC_HOT_WALLET_ADDR;
-        let _TO = order.btc.address;
+
+        /* 
+        
+          automatico	0.02
+          manual	0.1
+          multi-sig	0.2
+
+          if(order.value <= 0.02){
+            signedTx && relayAutomático
+          }else if(order.value > 0.02 && order.value <= 0.1){
+            rawUnsignedTx de hot wallet && guardo en base para posterior firma y envio
+          }else if(order.value > 0.1){
+            rawUnsignedTx de MultiSig && guardo en base para posterior firma(s) y relay.
+          }
+
+        */
+
+        let _VALUE_BTC = order.value;
         let _VALUE_SATS = order.value * 100000000;//TODO: proper handle of stas.
-        let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
 
-        let network = bitcoinjs.networks.testnet;
-        const RSKKeypair = bitcoinjs.ECPair.fromWIF(
-          _PRIVKEY,
-          network
-        );
+        /**
+         * Si el valor total de la orden es menor a 0.02 se puede hacer la
+         * firma y relay automático de la tx
+         */
+        if(_VALUE_BTC <= 0.02){
 
-        let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+          //Uso la HOT_WALLET definida en .ENV como origen de los fondos.
+          let _FROM = process.env.BTC_HOT_WALLET_ADDR;
+          let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
 
+          let _TO = order.btc.address;
+          
 
-        if (!createdSignedTx.signedRawTx) {
-          console.log(createdSignedTx);
+          let network = bitcoinjs.networks.testnet;
+          const RSKKeypair = bitcoinjs.ECPair.fromWIF(
+            _PRIVKEY,
+            network
+          );
 
-          throw 'Error creating signedRawTx';
+          let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+
+          if (!createdSignedTx.signedRawTx) {
+            console.log(createdSignedTx);
+            throw 'Error creating signedRawTx';
+          }
+
+          let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
+
+          if (!broadcastedTxId) {
+            console.log(broadcastedTxId);
+            throw 'Error broadcasting transaction';
+          }
+
+          order.btc.txId = broadcastedTxId;
+          order.btc.status = UNCONFIRMED;
+          
+        /**
+         * Si el order.value es mayor a 0.02 y menor o igual a 0.1 
+         * entonces también sale desde la hotwallet pero se guarda la 
+         * rawHex cruda en base, se ĺevantará después de Electrum u otra 
+         * wallet para confirmar valores, revisar tx en general, firmar y 
+         * enviar.
+         */
+        }else if(_VALUE_BTC > 0.02 && _VALUE_BTC <= 0.1){
+
+          try {
+
+            let _FROM = process.env.BTC_HOT_WALLET_ADDR;
+            let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
+  
+            let _TO = order.btc.address;
+            
+  
+            let network = bitcoinjs.networks.testnet;
+            const RSKKeypair = bitcoinjs.ECPair.fromWIF(
+              _PRIVKEY,
+              network
+            );
+            
+            let unsignedRawHexTx = await createUnsignedRawtx(
+              _FROM,
+              _TO,
+              _VALUE_SATS
+            );
+  
+            order.btc.unsignedRawHexTx  = unsignedRawHexTx;
+
+          } catch (error) {
+            console.log(error);
+            throw("Error creating unsignedRawTx from HOT_WALLET");
+          }
+          
+        /**
+         * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
+         */
+        }else if(_VALUE_BTC > 0.1){
+          /**
+           * Acá hay un tema: cómo manejar los UTXO de los fondos, porque al no ser una address particular hay que escanear todos los UTXOs asociados a todas las direcciones derivadas que alguna vez recibieron fondos.
+           */
         }
 
-        let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
+        
+      }// if chain === RSK && _.isEmpty(order.btc.txId))
 
-        if (!broadcastedTxId) {
-          console.log(broadcastedTxId);
+    }// if order.flow === RBTC_TO_BTC
 
-          throw 'Error broadcasting transaction';
-        }
+  }// if (order[chain].status !== CONFIRMED && status === CONFIRMED)
 
-        order.btc.txId = broadcastedTxId;
-        order.btc.status = UNCONFIRMED;
-      }
-    }
-  }
-}
+}// function checkConfirmations();
 
 async function updateStatus() {
   console.log('Running update process...');
