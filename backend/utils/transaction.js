@@ -319,13 +319,15 @@ async function getBTCTxConfirmations(txId) {
 
     if (!txId)
       return "Missing txId (hash) parameter";
+    
+    console.log(`Getting confirmations for tx: ${txId}`);
 
     let client = await connect();//TODO: check network/testnet before this
     let txInformation = await client.blockchain_transaction_get(txId, true);
 
     let confirmations;
 
-    txInformation.confirmations ? confirmations = txInformation.confirmations : 0;
+    txInformation.confirmations ? confirmations = txInformation.confirmations : confirmations = 0;
 
     await client.close();
 
