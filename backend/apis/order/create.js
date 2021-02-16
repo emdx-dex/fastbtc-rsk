@@ -5,7 +5,6 @@ const { registerAddress } = require('../../utils/blocknative');
 const addressesModel = require('../../models/addresses');
 const express = require('express');
 const ordersModel = require('../../models/orders');
-const web3 = require('web3');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIRMATION);
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
@@ -29,20 +28,6 @@ router.post('/', async (req, res) => {
       error: 'Choose a valid conversion flow.'
     });
   }
-
-  // TODO: Add validations
-
-  // if (_.isEmpty(rbtcAddress)) {
-  //   return res.status(400).json({
-  //     error: 'RBTC address is a required parameter.'
-  //   });
-  // }
-
-  // if (!web3.utils.isAddress(rbtcAddress)) {
-  //   return res.status(400).json({
-  //     error: 'RBTC address should be a valid RSK address.'
-  //   });
-  // }
 
   if (_.isNaN(Number(value)) || value <= 0) {
     return res.status(400).json({
