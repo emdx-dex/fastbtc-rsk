@@ -43,6 +43,7 @@ router.post('/', async (req, res) => {
        * Si no encuentra la orden, igual le devuelvo 200 status al webhook para que no siga llegando.
        * Como la orden no existe más, le hago un unwatch al hook
        */
+      console.log(`Order with address: ${watchedAddress} non existant, proceeding to unwatch that address.`)
       await unwatchAddress(watchedAddress);
       return res.sendStatus(200);
     }
