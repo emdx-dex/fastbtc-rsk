@@ -114,12 +114,6 @@ Vue.component('order', {
                   <status :status="depositStatus" ></status>
                 </span>
               </p>
-              
-              <p class="font-weight-black headline">
-                <a :href="fromAddressUrl(depositAddress)" target="_blank">
-                  {{ depositAddress }}
-                </a>
-              </p>
 
               <v-row class="d-flex align-center mb-2 light-grey">
                 <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
@@ -168,26 +162,20 @@ Vue.component('order', {
             </p>
 
             <v-row class="d-flex align-center mb-2 light-grey">
-                <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
-                  {{ transferAddress }}
-                </v-col>
-                <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
-                    <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferAddress)">
-                      <v-icon size="18">mdi-content-copy</v-icon>
-                    </v-btn>
-                  <a :href="fromAddressUrl(transferAddress)" target="_blank" style="text-decoration: none">
-                    <v-btn x-small>
-                      <v-icon size="18">mdi-arrow-top-right</v-icon>
-                    </v-btn>
-                  </a>
-                </v-col>
-              </v-row>
-            
-            <p class="font-weight-black headline">
-              <a :href="toAddressUrl(transferAddress)" target="_blank">
+              <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
                 {{ transferAddress }}
-              </a>
-            </p>
+              </v-col>
+              <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
+                  <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferAddress)">
+                    <v-icon size="18">mdi-content-copy</v-icon>
+                  </v-btn>
+                <a :href="toAddressUrl(transferAddress)" target="_blank" style="text-decoration: none">
+                  <v-btn x-small>
+                    <v-icon size="18">mdi-arrow-top-right</v-icon>
+                  </v-btn>
+                </a>
+              </v-col>
+            </v-row>
 
             <p class="subtitle-1 text--primary" v-if="transferTxId">
               Recipient transaction
