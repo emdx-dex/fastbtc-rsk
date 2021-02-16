@@ -62,7 +62,7 @@
     <div class="home__ordersummary" v-if="showOrderSummary">
       <v-card elevation="2">
         <v-card-title class="title text--primary">
-          Order details
+          Order details - {{order._id}}
         </v-card-title>
         <order :order="order"></order>
       </v-card>
@@ -128,7 +128,7 @@ export default {
       (v) => v <= TRANSFER_MAX || `Value should be lower than ${TRANSFER_MAX}.`,
       (v) => v >= TRANSFER_MIN || `Value should be greater than ${TRANSFER_MIN}.`,
     ],
-    supportEmail: "soporte@dominio.com"
+    supportEmail: "support@rsk.co"
   }),
   methods: {
     async clear() {
