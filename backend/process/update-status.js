@@ -113,8 +113,10 @@ async function updateStatus() {
           if (order.flow === BTC_TO_RBTC && order.btc.status === CONFIRMED && order.rsk.txId) {
             const { blockNumber, status } = await getTransactionReceipt(order.rsk.txId);
 
-            order.rsk.block = blockNumber;
-            order.rsk.status = (status) ? CONFIRMED : FAILED;
+            if (blockNumber >= RSK_BLOCK_HEIGHT_CONFIRMATION) {
+              order.rsk.block = blockNumber;
+              order.rsk.status = (status) ? CONFIRMED : FAILED;
+            }
           }
 
           // TODO: We should validate the same ^ but in the RBTC_TO_BTC flow.
