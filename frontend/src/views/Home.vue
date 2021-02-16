@@ -74,7 +74,7 @@
       elevation="2"
       class="mt-8"
     >
-      Por dudas, consultas o problemas tecnicos comunicarse a <a :href="'mailto:'+supportEmail">{{ supportEmail }}</a>
+      In case you need assistance or have any questions you can write to us: <a :href="'mailto:'+supportEmail">{{ supportEmail }}</a>
     </v-alert>
     <confirmation-dialog
       :onCancel="handleCancel"
