@@ -21,12 +21,12 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
   const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
 
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
-    console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
-
-    order[chain].status = CONFIRMED;
-
     if (order.flow === BTC_TO_RBTC) {
       if (chain === BTC && _.isEmpty(order.rsk.txId)) {
+        console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
+
+        order.btc.status = CONFIRMED;
+
         await unwatchAddress(order.btc.address);
 
         console.log(`Sending transaction. Id: ${order.id}.`);
@@ -45,6 +45,8 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         Esto triggerea cuando del lado de RSK se confirma la tx al contrato pero todavia no se hizo la tx del lado de BTC
       */
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
+        console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
+        
         order.rsk.status = CONFIRMED;
 
         /* 

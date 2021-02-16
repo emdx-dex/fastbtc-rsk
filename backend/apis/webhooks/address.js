@@ -48,13 +48,13 @@ router.post('/', async (req, res) => {
     if (status === STATUS.PENDING) {
       order.btc.fee = fee;
       order.btc.rawTransaction = rawTransaction;
+      order.btc.status = STATUS.UNCONFIRMED;
       order.btc.txId = txid;
     }
 
     // Confirmado en blocknative
     if (status === STATUS.CONFIRMED) {
       order.btc.block = blockHeight;
-      order.btc.status = STATUS.UNCONFIRMED;
     }
 
     let addressDoc = await addressesModel.findOne({
