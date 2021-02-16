@@ -80,8 +80,8 @@ Vue.component('order', {
 
       return method(url);
     },
-    copyToClipboard: function(text) {
-      const method = async (text) => await navigator.clipboard.writeText(text)
+    copyToClipboard: (text) => {
+      const method = async () => await navigator.clipboard.writeText(text)
 
       return method(text)
     }
@@ -135,7 +135,7 @@ Vue.component('order', {
                 Deposit transaction
               </p>
 
-              <v-row class="d-flex align-center mb-2 light-grey">
+              <v-row class="d-flex align-center mb-2 light-grey" v-if="depositTxId">
                 <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
                   {{ depositTxId }}
                 </v-col>
@@ -191,7 +191,7 @@ Vue.component('order', {
               Recipient transaction
             </p>
 
-            <v-row class="d-flex align-center mb-2 light-grey">
+            <v-row class="d-flex align-center mb-2 light-grey" v-if="transferTxId">
               <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
                 {{ transferTxId }}
               </v-col>
