@@ -52,7 +52,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
         let _FROM = process.env.BTC_HOT_WALLET_ADDR;
         let _TO = order.btc.address;
-        let _VALUE_SATS = order.value * 100000000;
+        let _VALUE_SATS = order.value * 100000000;//TODO: proper handle of stas.
         let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
 
         let network = bitcoinjs.networks.testnet;
