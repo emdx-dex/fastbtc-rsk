@@ -80,8 +80,8 @@ Vue.component('order', {
 
       return method(url);
     },
-    copyToClipboard: (text) => {
-      const method = async () => await navigator.clipboard.writeText(text)
+    copyToClipboard: async (text) => {
+      const method = await navigator.clipboard.writeText(text)
 
       return method(text)
     }
