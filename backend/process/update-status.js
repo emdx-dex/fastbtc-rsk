@@ -178,11 +178,14 @@ async function updateStatus() {
             const blockNumber = _.get(receipt, 'blockNumber');
             const status = _.get(receipt, 'status');
 
-
-            order.rsk.block = blockNumber;
-            order.rsk.status = (status) ?
-              ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
-              : FAILED;
+            if (!_.isEmpty(receipt)) {
+              order.rsk.block = blockNumber;
+              order.rsk.status = (status) ?
+                ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
+                : FAILED;
+            } else {
+              order.rsk.status = UNCONFIRMED;
+            }
           }
 
           /* 
