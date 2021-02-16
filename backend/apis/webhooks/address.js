@@ -4,6 +4,7 @@ const express = require('express');
 const FLOWS = require('../../../shared/flows');
 const ordersModel = require('../../models/orders');
 const STATUS = require('../../../shared/status');
+const { unwatchAddress } = require('../../utils/blocknative');
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ router.post('/', async (req, res) => {
   console.log("TxId:", txid);
   console.log("Block:", blockHeight);
   console.log("####### Webhook end\n");
-  
+
   try {
     const order = await ordersModel.findOne({
       'btc.address': watchedAddress,
@@ -40,7 +41,9 @@ router.post('/', async (req, res) => {
     if (_.isEmpty(order)) {
       /**
        * Si no encuentra la orden, igual le devuelvo 200 status al webhook para que no siga llegando.
+       * Como la orden no existe más, le hago un unwatch al hook
        */
+      await unwatchAddress(watchedAddress);
       return res.sendStatus(200);
     }
 
