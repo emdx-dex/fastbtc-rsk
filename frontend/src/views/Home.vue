@@ -59,7 +59,7 @@
         <v-btn @click="clear" class="mr-4"> clear order </v-btn>
       </div>
     </v-form>
-    <div class="home__ordersummary" v-if="!showOrderSummary">
+    <div class="home__ordersummary" v-if="showOrderSummary">
       <v-card elevation="2">
         <v-card-title class="title text--primary">
           Order details
