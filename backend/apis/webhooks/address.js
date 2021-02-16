@@ -19,12 +19,13 @@ router.post('/', async (req, res) => {
     watchedAddress
   } = req.body;
 
-  console.log("\n### Blocknative webhook received");
+  console.log("\n####### Blocknative webhook received");
   console.log("WatchedAdress:", watchedAddress);
   console.log("Status:", status);
-  console.log("TxId: ", txid);
+  console.log("TxId:", txid);
   console.log("Block:", blockHeight);
-
+  console.log("####### Webhook end\n");
+  
   try {
     const order = await ordersModel.findOne({
       'btc.address': watchedAddress,
