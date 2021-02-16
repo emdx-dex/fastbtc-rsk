@@ -100,12 +100,19 @@ Vue.component('order', {
               <p class="order__title subtitle-1 text--primary" v-if="rbtcSenderAddress">
                 RBTC sender address
               </p>
-              
-              <p class="font-weight-black headline" v-if="rbtcSenderAddress">
-                <a :href="getRSKAddressUrl(rbtcSenderAddress)" target="_blank">
-                  {{ rbtcSenderAddress }}
-                </a>
-              </p>
+
+              <v-row class="d-flex align-center mb-2" v-if="rbtcSenderAddress">
+                <v-col class="col-10">
+                  <span class="font-weight-black">{{ rbtcSenderAddress }}</span>
+                </v-col>
+                <v-col class="col-2 d-flex align-center justify-center">
+                  <a :href="getRSKAddressUrl(rbtcSenderAddress)" target="_blank" style="text-decoration: none">
+                    <v-btn x-small>
+                      <v-icon size="18">mdi-arrow-top-right</v-icon>
+                    </v-btn>
+                  </a>
+                </v-col>
+              </v-row>
         
               <p class="order__title subtitle-1 text--primary">
                 {{ fromCoin() }} deposit address
@@ -115,14 +122,11 @@ Vue.component('order', {
                 </span>
               </p>
 
-              <v-row class="d-flex align-center mb-2 light-grey">
-                <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
-                  {{ depositAddress }}
+              <v-row class="d-flex align-center mb-2">
+                <v-col class="col-10">
+                  <span class="font-weight-black">{{ depositAddress }}</span>
                 </v-col>
-                <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
-                    <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(depositAddress)">
-                      <v-icon size="18">mdi-content-copy</v-icon>
-                    </v-btn>
+                <v-col class="col-2 d-flex align-center justify-center">
                   <a :href="fromAddressUrl(depositAddress)" target="_blank" style="text-decoration: none">
                     <v-btn x-small>
                       <v-icon size="18">mdi-arrow-top-right</v-icon>
@@ -135,14 +139,14 @@ Vue.component('order', {
                 Deposit transaction
               </p>
 
-              <v-row class="d-flex align-center mb-2 light-grey" v-if="depositTxId">
-                <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
-                  {{ depositTxId }}
+              <v-row class="d-flex align-center mb-2" v-if="depositTxId">
+                <v-col class="col-10">
+                  <span class="font-weight-black">{{ depositTxId }}</span>
                 </v-col>
-                <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
-                    <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(depositTxId)">
+                <v-col class="col-2 d-flex align-center justify-center">
+                    <!-- <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(depositTxId)">
                       <v-icon size="18">mdi-content-copy</v-icon>
-                    </v-btn>
+                    </v-btn> -->
                   <a :href="fromTxUrl(depositTxId)" target="_blank" style="text-decoration: none">
                     <v-btn x-small>
                       <v-icon size="18">mdi-arrow-top-right</v-icon>
@@ -171,14 +175,14 @@ Vue.component('order', {
               </span>
             </p>
 
-            <v-row class="d-flex align-center mb-2 light-grey">
-              <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
-                {{ transferAddress }}
+            <v-row class="d-flex align-center mb-2">
+              <v-col class="col-10">
+                <span class="font-weight-black">{{ transferAddress }}</span>
               </v-col>
-              <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
-                  <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferAddress)">
+              <v-col class="col-2 d-flex align-center justify-center">
+                  <!-- <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferAddress)">
                     <v-icon size="18">mdi-content-copy</v-icon>
-                  </v-btn>
+                  </v-btn> -->
                 <a :href="toAddressUrl(transferAddress)" target="_blank" style="text-decoration: none">
                   <v-btn x-small>
                     <v-icon size="18">mdi-arrow-top-right</v-icon>
@@ -192,13 +196,13 @@ Vue.component('order', {
             </p>
 
             <v-row class="d-flex align-center mb-2 light-grey" v-if="transferTxId">
-              <v-col class="d-flex flex-grow-0 flex-shrink-1 font-weight-black align-center">
-                {{ transferTxId }}
+              <v-col class="col-10">
+                <span class="font-weight-black">{{ transferTxId }}</span>
               </v-col>
-              <v-col class="d-flex flex-grow-1 flex-shrink-0 align-center justify-center">
-                  <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferTxId)">
+              <v-col class="col-2 d-flex align-center justify-center">
+                  <!-- <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferTxId)">
                     <v-icon size="18">mdi-content-copy</v-icon>
-                  </v-btn>
+                  </v-btn> -->
                 <a :href="toTxUrl(transferTxId)" target="_blank" style="text-decoration: none">
                   <v-btn x-small>
                     <v-icon size="18">mdi-arrow-top-right</v-icon>
