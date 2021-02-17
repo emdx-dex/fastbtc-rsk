@@ -17,7 +17,8 @@ const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
-  const blockDelta = order[chain].block ? height - order[chain].block : 0;
+  // El block delta en -1 es para cuando no está definido el block en una chain.
+  const blockDelta = order[chain].block ? height - order[chain].block : -1;
   const status = (blockDelta >= heightConfirmation) ? CONFIRMED : order[chain].status;
 
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
