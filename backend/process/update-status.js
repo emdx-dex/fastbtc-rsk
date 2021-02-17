@@ -286,17 +286,18 @@ async function updateStatus() {
   }
 }
 
+
+/**
+ * Busco ordenes que no estan borradas
+ * Que estan en pending
+ * el createdAt - now >= 2hs
+ * unwatch de la adddr si el flow es btc a rbtc
+ * pongo la orden en deleted: true
+ */
 async function cleanUpOrders() {
 
-  /**
-   * Busco ordenes que no estan borradas
-   * Que estan en pending
-   * el createdAt - now >= 2hs
-   * unwatch de la adddr si el flow es btc a rbtc
-   * pongo la orden en deleted: true
-   */
-
-  const _1HourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const X = 2;
+  const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
 
   let orders = await ordersModel.find({
     $and: [
@@ -304,15 +305,37 @@ async function cleanUpOrders() {
         'btc.status': PENDING,
         'rsk.status': PENDING,
         createdAt: {
-          $lt: _1HourAgo
-        }
+          $lt: _XHourAgo
+        },
+        deleted: false
       }
     ]
   });
-  console.log(orders);
-  return;
+
+  await Promise.all(orders.map(async (order) => {
+
+    try {
+      /**
+     * Si el flow es de ida BTC a RBTC, limpio la address del hook de blocknative.
+     */
+      if (order.flow === BTC_TO_RBTC){
+        let addr = order.btc.address;
+        console.log(`Unwatching address: ${addr}`)
+        await unwatchAddress(addr);
+      }
+
+      order.deleted = true;
+      console.log(`Marking as deleted order _id: ${order._id}`);
+      await order.save();
+
+    } catch (error) {
+      console.log(error);
+    }
+
+  }));
 
 }
+
 
 // TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
@@ -320,12 +343,12 @@ async function cleanUpOrders() {
 
   const ONE_MINUTE_IN_MILISECONDS = 60000;
 
-  //await updateStatus();
+  await updateStatus();
+  
   //await cleanUpOrders();
-  await cleanUpOrders();
   setInterval(async () => {
-    //await updateStatus();
-    await cleanUpOrders();
+    await updateStatus();
+    //await cleanUpOrders();
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
 
