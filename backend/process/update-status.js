@@ -130,6 +130,9 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
             order.btc.status = SIGNATURE_PENDING;
             order.btc.unsignedRawHexTx = unsignedRawHexTx;
+            /**
+             * Endpoint backen para setear txId;
+             */
 
           } catch (error) {
             console.log(error);
@@ -140,9 +143,13 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
            */
         } else if (_VALUE_BTC > 0.1) {
+          
           /**
            * Acá hay un tema: cómo manejar los UTXO de los fondos, porque al no ser una address particular hay que escanear todos los UTXOs asociados a todas las direcciones derivadas que alguna vez recibieron fondos.
+           * 
+           * Se dispara alerta en Telegram y se maneja desde adentro de 
            */
+
         }
 
 
@@ -258,6 +265,7 @@ async function updateStatus() {
   const ONE_MINUTE_IN_MILISECONDS = 60000;
 
   await updateStatus();
+  //agregar cleanUp();
 
   setInterval(async () => {
     await updateStatus();
