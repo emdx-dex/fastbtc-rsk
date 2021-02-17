@@ -1,18 +1,35 @@
+<template>
+  <v-tooltip top>
+    <template v-slot:activator="{ on, attrs }">
+      <span v-bind="attrs" v-on="on">
+        <status-indicator :status="style" :pulse="pulse"></status-indicator>
+      </span>
+    </template>
+    <span>
+      {{ status.status | capitalize }}
+    </span>
+    <span v-if="showConfirmation">
+      . Confirmations: {{ status.confirmations }} /
+      {{ status.requiredConfirmations }}
+    </span>
+  </v-tooltip>
+</template>
+
+<script>
 import { capitalize } from 'lodash';
 import { StatusIndicator } from 'vue-status-indicator';
-import { VTooltip } from 'vuetify/lib';
 import STATUS from '../../../shared/status';
-import Vue from 'vue';
 
-Vue.component('status', {
-  components: { StatusIndicator, VTooltip },
+export default {
+  name: 'status',
+  components: { StatusIndicator },
   data: () => ({
     pulse: true,
     showConfirmation: false,
-    style: 'intermediary'
+    style: 'intermediary',
   }),
   filters: {
-    capitalize: v => capitalize(v)
+    capitalize: (v) => capitalize(v),
   },
   methods: {
     initialize: function () {
@@ -44,7 +61,7 @@ Vue.component('status', {
         default:
           break;
       }
-    }
+    },
   },
   mounted: function () {
     this.initialize();
@@ -53,24 +70,7 @@ Vue.component('status', {
   watch: {
     'status.status': function () {
       this.initialize();
-    }
+    },
   },
-  template: `
-      <v-tooltip top>
-        <template v-slot:activator="{ on, attrs }">
-          <span
-            v-bind="attrs"
-            v-on="on"
-          >
-            <status-indicator :status="style" :pulse="pulse"></status-indicator>
-          </span>
-        </template>
-        <span>
-          {{ status.status | capitalize }}
-        </span>
-        <span v-if="showConfirmation">
-          . Confirmations: {{ status.confirmations }} / {{ status.requiredConfirmations }}
-        </span>
-      </v-tooltip>
-  `
-});
+};
+</script>

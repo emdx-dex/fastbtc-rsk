@@ -22,10 +22,18 @@
 </template>
 
 <script>
+import ErrorNotification from '@/components/error-notification';
 import moment from 'moment';
+import Order from '@/components/order';
+import Page from '@/components/page';
 
 export default {
   name: 'Orders',
+  components: {
+    'error-notification': ErrorNotification,
+    Order,
+    Page,
+  },
   data: () => ({
     expanded: [],
     error: '',

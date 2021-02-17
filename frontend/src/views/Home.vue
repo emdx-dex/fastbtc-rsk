@@ -105,12 +105,22 @@ import {
   UNCONFIRMED,
 } from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
+import ConfirmationModal from '@/components/confirmation-dialog';
+import ErrorNotification from '@/components/error-notification';
+import Order from '@/components/order';
+import Page from '@/components/page';
 
 const TRANSFER_MAX = process.env.VUE_APP_TRANSFER_MAX;
 const TRANSFER_MIN = process.env.VUE_APP_TRANSFER_MIN;
 
 export default {
   name: 'Home',
+  components: {
+    'confirmation-dialog': ConfirmationModal,
+    'error-notification': ErrorNotification,
+    Order,
+    Page,
+  },
   data: () => ({
     address: '',
     addressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
