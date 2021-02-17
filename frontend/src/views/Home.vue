@@ -98,12 +98,7 @@ import {
   remove as removeCookie,
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
-import {
-  CONFIRMED,
-  FAILED,
-  PENDING,
-  UNCONFIRMED,
-} from '../../../shared/status';
+import { CONFIRMED, PENDING, UNCONFIRMED } from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 import ConfirmationModal from '@/components/confirmation-dialog';
 import ErrorNotification from '@/components/error-notification';
@@ -228,6 +223,7 @@ export default {
       if (!_.isEmpty(order)) {
         const { id } = order;
         const status = [order.btc.status, order.rsk.status];
+        const allConfirmed = status.every((s) => _.isEqual(s, CONFIRMED));
 
         this.showOrderSummary = true;
         this.valid = false;
@@ -241,7 +237,7 @@ export default {
           this.interval = setInterval(() => {
             this.$store.dispatch('order/get', { id });
           }, ONE_MINUTE_IN_MILISECONDS);
-        } else if (status === CONFIRMED || status === FAILED) {
+        } else if (allConfirmed) {
           this.removePooling();
         }
       } else {

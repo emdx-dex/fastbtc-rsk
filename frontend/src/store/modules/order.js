@@ -56,14 +56,17 @@ export default {
         commit('ERROR_CREATE', error);
       }
     },
-    get: async ({ commit }, { id }) => {
+    get: async ({ commit, state }, { id }) => {
       commit('BEFORE_FETCH');
 
       try {
+        const currentOrder = _.get(state, 'order.id');
         const response = await getOrder({ id });
         const order = _.get(response, 'data.order');
 
-        commit('SUCCESS_FETCH', order);
+        if (_.isEmpty(currentOrder) || _.isEqual(order.id, currentOrder)) {
+          commit('SUCCESS_FETCH', order);
+        }
       } catch (error) {
         commit('ERROR_FETCH', error);
       }
