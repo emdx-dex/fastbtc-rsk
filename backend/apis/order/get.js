@@ -23,8 +23,8 @@ router.get('/:id', async (req, res) => {
     /**
      * Esto se reemplaza por socket en el futuro, pero por ahora con el estado que viene de orden va a alcanzar.
      */
-    // const btcBlockNumber = await getBlockNumber();
-    // const rskBlockNumber = await getRSKBlockNumber();
+    const btcBlockNumber = await getBlockNumber();
+    const rskBlockNumber = await getRSKBlockNumber();
 
     return res.json({
       data: {
