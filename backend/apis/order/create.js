@@ -3,12 +3,15 @@ const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
 const { BTC, RSK } = require('../../../shared/chains');
 const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
 const { getBlockHeight } = require('../../utils/block-height');
+const { isAddressValid } = require('../../utils/address');
 const { registerAddress } = require('../../utils/blocknative');
 const addressesModel = require('../../models/addresses');
+const bitcoinjs = require('bitcoinjs-lib');
 const express = require('express');
 const ordersModel = require('../../models/orders');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
+const BTC_NETWORK = process.env.BTC_NETWORK;
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
@@ -35,6 +38,20 @@ router.post('/', async (req, res) => {
     return res.status(400).json({
       error: 'value is a required parameter.'
     });
+  }
+
+  if (_.isEqual(flow, RBTC_TO_BTC)) {
+    const network = _.isEqual(BTC_NETWORK, 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
+
+    if (!isAddressValid(btc.address, network)) {
+      return res.status(400).json({
+        error: {
+          form: {
+            address: 'Recipient address must be a valid BTC address.'
+          }
+        }
+      });
+    }
   }
 
   try {

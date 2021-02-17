@@ -12,23 +12,16 @@
 
 <script>
 import _ from 'lodash';
-// import { VBtn, VSnackbar } from 'vuetify/lib';
 
 export default {
   name: 'error-notification',
-  // components: {
-  //   VBtn,
-  //   VSnackbar,
-  // },
   data: () => ({
     open: false,
   }),
   props: ['error'],
   watch: {
-    error: function (newVal, oldVal) {
-      if (!_.isEqual(newVal, oldVal)) {
-        this.open = true;
-      }
+    error: function (newError, oldError) {
+      this.open = _.isString(newError) && !_.isEqual(newError, oldError);
     },
   },
 };

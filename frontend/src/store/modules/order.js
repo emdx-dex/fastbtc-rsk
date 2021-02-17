@@ -13,6 +13,7 @@ export default {
   mutations: {
     BEFORE_CREATE(state) {
       state.creating = true;
+      state.error = null;
       state.order = [];
     },
     SUCCESS_CREATE(state, order) {
@@ -24,6 +25,7 @@ export default {
       state.error = error;
     },
     BEFORE_FETCH(state) {
+      state.error = null;
       state.loading = true;
     },
     SUCCESS_FETCH(state, order) {
