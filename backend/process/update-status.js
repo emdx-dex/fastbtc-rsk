@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING } = require('../../shared/status');
+const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, PENDING } = require('../../shared/status');
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
@@ -47,23 +47,13 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
       */
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
         console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
-        
+
         order.rsk.status = CONFIRMED;
 
         /* 
-        
-          automatico	0.02
-          manual	0.1
+          automatico	hot_wallet 0.02
+          manual	hot_wallet 0.1
           multi-sig	0.2
-
-          if(order.value <= 0.02){
-            signedTx && relayAutomático
-          }else if(order.value > 0.02 && order.value <= 0.1){
-            rawUnsignedTx de hot wallet && guardo en base para posterior firma y envio
-          }else if(order.value > 0.1){
-            rawUnsignedTx de MultiSig && guardo en base para posterior firma(s) y relay.
-          }
-
         */
         const BTC_UNIT = 100000000;
         let network = bitcoinjs.networks.testnet;
@@ -143,12 +133,13 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
            */
         } else if (_VALUE_BTC > 0.1) {
-          
+
           /**
            * Acá hay un tema: cómo manejar los UTXO de los fondos, porque al no ser una address particular hay que escanear todos los UTXOs asociados a todas las direcciones derivadas que alguna vez recibieron fondos.
            * 
            * Se dispara alerta en Telegram y se maneja desde adentro de 
            */
+          order.btc.status = MULTISIG_PENDING;
 
         }
 
@@ -168,11 +159,15 @@ async function updateStatus() {
     const orders = await ordersModel.find({
       '$or': [
         { 'btc.status': UNCONFIRMED },
+        { 'btc.status': SIGNATURE_PENDING },
+        { 'btc.status': MULTISIG_PENDING },
         { 'rsk.status': UNCONFIRMED }
-      ]
+      ],
+      deleted: false
     });
     const btcBlockHeight = await getBlockNumber();
     const rskBlockHeight = await getRSKBlockNumber();
+
     const promises = orders.map((order) => {
       return new Promise(async (resolve, reject) => {
         try {
@@ -220,17 +215,50 @@ async function updateStatus() {
           ) {
 
             /**
-             *TODO:// Acá el problema de esto es que no puedo chequear los btcConfirmations porque no tengo el order.btc.txId (el hash de cuando
-             * se hace relay) y por lo tanto no puedo ver cuantas confirmaciones pasaron desde el envio.
-             * Opciones:
-             * 1. Hacerlo manual, cuando el admin haga la tx, damos un input en el form de ordenes que le pega a un endpoint que setea el id
-             * 2. Buscar alguna combinación de from/to/utxos, etc que me permita tener el txId y ver las confirmaciones
+             * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
+             */
+            if (!order.btc.txId)
+              return;
+
+            /**
+             * Disparar alerta a grupo Telegram con:
+             * order.btc.status
+             * order.btc.value
+             * order.btc.unsignedRawHexTx;
              */
 
-            // const confirmations = await getBTCTxConfirmations(order.btc.txId);
-            // if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-            //   order.btc.status = CONFIRMED;
-            // }
+            //telegramSendAlert();
+
+            let confirmations = await getBTCTxConfirmations(order.btc.txId);
+            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+              order.btc.status = CONFIRMED;
+            }
+
+          } else if (//caso 3: order value desde MULTISIG
+            order.flow === RBTC_TO_BTC &&
+            order.rsk.status === CONFIRMED &&
+            order.btc.status === MULTISIG_PENDING
+          ) {
+
+            /**
+             * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
+             */
+            if (!order.btc.txId)
+              return;
+
+            /**
+             * Disparar alerta a grupo Telegram con:
+             * order.btc.status
+             * order.btc.address (es el TO);
+             * order.btc.value
+             */
+
+            //telegramSendAlert();
+
+            let confirmations = await getBTCTxConfirmations(order.btc.txId);
+            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+              order.btc.status = CONFIRMED;
+            }
 
           }
 
@@ -258,17 +286,46 @@ async function updateStatus() {
   }
 }
 
+async function cleanUpOrders() {
+
+  /**
+   * Busco ordenes que no estan borradas
+   * Que estan en pending
+   * el createdAt - now >= 2hs
+   * unwatch de la adddr si el flow es btc a rbtc
+   * pongo la orden en deleted: true
+   */
+
+  const _1HourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  let orders = await ordersModel.find({
+    $and: [
+      {
+        'btc.status': PENDING,
+        'rsk.status': PENDING,
+        createdAt: {
+          $lt: _1HourAgo
+        }
+      }
+    ]
+  });
+  console.log(orders);
+  return;
+
+}
+
 // TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
   require('../utils/connection');
 
   const ONE_MINUTE_IN_MILISECONDS = 60000;
 
-  await updateStatus();
-  //agregar cleanUp();
-
+  //await updateStatus();
+  //await cleanUpOrders();
+  await cleanUpOrders();
   setInterval(async () => {
-    await updateStatus();
+    //await updateStatus();
+    await cleanUpOrders();
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
 
