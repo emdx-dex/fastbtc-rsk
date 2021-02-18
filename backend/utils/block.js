@@ -15,9 +15,9 @@ async function connect() {
   try {
     if (_.isEmpty(client)) {
       client = new ElectrumClient(
-        process.env.BTC_ELECTRUM_URI,
-        process.env.BTC_ELECTRUM_PORT,
-        process.env.BTC_ELECTRUM_PROTOCOL
+        BTC_ELECTRUM_URI,
+        BTC_ELECTRUM_PORT,
+        BTC_ELECTRUM_PROTOCOL
       );
       await client.connect();
     }
@@ -33,10 +33,10 @@ async function connect() {
  */
 async function getBlockNumberApi() {
   try {
-    
+
     const response = await axios.get(`${BTC_INFO_URL}/blocks?limit=1`);
     const blockNumber = _.get(response, 'data.data[0].id', {});
-    
+
     return blockNumber;
   } catch (error) {
     console.log(error);
@@ -66,21 +66,21 @@ async function getBlockNumberElectrumX() {
  * Si fallo intento de la api de Blockchair
  * Sino devuelvo -1 y alerto.
  */
-async function getBlockNumber(){
+async function getBlockNumber() {
 
   let latestBlock;
 
   latestBlock = await getBlockNumberElectrumX();
 
-  if(latestBlock != -1)
+  if (latestBlock != -1)
     return latestBlock;
 
   //Alert()
   latestBlock = await getBlockNumberApi();
 
-  if(latestBlock != -1)
+  if (latestBlock != -1)
     return latestBlock;
-  
+
   //Alert()
   return -1;
 
