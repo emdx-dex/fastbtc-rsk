@@ -249,12 +249,11 @@ async function updateStatus() {
             /**
              * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
              */
-            if (!order.btc.txId)
-              return;
-
-            let confirmations = await getBTCTxConfirmations(order.btc.txId);
-            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-              order.btc.status = CONFIRMED;
+            if (order.btc.txId) {
+              let confirmations = await getBTCTxConfirmations(order.btc.txId);
+              if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+                order.btc.status = CONFIRMED;
+              }
             }
 
           } else if (//caso 3: order value desde MULTISIG
@@ -266,12 +265,11 @@ async function updateStatus() {
             /**
              * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
              */
-            if (!order.btc.txId)
-              return;
-
-            let confirmations = await getBTCTxConfirmations(order.btc.txId);
-            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-              order.btc.status = CONFIRMED;
+            if (order.btc.txId) {
+              let confirmations = await getBTCTxConfirmations(order.btc.txId);
+              if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+                order.btc.status = CONFIRMED;
+              }
             }
 
           }
