@@ -13,6 +13,7 @@ export default {
   mutations: {
     BEFORE_CREATE(state) {
       state.creating = true;
+      state.error = null;
       state.order = [];
     },
     SUCCESS_CREATE(state, order) {
@@ -24,6 +25,7 @@ export default {
       state.error = error;
     },
     BEFORE_FETCH(state) {
+      state.error = null;
       state.loading = true;
     },
     SUCCESS_FETCH(state, order) {
@@ -56,14 +58,17 @@ export default {
         commit('ERROR_CREATE', error);
       }
     },
-    get: async ({ commit }, { id }) => {
+    get: async ({ commit, state }, { id }) => {
       commit('BEFORE_FETCH');
 
       try {
+        const currentOrder = _.get(state, 'order.id');
         const response = await getOrder({ id });
         const order = _.get(response, 'data.order');
 
-        commit('SUCCESS_FETCH', order);
+        if (_.isEmpty(currentOrder) || _.isEqual(order.id, currentOrder)) {
+          commit('SUCCESS_FETCH', order);
+        }
       } catch (error) {
         commit('ERROR_FETCH', error);
       }

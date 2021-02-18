@@ -178,10 +178,11 @@ async function getAddressBalance(_address, _network = 'testnet') {
 }
 
 module.exports = {
-  sortBuffers: sortBuffers,
-  deriveAddresess: deriveAddresess,
-  getAddrNextIndex: getAddrNextIndex,
-  getAddressBalance: getAddressBalance,
-  deriveAddrByIndex: deriveAddrByIndex
+  deriveAddrByIndex,
+  deriveAddresess,
+  getAddressBalance,
+  getAddrNextIndex,
+  isAddressValid,
+  sortBuffers
 };
 

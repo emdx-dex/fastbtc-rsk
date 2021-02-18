@@ -19,27 +19,9 @@
 
 <script>
 import _ from 'lodash';
-// import {
-//   VBtn,
-//   VCard,
-//   VCardActions,
-//   VCardText,
-//   VCardTitle,
-//   VDialog,
-//   VSpacer,
-// } from 'vuetify/lib';
 
 export default {
   name: 'confirmation-dialog',
-  // components: {
-  //   VBtn,
-  //   VCard,
-  //   VCardActions,
-  //   VCardText,
-  //   VCardTitle,
-  //   VDialog,
-  //   VSpacer,
-  // },
   props: ['onCancel', 'onConfirm', 'show'],
   watch: {
     error: function (newVal, oldVal) {

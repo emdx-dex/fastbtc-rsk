@@ -36,7 +36,7 @@
         <v-col cols="12" md="12" v-if="isRbtcToBtc">
           <v-text-field
             :required="isRbtcToBtc"
-            :rules="senderAddressRule"
+            :rules="[senderAddressRule]"
             :label="fromCoin + ' Sender address (Source funds)'"
             v-model="senderAddress"
           ></v-text-field>
@@ -45,7 +45,8 @@
       <v-row>
         <v-col cols="12" md="12">
           <v-text-field
-            :rules="addressRule"
+            :error-messages="addressErrors"
+            :rules="[addressRule]"
             :label="
               toCoin +
               ' Recipient address ' +
@@ -98,17 +99,13 @@ import {
   remove as removeCookie,
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
-import {
-  CONFIRMED,
-  FAILED,
-  PENDING,
-  UNCONFIRMED,
-} from '../../../shared/status';
+import { CONFIRMED, PENDING, UNCONFIRMED } from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 import ConfirmationModal from '@/components/confirmation-dialog';
 import ErrorNotification from '@/components/error-notification';
 import Order from '@/components/order';
 import Page from '@/components/page';
+import Web3 from 'web3';
 
 const TRANSFER_MAX = process.env.VUE_APP_TRANSFER_MAX;
 const TRANSFER_MIN = process.env.VUE_APP_TRANSFER_MIN;
@@ -123,7 +120,7 @@ export default {
   },
   data: () => ({
     address: '',
-    addressRule: [(v) => !_.isEmpty(v) || 'Address is required.'],
+    addressErrors: [],
     error: '',
     flow: BTC_TO_RBTC,
     fromCoin: '',
@@ -131,7 +128,6 @@ export default {
     isRbtcToBtc: false,
     order: {},
     senderAddress: '',
-    senderAddressRule: [(v) => !_.isEmpty(v) || 'Sender address is required.'],
     showConfirmationDialog: false,
     showOrderSummary: false,
     toCoin: '',
@@ -147,6 +143,22 @@ export default {
     supportEmail: 'support@rsk.co',
   }),
   methods: {
+    addressRule(address) {
+      this.addressErrors = [];
+
+      switch (true) {
+        case _.isEmpty(address):
+          return 'Sender address is required.';
+
+        case this.flow === BTC_TO_RBTC && !Web3.utils.isAddress(address):
+          return 'Recipient address must be a valid RSK address.';
+
+        default:
+          this.$refs.form.resetValidation();
+
+          return true;
+      }
+    },
     async clear() {
       this.showConfirmationDialog = true;
     },
@@ -169,6 +181,18 @@ export default {
       clearInterval(this.interval);
 
       this.interval = null;
+    },
+    senderAddressRule(senderAddress) {
+      switch (true) {
+        case _.isEmpty(senderAddress):
+          return 'Sender address is required.';
+
+        case !Web3.utils.isAddress(senderAddress):
+          return 'Sender address must be a valid RSK address.';
+
+        default:
+          return true;
+      }
     },
     async submit() {
       const { address, senderAddress, value } = this;
@@ -217,7 +241,13 @@ export default {
   },
   watch: {
     '$store.state.order.error': function (error) {
+      const formErrors = _.get(error, 'form', {});
+
       this.error = error;
+
+      Object.keys(formErrors).forEach((key) => {
+        this[`${key}Errors`] = formErrors[key];
+      });
     },
     '$store.state.order.loading': function (loading) {
       this.loading = loading;
@@ -228,6 +258,7 @@ export default {
       if (!_.isEmpty(order)) {
         const { id } = order;
         const status = [order.btc.status, order.rsk.status];
+        const allConfirmed = status.every((s) => _.isEqual(s, CONFIRMED));
 
         this.showOrderSummary = true;
         this.valid = false;
@@ -241,7 +272,7 @@ export default {
           this.interval = setInterval(() => {
             this.$store.dispatch('order/get', { id });
           }, ONE_MINUTE_IN_MILISECONDS);
-        } else if (status === CONFIRMED || status === FAILED) {
+        } else if (allConfirmed) {
           this.removePooling();
         }
       } else {

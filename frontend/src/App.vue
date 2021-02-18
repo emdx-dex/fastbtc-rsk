@@ -35,18 +35,3 @@ export default {
   data: () => ({}),
 };
 </script>
-
-<style lang="scss" scoped>
-.app {
-  &__header {
-    &__link {
-      color: white;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
-}
-</style>
