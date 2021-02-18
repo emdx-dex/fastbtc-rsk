@@ -309,7 +309,7 @@ async function cleanUpOrders() {
         'btc.status': PENDING,
         'rsk.status': PENDING,
         createdAt: {
-          $gt: _XHourAgo
+          $lt: _XHourAgo
         },
         deleted: false
       }
