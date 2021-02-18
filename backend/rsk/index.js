@@ -3,6 +3,7 @@ const { FAILED, PENDING, UNCONFIRMED } = require('../../shared/status');
 const abi = require('../../contracts/abi/FastSwap.abi.json');
 const ordersModel = require('../models/orders');
 const Web3 = require('web3');
+const { sendTelegramAlert } = require('../utils/alerts');
 
 require('dotenv').config();
 
@@ -51,7 +52,7 @@ async function getTransactionReceipt(txId) {
   }
 }
 
-async function swapIn(destiny, _amount) {
+async function swapIn(destiny, _amount, _orderId) {
   return new Promise(async (resolve, reject) => {
     const contract = getContract();
     const web3 = getInstance();
@@ -79,7 +80,14 @@ async function swapIn(destiny, _amount) {
 
           resolve(hash);
         })
-        .on('error', (error) => {
+        .on('error', async (error) => {
+          let msgToAlert = `Failed to execute rsk sawpIn() tx.\n 
+                            OrderId: ${_orderId}\n 
+                            To: ${destiny}\n 
+                            Value: ${_amount}\n 
+                            RawTx:  ${rawTransaction}`;
+
+          sendTelegramAlert(msgToAlert);
           reject(error);
         });
     } catch (error) {

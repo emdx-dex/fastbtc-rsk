@@ -4,6 +4,7 @@ const { getBlockNumber } = require('../../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../../rsk/index');
 const express = require('express');
 const ordersModel = require('../../models/orders');
+const { rateLimiter } = require('../../utils/rate-limiter');
 
 require('dotenv').config();
 
@@ -11,7 +12,7 @@ const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIR
 const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
 const router = express.Router();
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', rateLimiter, async (req, res) => {
   const { id } = req.params;
 
   try {
