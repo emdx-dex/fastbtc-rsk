@@ -5,6 +5,7 @@ const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
 const { getBlockHeight } = require('../../utils/block-height');
 const { isAddressValid } = require('../../utils/address');
 const { registerAddress } = require('../../utils/blocknative');
+const { rateLimiter } = require('../../utils/rate-limiter');
 const addressesModel = require('../../models/addresses');
 const bitcoinjs = require('bitcoinjs-lib');
 const express = require('express');
@@ -19,7 +20,7 @@ const router = express.Router();
 
 require('dotenv').config();
 
-router.post('/', async (req, res) => {
+router.post('/', rateLimiter, async (req, res) => {
   const { btc, flow, rsk, value } = req.body;
 
   if (_.isEmpty(flow)) {

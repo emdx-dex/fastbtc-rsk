@@ -27,7 +27,7 @@ const ordersSchema = new Schema({
   },
   flow: {
     default: FLOWS.BTC_TO_RBTC,
-    enum : Object.values(FLOWS),
+    enum: Object.values(FLOWS),
     type: String
   },
   rsk: {
@@ -41,7 +41,11 @@ const ordersSchema = new Schema({
     },
     txId: String
   },
-  value: String
+  value: String,
+  deleted: {
+    type: Boolean,
+    default: false
+  }
 }, schemaConfig);
 
 const ordersModel = model('ordersModel', ordersSchema);
