@@ -346,13 +346,14 @@ async function cleanUpOrders() {
   require('../utils/connection');
 
   const ONE_MINUTE_IN_MILISECONDS = 60000;
-
+  
+  await cleanUpOrders();
   await updateStatus();
 
   //await cleanUpOrders();
   setInterval(async () => {
-    await updateStatus();
     await cleanUpOrders();
+    await updateStatus();
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
 
