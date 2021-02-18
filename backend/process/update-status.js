@@ -133,20 +133,20 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             );
 
             order.btc.status = SIGNATURE_PENDING;
-            order.btc.unsignedRawHexTx = unsignedRawHexTx.rawTx;
+            order.btc.unsignedRawHexTx = unsignedRawHexTx;
 
             /**
              * Disparar alerta a grupo Telegram con:
              * order.btc.status
              * order.value
-             * order.btc.unsignedRawHexTx;
+             * unsignedRawHexTx.rawTx;
              */
 
             let rawHexMsg = `Order: ${order._id}\n 
                             Status: ${order.btc.status}\n
                             Value: ${order.value}\n 
                             Ready to sign from HOT_WALLET \n 
-                            rawHex: ${order.btc.unsignedRawHexTx}`;
+                            rawHex: ${unsignedRawHexTx.rawTx}`;
 
             sendTelegramAlert(rawHexMsg);
 

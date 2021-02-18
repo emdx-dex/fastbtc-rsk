@@ -17,7 +17,7 @@ const ordersSchema = new Schema({
     block: String,
     fee: String,
     rawTransaction: Object,
-    unsignedRawHexTx: String,
+    unsignedRawHexTx: Object,
     status: {
       default: STATUS.PENDING,
       enum: Object.values(STATUS),
