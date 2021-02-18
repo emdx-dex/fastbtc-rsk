@@ -10,18 +10,36 @@ const BTC_ELECTRUM_PROTOCOL = process.env.BTC_ELECTRUM_PROTOCOL;
 const BTC_ELECTRUM_URI = process.env.BTC_ELECTRUM_URI;
 const BTC_INFO_URL = process.env.BTC_INFO_URL;
 
-let client;
+// let client;
+
+// async function connect() {
+//   try {
+//     if (_.isEmpty(client)) {
+//       client = new ElectrumClient(
+//         BTC_ELECTRUM_URI,
+//         BTC_ELECTRUM_PORT,
+//         BTC_ELECTRUM_PROTOCOL
+//       );
+//       await client.connect();
+//     }
+//     return client;
+//   } catch (error) {
+//     console.log(error);
+//     return error;
+//   }
+// };
+
+
 
 async function connect() {
   try {
-    if (_.isEmpty(client)) {
-      client = new ElectrumClient(
-        BTC_ELECTRUM_URI,
-        BTC_ELECTRUM_PORT,
-        BTC_ELECTRUM_PROTOCOL
-      );
-      await client.connect();
-    }
+    let client;
+    client = new ElectrumClient(
+      BTC_ELECTRUM_URI,
+      BTC_ELECTRUM_PORT,
+      BTC_ELECTRUM_PROTOCOL
+    );
+    await client.connect();
     return client;
   } catch (error) {
     console.log(error);
