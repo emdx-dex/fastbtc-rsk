@@ -101,10 +101,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             order.btc.txId = broadcastedTxId;
             order.btc.status = UNCONFIRMED;
 
-            let depositMsg = `Order: ${order._id}\n 
-                              Flow: ${RBTC_TO_BTC}\n 
-                              Value: ${order.value} BTC\n 
-                              TxId: ${order.btc.txId}`;
+            let depositMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Value: ${order.value} BTC\n TxId: ${order.btc.txId}`;
 
             sendTelegramAlert(depositMsg);
 
@@ -142,12 +139,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
              * unsignedRawHexTx.rawTx;
              */
 
-            let rawHexMsg = `Order: ${order._id}\n 
-                            Status: ${order.btc.status}\n
-                            Value: ${order.value}\n 
-                            Ready to sign from HOT_WALLET \n 
-                            rawHex: ${unsignedRawHexTx.rawTx}`;
-
+            let rawHexMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.value} BTC\n Ready to sign from HOT_WALLET\n rawHex: ${unsignedRawHexTx.rawTx}`;
             sendTelegramAlert(rawHexMsg);
 
           } catch (error) {
@@ -166,15 +158,11 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            */
           order.btc.status = MULTISIG_PENDING;
 
-          let multisigTxMsg = `Order: ${order._id}\n 
-                                Status: ${order.btc.status}\n
-                                Value: ${order.value}\n 
-                                Ready to sign from MULTISIG_WALLET \n`;
+          let multisigTxMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.value} BTC\n Ready to sign from MULTISIG_WALLET \n`;
 
           sendTelegramAlert(multisigTxMsg);
 
         }//else if multiSig
-
 
       }// if chain === RSK && _.isEmpty(order.btc.txId))
 
