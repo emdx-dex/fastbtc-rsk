@@ -62,12 +62,11 @@ async function swapIn(destiny, _amount) {
       const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress);
-      // TODO: Change this for a safe gas margin and move to .env
-      const txCost = 23000;
+      const safeMarginGas = gas * 0.1;
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
-        gas: web3.utils.toHex(gas + txCost),
+        gas: web3.utils.toHex(gas + safeMarginGas),
         gasPrice: web3.utils.toHex(gasPrice),
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
