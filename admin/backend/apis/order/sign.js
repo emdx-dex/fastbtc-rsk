@@ -10,12 +10,11 @@ const router = express.Router();
 
 router.put('/', async (req, res) => {
   try {
-
     let { id, txId } = req.body;
 
     if (!id || !txId)
-      return res.status(200).json({
-        error: 'Missing Parameters'
+      return res.status(400).json({
+        error: 'Missing Parameters.'
       });
 
     let filter = {
@@ -25,10 +24,11 @@ router.put('/', async (req, res) => {
 
     const order = await ordersModel.findOne(filter);
 
-    if (_.isEmpty(order)) 
-    return res.status(404).json({
-      error: "Order not found"
-    });
+    if (_.isEmpty(order)) {
+      return res.status(404).json({
+        error: 'Order not found.'
+      });
+    }
 
     order.btc.status = UNCONFIRMED;
     order.btc.txId = txId;
@@ -36,7 +36,9 @@ router.put('/', async (req, res) => {
     let savedOrder = await order.save();
 
     return res.status(200).json({
-      order: savedOrder
+      data: {
+        order: savedOrder
+      }
     });
 
   } catch (error) {

@@ -16,6 +16,30 @@
           <order :order="item"></order>
         </td>
       </template>
+      <template v-slot:item.status="{ item }">
+        <div class="d-flex justify-center align-center">
+          <v-icon
+            color="success"
+            v-if="
+              !item.deleted &&
+              item.flow === 'RbtcToBtc' && 
+              (item.status === 'signature_pending' ||
+                item.status === 'multisig_pending')
+            "
+          >
+            mdi-draw
+          </v-icon>
+          <v-icon v-else-if="item.status === 'deleted'" color="error">
+            mdi-trash-can
+          </v-icon>
+          <span v-else></span>
+        </div>
+      </template>
+
+      <template v-slot:item.flow="{ item }">
+        <span v-if="item.flow === 'btcToRbtc'">BTC -> RBTC</span>
+        <span v-else-if="item.flow === 'RbtcToBtc'">RBTC -> BTC</span>
+      </template>
     </v-data-table>
     <error-notification :error="error"></error-notification>
   </page>
@@ -38,6 +62,11 @@ export default {
     expanded: [],
     error: '',
     headers: [
+      {
+        text: '',
+        value: 'status',
+        sortable: false,
+      },
       {
         class: 'orders__table__row--date',
         text: 'Date',
@@ -72,12 +101,15 @@ export default {
     },
     '$store.state.orders.orders': function (orders) {
       const formattedOrders = orders.map(
-        ({ createdAt, flow, id, value, ...order }) => {
+        ({ btc, createdAt, flow, deleted, id, value, ...order }) => {
           return {
             ...order,
+            btc,
             createdAt: moment(createdAt).format('DD/MM/YYYY hh:mm:ss'),
             flow,
+            deleted,
             id,
+            status: deleted ? 'deleted' : btc.status,
             value,
           };
         }

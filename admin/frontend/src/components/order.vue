@@ -142,6 +142,31 @@
           <p class="subtitle-1 text--primary">Value</p>
 
           <p class="font-weight-black headline">{{ value }} {{ toCoin() }}</p>
+
+          <div
+            v-if="
+              !deleted &&
+              flow === 'RbtcToBtc' &&
+              (transferStatus.status === 'signature_pending' ||
+                transferStatus.status === 'multisig_pending')
+            "
+          >
+            <v-form ref="form" v-model="valid" lazy-validation>
+              <v-text-field
+                :rules="txInputRules"
+                label="Transaction ID"
+                v-model="txInput"
+              ></v-text-field>
+              <v-btn
+                :disabled="!valid"
+                @click="submit"
+                class="mr-4"
+                color="success"
+              >
+                submit
+              </v-btn>
+            </v-form>
+          </div>
         </v-col>
       </v-row>
     </v-container>
@@ -164,22 +189,32 @@ export default {
   data: () => ({
     confirmations: '',
     coin: '',
+    deleted: false,
     depositAddress: '',
     depositStatus: {},
     depositTxId: '',
     flow: '',
+    id: '',
     rbtcSenderAddress: false,
     requiredConfirmations: '',
     transferAddress: '',
     transferStatus: {},
     transferTxId: '',
     txId: '',
+    txInput: '',
+    txInputRules: [(v) => !_.isEmpty(v) || 'Transaction ID is required.'],
+    valid: false,
     value: '',
   }),
   mounted: function () {
     this.initialize(this.order);
   },
   methods: {
+    copyToClipboard: async function (text) {
+      const method = await navigator.clipboard.writeText(text);
+
+      return method(text);
+    },
     fromAddressUrl: function (url) {
       const method =
         this.flow === BTC_TO_RBTC ? getBTCAddressUrl : getRSKAddressUrl;
@@ -197,11 +232,12 @@ export default {
     getRSKAddressUrl,
     initialize: function (order) {
       if (!_.isEmpty(order)) {
-        const { flow, value } = order;
+        const { id, deleted, flow, value } = order;
         const fromChain = flow === BTC_TO_RBTC ? 'btc' : 'rsk';
         const toChain = flow === BTC_TO_RBTC ? 'rsk' : 'btc';
 
         this.coin = flow === BTC_TO_RBTC ? SYMBOLS.BTC : SYMBOLS.RBTC;
+        this.deleted = deleted;
         this.depositAddress = order[fromChain].address;
         this.depositStatus = {
           confirmations: order[fromChain].confirmations,
@@ -210,6 +246,7 @@ export default {
         };
         this.depositTxId = order[fromChain].txId;
         this.flow = flow;
+        this.id = id;
         this.rbtcSenderAddress =
           flow === RBTC_TO_BTC ? order.rsk.senderAddress : false;
         this.transferAddress = order[toChain].address;
@@ -220,6 +257,16 @@ export default {
         };
         this.transferTxId = order[toChain].txId;
         this.value = value;
+      }
+    },
+    submit: function () {
+      const { id, txInput } = this;
+      const valid = this.$refs.form.validate();
+
+      if (valid) {
+        this.valid = false;
+
+        this.$store.dispatch('orders/sign', { id, txId: txInput });
       }
     },
     toCoin: function () {
@@ -235,11 +282,6 @@ export default {
         this.flow === BTC_TO_RBTC ? getRSKAddressUrl : getBTCAddressUrl;
 
       return method(url);
-    },
-    copyToClipboard: async (text) => {
-      const method = await navigator.clipboard.writeText(text);
-
-      return method(text);
     },
   },
   props: ['order'],
