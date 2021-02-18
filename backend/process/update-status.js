@@ -25,14 +25,17 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
   if (order[chain].status !== CONFIRMED && status === CONFIRMED) {
     if (order.flow === BTC_TO_RBTC) {
       if (chain === BTC && _.isEmpty(order.rsk.txId)) {
-        console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
 
         order.btc.status = CONFIRMED;
 
+        console.log(`Confirmed BTC tx ${order.btc.txId}`);
+        console.log(`Order Id: ${order._id}`);
+        console.log(`Flow: ${BTC_TO_RBTC}`);
+
         await unwatchAddress(order.btc.address);
 
-        console.log(`Sending transaction. Id: ${order.id}.`);
 
+        console.log(`Sending transaction RSK transaction`);
         // TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
         const transactionHash = await swapIn(order.rsk.address, order.value, order._id);
 
@@ -47,9 +50,12 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         Esto triggerea cuando del lado de RSK se confirma la tx al contrato pero todavia no se hizo la tx del lado de BTC
       */
       if (chain === RSK && _.isEmpty(order.btc.txId)) {
-        console.log(`Confirming. Id: ${order.id}. Chain: ${chain}`);
 
         order.rsk.status = CONFIRMED;
+
+        console.log(`Confirmed RSK tx ${order.rsk.txId}`);
+        console.log(`Order Id: ${order._id}`);
+        console.log(`Flow: ${RBTC_TO_BTC}`);
 
         /* 
           automatico	hot_wallet 0.02
@@ -95,7 +101,11 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             order.btc.txId = broadcastedTxId;
             order.btc.status = UNCONFIRMED;
 
-            let depositMsg = `Order: ${order._id} with value ${order.value} sent, txId: ${order.btc.txId}`;
+            let depositMsg = `Order: ${order._id}\n 
+                              Flow: ${RBTC_TO_BTC}\n 
+                              Value: ${order.value} BTC\n 
+                              TxId: ${order.btc.txId}`;
+
             sendTelegramAlert(depositMsg);
 
           } catch (error) {
@@ -303,6 +313,9 @@ async function cleanUpOrders() {
   const X = 2;
   const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
 
+  /**
+   * TODO: extender condicion a los 2 estados confirmados y que haya pasado N cantidad de tiempo.
+   */
   let orders = await ordersModel.find({
     $and: [
       {
@@ -346,7 +359,7 @@ async function cleanUpOrders() {
   require('../utils/connection');
 
   const ONE_MINUTE_IN_MILISECONDS = 60000;
-  
+
   await cleanUpOrders();
   await updateStatus();
 
