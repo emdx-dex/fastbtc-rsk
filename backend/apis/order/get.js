@@ -16,7 +16,13 @@ router.get('/:id', rateLimiter, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const order = await ordersModel.findById(id);
+    /**
+     * Busco la orden por id pero que no esté marcada como deleted.
+     */
+    const order = await ordersModel.findOne({
+      _id: id,
+      deleted: false
+    });
 
     if (_.isEmpty(order)) return res.sendStatus(404);
 
