@@ -5,6 +5,7 @@ const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, PENDING } = require('
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
+const { sendTelegramAlert } = require('../utils/alerts');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
@@ -94,6 +95,9 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             order.btc.txId = broadcastedTxId;
             order.btc.status = UNCONFIRMED;
 
+            let depositMsg = `Order: ${order._id} with value ${order.value} sent, txId: ${order.btc.txId}`;
+            sendTelegramAlert(depositMsg);
+
           } catch (error) {
             console.log(error);
             throw ("Error creating or relaying signed transaction")
@@ -120,9 +124,21 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
             order.btc.status = SIGNATURE_PENDING;
             order.btc.unsignedRawHexTx = unsignedRawHexTx;
+
             /**
-             * Endpoint backen para setear txId;
+             * Disparar alerta a grupo Telegram con:
+             * order.btc.status
+             * order.btc.value
+             * order.btc.unsignedRawHexTx;
              */
+
+            let rawHexMsg = `Order: ${order._id}\n 
+                            Status: ${order.btc.status}\n
+                            Value: ${order.btc.value}\n 
+                            Ready to sign from HOT_WALLET \n 
+                            rawHex: ${order.btc.unsignedRawHexTx}`;
+
+            sendTelegramAlert(rawHexMsg);
 
           } catch (error) {
             console.log(error);
@@ -135,13 +151,19 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         } else if (_VALUE_BTC > 0.1) {
 
           /**
-           * Acá hay un tema: cómo manejar los UTXO de los fondos, porque al no ser una address particular hay que escanear todos los UTXOs asociados a todas las direcciones derivadas que alguna vez recibieron fondos.
            * 
            * Se dispara alerta en Telegram y se maneja desde adentro de 
            */
           order.btc.status = MULTISIG_PENDING;
 
-        }
+          let multisigTxMsg = `Order: ${order._id}\n 
+                                Status: ${order.btc.status}\n
+                                Value: ${order.btc.value}\n 
+                                Ready to sign from MULTISIG_WALLET \n`;
+
+          sendTelegramAlert(multisigTxMsg);
+
+        }//else if multiSig
 
 
       }// if chain === RSK && _.isEmpty(order.btc.txId))
@@ -220,15 +242,6 @@ async function updateStatus() {
             if (!order.btc.txId)
               return;
 
-            /**
-             * Disparar alerta a grupo Telegram con:
-             * order.btc.status
-             * order.btc.value
-             * order.btc.unsignedRawHexTx;
-             */
-
-            //telegramSendAlert();
-
             let confirmations = await getBTCTxConfirmations(order.btc.txId);
             if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
               order.btc.status = CONFIRMED;
@@ -245,15 +258,6 @@ async function updateStatus() {
              */
             if (!order.btc.txId)
               return;
-
-            /**
-             * Disparar alerta a grupo Telegram con:
-             * order.btc.status
-             * order.btc.address (es el TO);
-             * order.btc.value
-             */
-
-            //telegramSendAlert();
 
             let confirmations = await getBTCTxConfirmations(order.btc.txId);
             if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
@@ -318,7 +322,7 @@ async function cleanUpOrders() {
       /**
      * Si el flow es de ida BTC a RBTC, limpio la address del hook de blocknative.
      */
-      if (order.flow === BTC_TO_RBTC){
+      if (order.flow === BTC_TO_RBTC) {
         let addr = order.btc.address;
         console.log(`Unwatching address: ${addr}`)
         await unwatchAddress(addr);
@@ -344,11 +348,11 @@ async function cleanUpOrders() {
   const ONE_MINUTE_IN_MILISECONDS = 60000;
 
   await updateStatus();
-  
+
   //await cleanUpOrders();
   setInterval(async () => {
     await updateStatus();
-    //await cleanUpOrders();
+    await cleanUpOrders();
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
 

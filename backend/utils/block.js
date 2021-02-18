@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const axios = require('axios');
 const ElectrumClient = require('@codewarriorr/electrum-client-js');
+const { sendTelegramAlert } = require('./alerts');
 
 require('dotenv').config();
 
@@ -53,6 +54,9 @@ async function getBlockNumberElectrumX() {
   try {
     const client = await connect();
     const { height } = await client.blockchain_headers_subscribe();
+    /**
+     * TODO: revisar si client.cose(); es necesario.
+     */
     return height;
   } catch (error) {
     console.log(error);
@@ -75,16 +79,16 @@ async function getBlockNumber() {
   if (latestBlock != -1)
     return latestBlock;
 
-  //Alert()
+  await sendTelegramAlert("Warning: failed to fetch Electrum block height, falling back to API query ..");
   latestBlock = await getBlockNumberApi();
 
   if (latestBlock != -1)
     return latestBlock;
 
-  //Alert()
+  await sendTelegramAlert("ALERT: failed to fetch Electrum and API block height, returning -1");
   return -1;
 
-}
+};
 
 module.exports = {
   getBlockNumber: getBlockNumber
