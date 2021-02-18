@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, PENDING } = require('../../shared/status');
+const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PENDING } = require('../../shared/status');
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
