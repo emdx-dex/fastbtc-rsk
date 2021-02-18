@@ -15,6 +15,9 @@
               <span class="font-weight-black">{{ rbtcSenderAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
+              <v-btn x-small class="mr-2" @click="copyToClipboard(rbtcSenderAddress)">
+                <v-icon size="18">mdi-content-copy</v-icon>
+              </v-btn>
               <a
                 :href="getRSKAddressUrl(rbtcSenderAddress)"
                 target="_blank"
@@ -40,6 +43,9 @@
               <span class="font-weight-black">{{ depositAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
+              <v-btn x-small class="mr-2" @click="copyToClipboard(depositAddress)">
+                <v-icon size="18">mdi-content-copy</v-icon>
+              </v-btn>
               <a
                 :href="fromAddressUrl(depositAddress)"
                 target="_blank"
@@ -61,9 +67,9 @@
               <span class="font-weight-black">{{ depositTxId }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <!-- <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(depositTxId)">
-                      <v-icon size="18">mdi-content-copy</v-icon>
-                    </v-btn> -->
+              <v-btn x-small class="mr-2" @click="copyToClipboard(depositTxId)">
+                <v-icon size="18">mdi-content-copy</v-icon>
+              </v-btn>
               <a
                 :href="fromTxUrl(depositTxId)"
                 target="_blank"
@@ -97,9 +103,9 @@
               <span class="font-weight-black">{{ transferAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <!-- <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferAddress)">
-                    <v-icon size="18">mdi-content-copy</v-icon>
-                  </v-btn> -->
+              <v-btn x-small class="mr-2" @click="copyToClipboard(transferAddress)">
+                <v-icon size="18">mdi-content-copy</v-icon>
+              </v-btn>
               <a
                 :href="toAddressUrl(transferAddress)"
                 target="_blank"
@@ -124,9 +130,9 @@
               <span class="font-weight-black">{{ transferTxId }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <!-- <v-btn x-small class="mr-2" :nativeOnClick="copyToClipboard(transferTxId)">
-                    <v-icon size="18">mdi-content-copy</v-icon>
-                  </v-btn> -->
+              <v-btn x-small class="mr-2" @click="copyToClipboard(transferTxId)">
+                <v-icon size="18">mdi-content-copy</v-icon>
+              </v-btn>
               <a
                 :href="toTxUrl(transferTxId)"
                 target="_blank"
@@ -236,10 +242,8 @@ export default {
 
       return method(url);
     },
-    copyToClipboard: async (text) => {
-      const method = await navigator.clipboard.writeText(text);
-
-      return method(text);
+    async copyToClipboard(text) {
+      await navigator.clipboard.writeText(text);
     },
   },
   props: ['order'],
