@@ -1,9 +1,7 @@
 <template>
-  <div class="page">
-    <v-card class="mx-auto" max-width="1024" elevation="0">
+    <v-container>
       <slot />
-    </v-card>
-  </div>
+    </v-container>
 </template>
 
 <script>

@@ -31,3 +31,9 @@ export default {
   data: () => ({}),
 };
 </script>
+
+<style>
+.background {
+  max-width: 1200px;
+}
+</style>

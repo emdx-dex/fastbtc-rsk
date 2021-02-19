@@ -57,17 +57,20 @@
           ></v-text-field>
         </v-col>
       </v-row>
+      <div class="order-alert">
+       <p v-show="timeToApproved">Order completion will take an estimate between {{ timeToApproved }}</p>
+      </div>
       <div class="home__form__footer">
         <v-btn :disabled="!valid" @click="submit" class="mr-4" color="success">
           submit
         </v-btn>
-        <v-btn @click="clear" class="mr-4"> clear order </v-btn>
+        <v-btn @click="clear" class="mr-4"> Delete order </v-btn>
       </div>
     </v-form>
     <div class="home__ordersummary" v-if="showOrderSummary">
       <v-card elevation="2">
         <v-card-title class="title text--primary">
-          Order details - {{ order._id }}
+          Order ID: #{{ order._id }}
         </v-card-title>
         <order :order="order"></order>
       </v-card>
@@ -283,5 +286,27 @@ export default {
       }
     },
   },
+  computed: {
+    timeToApproved(){
+      if(this.value >= 0.2){
+        return "2 to 8 hours"
+      }
+      else if(this.value >= 0.02){
+        return "60 to 120 minutes"
+      }
+      else if(this.value < 0.02 && this.value > 0) {
+        return "15 to 30 minutes"
+      }else {
+        return ""
+      }
+    }
+  }
 };
 </script>
+
+<style>
+.order-alert {
+  height: 10px;
+  font-size: 14px;
+}
+</style>

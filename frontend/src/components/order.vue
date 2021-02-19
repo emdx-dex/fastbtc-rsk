@@ -2,9 +2,9 @@
   <div class="order">
     <v-container class="lighten-5">
       <v-row>
-        <v-col cols="12" md="6">
+        <v-col lg="6" md="6" class="pa-8">
           <p
-            class="order__title subtitle-1 text--primary"
+            class="order__title subtitle-1 text--primary rsk-address"
             v-if="rbtcSenderAddress"
           >
             RBTC sender address
@@ -87,9 +87,7 @@
           <p class="font-weight-black headline">{{ value }} {{ fromCoin() }}</p>
         </v-col>
 
-        <v-spacer></v-spacer>
-
-        <v-col cols="12" md="6">
+        <v-col lg="6" md="6" class="pa-8">
           <p class="order__title subtitle-1 text--primary">
             {{ toCoin() }} recipient address
 
@@ -100,7 +98,7 @@
 
           <v-row class="d-flex align-center mb-2">
             <v-col class="col-10">
-              <span class="font-weight-black">{{ transferAddress }}</span>
+              <span class="font-weight-black rsk-address">{{ transferAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
               <v-btn x-small class="mr-2" @click="copyToClipboard(transferAddress)">
@@ -254,3 +252,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.rsk-address {
+  text-transform: lowercase!important;
+}
+</style>
