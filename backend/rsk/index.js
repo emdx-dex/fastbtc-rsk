@@ -32,7 +32,8 @@ function getContract() {
 
 async function getBlockNumber() {
   try {
-    const web3 = getInstance();
+    const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
+    const web3 = new Web3(web3Provider);
     const blockNumber = await web3.eth.getBlockNumber();
 
     return blockNumber;
