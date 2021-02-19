@@ -38,7 +38,7 @@ async function getBlockNumber() {
 
     return blockNumber;
   } catch (error) {
-    return 0;
+    return -1;
   }
 }
 
@@ -82,12 +82,7 @@ async function swapIn(destiny, _amount, _orderId) {
           resolve(hash);
         })
         .on('error', async (error) => {
-          let msgToAlert = `Failed to execute rsk sawpIn() tx.\n 
-                            OrderId: ${_orderId}\n 
-                            To: ${destiny}\n 
-                            Value: ${_amount}\n 
-                            RawTx:  ${rawTransaction}`;
-
+          let msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
           sendTelegramAlert(msgToAlert);
           reject(error);
         });

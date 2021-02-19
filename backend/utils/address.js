@@ -2,6 +2,11 @@ const addressesModel = require('../models/addresses');
 const bip32 = require('bip32');
 const bitcoinjs = require('bitcoinjs-lib');
 const ElectrumClient = require('@codewarriorr/electrum-client-js');
+const Web3 = require('web3');
+const { BTC } = require('../../shared/chains');
+
+let web3;
+
 
 require('dotenv').config();
 
@@ -146,13 +151,18 @@ function deriveAddrByIndex(_index) {
 }
 
 /**
- * 
+ * Returns address balance in BTC
  * @param {base58 Bitcoin address} _address string
  * @param {testnet|mainnet} _network string
  */
-async function getAddressBalance(_address, _network = 'testnet') {
+async function getBTCAddressBalance(_address, _network = 'testnet') {
 
-  if (!isAddressValid(_address, _network))
+  const BTC_UNIT = 100000000;
+  let network;
+
+  _network == 'testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.network.bitcoin;
+
+  if (!isAddressValid(_address, network))
     return "Invalid Address";
 
   try {
@@ -164,11 +174,11 @@ async function getAddressBalance(_address, _network = 'testnet') {
     const reversedHash = new Buffer.from(hash.reverse());
     const rScriptHash = reversedHash.toString('hex');
 
-    let balance = await client.blockchain_scripthash_get_balance(rScriptHash);
+    let balance = await client.blockchain_scripthash_getBalance(rScriptHash);
 
     await client.close();
 
-    return balance;
+    return balance.confirmed / BTC_UNIT;
 
   } catch (error) {
     console.log(error);
@@ -177,10 +187,40 @@ async function getAddressBalance(_address, _network = 'testnet') {
 
 }
 
+function getInstance() {
+  if (web3) return web3;
+
+  const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS);
+
+  web3 = new Web3(web3Provider);
+
+  return web3;
+}
+
+/**
+ * Returns Address balance in ETH.
+ * @param {RSK/ETH address} _addr String
+ */
+async function getRSKAddressBalance(_addr) {
+
+  try {
+    const web3 = getInstance();
+
+    let balance = await web3.eth.getBalance(_addr);
+
+    return web3.utils.fromWei(balance);
+  } catch (error) {
+    console.log(error);
+    return -1;
+  }
+
+}
+
 module.exports = {
   deriveAddrByIndex,
   deriveAddresess,
-  getAddressBalance,
+  getBTCAddressBalance,
+  getRSKAddressBalance,
   getAddrNextIndex,
   isAddressValid,
   sortBuffers
