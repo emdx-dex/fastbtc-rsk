@@ -1,8 +1,9 @@
+const _ = require('lodash');
+const { RBTC_TO_BTC } = require('../../../../shared/flows');
+const { UNCONFIRMED } = require('../../../../shared/status');
+const { validateTxId } = require('../../utils/transaction');
 const express = require('express');
 const ordersModel = require('../../models/orders');
-const { UNCONFIRMED } = require('../../../../shared/status');
-const { RBTC_TO_BTC } = require('../../../../shared/flows');
-const _ = require('lodash');
 
 require('dotenv').config();
 
@@ -12,10 +13,19 @@ router.put('/', async (req, res) => {
   try {
     let { id, txId } = req.body;
 
-    if (!id || !txId)
+    if (!id || !txId) {
       return res.status(400).json({
         error: 'Missing Parameters.'
       });
+    }
+
+    const isValid = await validateTxId(txId);
+
+    if (!isValid) {
+      return res.status(400).json({
+        error: 'Tx id is not valid.'
+      });
+    }
 
     let filter = {
       _id: id,

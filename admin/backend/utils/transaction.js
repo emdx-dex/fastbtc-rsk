@@ -1,7 +1,7 @@
-const ElectrumClient = require('@codewarriorr/electrum-client-js');
+const axios = require('axios');
 const bitcoinjs = require('bitcoinjs-lib');
 const coinSelect = require('coinselect')
-const axios = require('axios');
+const ElectrumClient = require('@codewarriorr/electrum-client-js');
 
 require('dotenv').config();
 
@@ -319,7 +319,7 @@ async function getBTCTxConfirmations(txId) {
 
     if (!txId)
       return "Missing txId (hash) parameter";
-    
+
     console.log(`Getting confirmations for tx: ${txId}`);
 
     let client = await connect();//TODO: check network/testnet before this
@@ -339,10 +339,24 @@ async function getBTCTxConfirmations(txId) {
   }
 }
 
+async function validateTxId(txId) {
+  try {
+    const client = await connect();
+    const tx = await client.blockchain_transaction_get(txId, true);
+    
+    await client.close();
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 module.exports = {
-  createUnsignedRawtx: createUnsignedRawtx,
-  createAndSignTx: createAndSignTx,
-  relaySignedTx: relaySignedTx,
-  getTxInfo: getTxInfo,
-  getBTCTxConfirmations: getBTCTxConfirmations
+  createAndSignTx,
+  createUnsignedRawtx,
+  getBTCTxConfirmations,
+  getTxInfo,
+  relaySignedTx,
+  validateTxId
 }
