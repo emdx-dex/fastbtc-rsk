@@ -312,7 +312,7 @@ async function cleanUpOrders() {
         },
         deleted: false
       }
-    ]
+    ]//TODO: borrar las ya confirmadas ~10 días.
   });
 
   await Promise.all(orders.map(async (order) => {

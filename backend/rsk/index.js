@@ -62,7 +62,7 @@ async function swapIn(destiny, _amount, _orderId) {
       const method = contract.methods.rbtcSwapIn(destiny, amount);
       const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
-      const nonce = await web3.eth.getTransactionCount(operatorAddress);
+      const nonce = await web3.eth.getTransactionCount(operatorAddress, "pending");
       const safeMarginGas = _.toInteger(gas * 0.1);
       const rawTx = {
         data: method.encodeABI(),
