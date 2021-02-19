@@ -7,7 +7,7 @@ export default (parameters) => {
       return data;
     })
     .catch(({ response }) => {
-      const error = _.get(response, 'data.error', 'Error signing the offer.');
+      const error = _.get(response, 'data.error', 'Wrong transaction ID.');
 
       throw (error);
     });
