@@ -6,6 +6,7 @@ const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRaw
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
 const { sendTelegramAlert } = require('../utils/alerts');
+const { getBTCAddressBalance, getRSKAddressBalance } = require('../utils/address');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
@@ -41,7 +42,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           const transactionHash = await swapIn(order.rsk.address, order.value, order._id);
 
           order.rsk.status = UNCONFIRMED;
-          order.rsk.txId = transactionHash;  
+          order.rsk.txId = transactionHash;
         } catch (error) {
           order.rsk.status = FAILED;
         }
@@ -343,6 +344,80 @@ async function cleanUpOrders() {
 
 }
 
+/**
+ * Get balances of RSKSWAP important addresses.
+ */
+async function fastSwapBalances() {
+
+  try {
+    let btcHotAddrBalance = await getBTCAddressBalance(process.env.BTC_HOT_WALLET_ADDR);
+    //let btcMultiSigAddrBalance = await getBTCAddressBalance();
+    let rskContractBalance = await getRSKAddressBalance(process.env.FAST_SWAP_ADDRESS.toLowerCase());
+
+    return {
+      btc: {
+        hot: {
+          address: process.env.BTC_HOT_WALLET_ADDR,
+          balance: btcHotAddrBalance
+        }
+      },
+      rsk: {
+        address: process.env.FAST_SWAP_ADDRESS,
+        balance: rskContractBalance
+      }
+    };
+
+  } catch (error) {
+    console.log(error);
+    return {};
+  }
+
+};
+
+/**
+ * 
+ * @param {Address to alert of} _addr String
+ * @param {balance} _value number
+ */
+async function lowBalanceAlert(_addr, _value) {
+
+  try {
+    let msg = `Address: ${_addr} with balance: ${_value} is running low.`
+    await sendTelegramAlert(msg);
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
+/**
+ * Check all balances and send Telegram alerts accordingly.
+ */
+async function checkBalances() {
+  try {
+
+    console.log("Checking fastswap balances ..");
+
+    let balances = await fastSwapBalances();
+
+    //TODO:Define ENV variables for threshold
+    const MIN_RSK_VALUE = 0.05;
+    const MIN_BTC_VALUE = 0.05;
+    
+    if (balances.rsk.balance <= MIN_RSK_VALUE)
+      await lowBalanceAlert(balances.rsk.address, balances.rsk.balance);
+
+    if (balances.btc.hot.balance <= MIN_BTC_VALUE)
+      await lowBalanceAlert(balances.btc.hot.address, balances.btc.hot.balance);
+
+    console.log("Fastswap balance check done, all good.");
+
+  } catch (error) {
+    console.log(error);
+    return -1;
+  }
+
+}
 
 // TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
@@ -351,12 +426,15 @@ async function cleanUpOrders() {
   const ONE_MINUTE_IN_MILISECONDS = 60000;
 
   await cleanUpOrders();
+  await checkBalances();
   await updateStatus();
 
-  //await cleanUpOrders();
   setInterval(async () => {
+
     await cleanUpOrders();
+    await checkBalances();
     await updateStatus();
+
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
 
