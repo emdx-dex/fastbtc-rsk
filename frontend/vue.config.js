@@ -13,4 +13,25 @@ module.exports = {
     'vuetify'
   ],
   runtimeCompiler: true,
+  /**
+   *   devServer: {
+    public: process.env.VUE_APP_PUBLIC,
+    hotOnly: true,
+    disableHostCheck: true,
+    proxy: {
+      '^/sockjs-node': {
+        target: process.env.VUE_APP_BACKEND_URL,
+        ws: true,
+        changeOrigin: true
+      },
+      '^/api': {
+        target: process.env.VUE_APP_BACKEND_URL,
+        ws: true,
+        changeOrigin: true
+      },
+    },
+    disableHostCheck: true
+  },
+  outputDir: process.env.VUE_BUILD_FOLDER,
+   */
 }
