@@ -24,7 +24,13 @@ router.get('/:id', rateLimiter, async (req, res) => {
       deleted: false
     });
 
-    if (_.isEmpty(order)) return res.sendStatus(404);
+    if (_.isEmpty(order)) { 
+      return res
+        .status(404)
+        .json({
+          error: 'The order has been expired or not exist'
+        }); 
+    }
 
     /**
      * Esto se reemplaza por socket en el futuro, pero por ahora con el estado que viene de orden va a alcanzar.
