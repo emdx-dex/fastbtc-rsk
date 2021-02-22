@@ -5,6 +5,7 @@ const express = require('express');
 const fs = require('fs');
 const logger = require('morgan');
 const history = require('connect-history-api-fallback');
+const { resolve } = require('path');
 
 require('dotenv').config();
 
@@ -33,7 +34,7 @@ const app = express();
  * Para servir VUE desde ExpressJS y en caso de que después sea multi pagina.
  */
 app.use(express.static(process.cwd()));
-const publicPath = resolve(__dirname, '../dist/')
+const publicPath = resolve(__dirname, 'dist/')
 const staticConf = { maxAge: '1y', etag: false }
 
 app.use(logger('combined', {
