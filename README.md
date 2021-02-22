@@ -23,7 +23,7 @@
 * Endpoint to set txId when manually executed on RBTC_TO_BTC flow and save into proper order [x] @maxidev
 * Add convesion rate btc<->rbtc taking operation_fee into account [] @maxidev
 * Enable function that check that the tx value sent to blocknative watchess address is >= to order value [] @maxidev
-
+* Add to package.json script to build production ready front end assets and serve from express [] @maxidev/@agustin
 ## Infrastructure overview
 
 ![alt text](./fast-btc.png)
