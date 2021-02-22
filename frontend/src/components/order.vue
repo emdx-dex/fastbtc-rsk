@@ -145,7 +145,7 @@
 
           <p class="subtitle-1 text--primary">Value</p>
 
-          <p class="font-weight-black headline">{{ value }} {{ toCoin() }}</p>
+          <p class="font-weight-black headline">{{ netValue }} {{ toCoin() }}</p>
         </v-col>
       </v-row>
     </v-container>
@@ -172,6 +172,7 @@ export default {
     depositStatus: {},
     depositTxId: '',
     flow: '',
+    netValue: '',
     rbtcSenderAddress: false,
     requiredConfirmations: '',
     transferAddress: '',
@@ -201,7 +202,7 @@ export default {
     getRSKAddressUrl,
     initialize: function (order) {
       if (!_.isEmpty(order)) {
-        const { flow, value } = order;
+        const { flow, netValue, value } = order;
         const fromChain = flow === BTC_TO_RBTC ? 'btc' : 'rsk';
         const toChain = flow === BTC_TO_RBTC ? 'rsk' : 'btc';
 
@@ -214,6 +215,7 @@ export default {
         };
         this.depositTxId = order[fromChain].txId;
         this.flow = flow;
+        this.netValue = netValue;
         this.rbtcSenderAddress =
           flow === RBTC_TO_BTC ? order.rsk.senderAddress : false;
         this.transferAddress = order[toChain].address;
