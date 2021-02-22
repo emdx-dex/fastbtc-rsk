@@ -4,7 +4,7 @@
 
 * [API](/docs/API.md)
 * [SETUP](/docs/SETUP.md)
-* [ADMIN PANEL SETUP](/docs/SETUP.md)
+* [ADMIN PANEL SETUP](/docs/ADMIN-SETUP.md)
 
 ### TODO
 
