@@ -1,6 +1,5 @@
 module.exports = {
   devServer: {
-    //open: process.platform === 'darwin',
     //host: '0.0.0.0',
     port: 5556, // CHANGE YOUR PORT HERE!
     //disableHostCheck: true,
@@ -13,4 +12,21 @@ module.exports = {
     'vuetify'
   ],
   runtimeCompiler: true,
+  outputDir: "../backend/dist"
+  /**
+   *   devServer: {
+    proxy: {
+      '^/sockjs-node': {
+        target: process.env.VUE_APP_BACKEND_URL,
+        ws: true,
+        changeOrigin: true
+      },
+      '^/api': {
+        target: process.env.VUE_APP_BACKEND_URL,
+        ws: true,
+        changeOrigin: true
+      },
+    },
+  },
+   */
 }

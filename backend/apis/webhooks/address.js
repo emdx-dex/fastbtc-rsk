@@ -20,12 +20,16 @@ router.post('/', async (req, res) => {
     watchedAddress
   } = req.body;
 
+  /**
+   * TODO: VALIDAR SOURCE DEL REQUEST, ojoo con el order 404 de abajo que puede unwatchear cosas mal, falta deleted: false.
+   */
+
   console.log("\n####### Blocknative webhook received");
   console.log("WatchedAdress:", watchedAddress);
   console.log("Status:", status);
   console.log("TxId:", txid);
   console.log("Block:", blockHeight);
-  console.log("####### Webhook end\n");
+  console.log("####### Blocknative webhook end\n");
 
   try {
     const order = await ordersModel.findOne({
