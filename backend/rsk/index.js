@@ -61,11 +61,10 @@ async function getTransactionReceipt(txId) {
  */
 async function swapIn(destiny, _amount, _orderId) {
   return new Promise(async (resolve, reject) => {
-    const contract = getContract();
-    const web3 = getInstance();
-    const amount = web3.utils.toWei(_amount);
-
     try {
+      const contract = getContract();
+      const web3 = getInstance();
+      const amount = web3.utils.toWei(_amount);
       const method = contract.methods.rbtcSwapIn(destiny, amount);
       const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();

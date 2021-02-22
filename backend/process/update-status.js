@@ -49,6 +49,8 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           order.rsk.txId = transactionHash;
         } catch (error) {
           order.rsk.status = FAILED;
+
+          throw(error);
         }
       }
     }
