@@ -39,7 +39,11 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         console.log(`Sending transaction RSK transaction`);
         // TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
         try {
-          const transactionHash = await swapIn(order.rsk.address, order.value, order._id);
+
+          /**
+           * Envio netValue: el usuario recibe del lado de RSK el valor de la orden menos el fee de operación.
+           */
+          const transactionHash = await swapIn(order.rsk.address, order.netValue, order._id);
 
           order.rsk.status = UNCONFIRMED;
           order.rsk.txId = transactionHash;
