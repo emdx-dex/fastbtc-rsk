@@ -5,6 +5,7 @@
         <v-col cols="12" md="5">
           <v-text-field
             :rules="valueRule"
+            @input="handleValueChange"
             label="Value"
             required
             single-line
@@ -26,7 +27,7 @@
             single-line
             tabindex="-1"
             type="number"
-            v-model="value"
+            v-model="netValue"
           >
             <div slot="append">{{ toCoin }}</div>
           </v-text-field>
@@ -110,6 +111,7 @@ import Order from '@/components/order';
 import Page from '@/components/page';
 import Web3 from 'web3';
 
+const OPERATION_FEE_PERCENT = process.env.VUE_APP_OPERATION_FEE_PERCENT;
 const TRANSFER_MAX = process.env.VUE_APP_TRANSFER_MAX;
 const TRANSFER_MIN = process.env.VUE_APP_TRANSFER_MIN;
 
@@ -129,6 +131,7 @@ export default {
     fromCoin: '',
     interval: null,
     isRbtcToBtc: false,
+    netValue: '',
     order: {},
     senderAddress: '',
     showConfirmationDialog: false,
@@ -179,6 +182,9 @@ export default {
       this.valid = true;
 
       this.removePooling();
+    },
+    handleValueChange(value) {
+      this.netValue = value - (value * OPERATION_FEE_PERCENT);
     },
     removePooling() {
       clearInterval(this.interval);

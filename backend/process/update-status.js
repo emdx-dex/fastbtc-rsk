@@ -300,55 +300,55 @@ async function updateStatus() {
  * pongo la orden en deleted: true
  */
 async function cleanUpOrders() {
+  try {
+    const X = 2;
+    const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
 
-  const X = 2;
-  const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
-
-  /**
-   * TODO: extender condicion a los 2 estados confirmados y que haya pasado N cantidad de tiempo.
-   */
-  let orders = await ordersModel.find({
-    $and: [
-      {
-        'btc.status': PENDING,
-        'rsk.status': PENDING,
-        createdAt: {
-          $lt: _XHourAgo
-        },
-        deleted: false
-      }
-    ]//TODO: borrar las ya confirmadas ~10 días.
-  });
-
-  await Promise.all(orders.map(async (order) => {
-
-    try {
-      /**
-     * Si el flow es de ida BTC a RBTC, limpio la address del hook de blocknative.
+    /**
+     * TODO: extender condicion a los 2 estados confirmados y que haya pasado N cantidad de tiempo.
      */
-      if (order.flow === BTC_TO_RBTC) {
-        let addr = order.btc.address;
-        console.log(`Unwatching address: ${addr}`)
-        await unwatchAddress(addr);
+    let orders = await ordersModel.find({
+      $and: [
+        {
+          'btc.status': PENDING,
+          'rsk.status': PENDING,
+          createdAt: {
+            $lt: _XHourAgo
+          },
+          deleted: false
+        }
+      ]//TODO: borrar las ya confirmadas ~10 días.
+    });
+
+    await Promise.all(orders.map(async (order) => {
+
+      try {
+        /**
+         * Si el flow es de ida BTC a RBTC, limpio la address del hook de blocknative.
+         */
+        if (order.flow === BTC_TO_RBTC) {
+          let addr = order.btc.address;
+          console.log(`Unwatching address: ${addr}`)
+          await unwatchAddress(addr);
+        }
+
+        order.deleted = true;
+        console.log(`Marking as deleted order _id: ${order._id}`);
+        await order.save();
+
+      } catch (error) {
+        console.log(error);
       }
-
-      order.deleted = true;
-      console.log(`Marking as deleted order _id: ${order._id}`);
-      await order.save();
-
-    } catch (error) {
-      console.log(error);
-    }
-
-  }));
-
+    }));
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 /**
  * Get balances of RSKSWAP important addresses.
  */
 async function fastSwapBalances() {
-
   try {
     let btcHotAddrBalance = await getBTCAddressBalance(process.env.BTC_HOT_WALLET_ADDR);
     //let btcMultiSigAddrBalance = await getBTCAddressBalance();
@@ -380,7 +380,6 @@ async function fastSwapBalances() {
  * @param {balance} _value number
  */
 async function lowBalanceAlert(_addr, _value) {
-
   try {
     let msg = `Address: ${_addr} with balance: ${_value} is running low.`
     await sendTelegramAlert(msg);
@@ -395,7 +394,6 @@ async function lowBalanceAlert(_addr, _value) {
  */
 async function checkBalances() {
   try {
-
     console.log("Checking fastswap balances ..");
 
     let balances = await fastSwapBalances();
@@ -403,7 +401,7 @@ async function checkBalances() {
     //TODO:Define ENV variables for threshold
     const MIN_RSK_VALUE = 0.05;
     const MIN_BTC_VALUE = 0.05;
-    
+
     if (balances.rsk.balance <= MIN_RSK_VALUE)
       await lowBalanceAlert(balances.rsk.address, balances.rsk.balance);
 
@@ -416,7 +414,6 @@ async function checkBalances() {
     console.log(error);
     return -1;
   }
-
 }
 
 // TODO: revisar que el tiempo sea optimo por cada chain.
@@ -437,7 +434,3 @@ async function checkBalances() {
 
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
-
-module.exports = {
-  updateStatus
-};
