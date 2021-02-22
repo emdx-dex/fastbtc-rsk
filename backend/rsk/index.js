@@ -53,6 +53,12 @@ async function getTransactionReceipt(txId) {
   }
 }
 
+/**
+ * Flow: BTC_TO_RBTC: cuando el usuario final recibe RBTC, previo depósito BTC.
+ * @param {eth address} destiny string  
+ * @param {_amount netValue to transfer} string
+ * @param {mongoID} _orderId string
+ */
 async function swapIn(destiny, _amount, _orderId) {
   return new Promise(async (resolve, reject) => {
     const contract = getContract();
@@ -108,7 +114,8 @@ function listenRBTCSwapOut() {
     try {
       const order = await ordersModel.findOne({
         'rsk.senderAddress': senderAddress,
-        'rsk.status': PENDING
+        'rsk.status': PENDING,
+        deleted: false
       });
 
       if (_.isEmpty(order)) return;
@@ -121,7 +128,7 @@ function listenRBTCSwapOut() {
 
         order.rsk.status = FAILED;
       } else {
-        console.log(`[RBTCSwapOut] Order ${order._id}: sent correct amount.`);
+        console.log(`[RBTCSwapOut] Order ${order._id}: user sent correct amount.`);
 
         order.rsk.block = blockNumber;
         order.rsk.status = UNCONFIRMED;
