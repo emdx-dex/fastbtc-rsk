@@ -10,9 +10,13 @@ let web3;
 
 require('dotenv').config();
 
+const BTC_ELECTRUM_PORT = process.env.BTC_ELECTRUM_PORT;
+const BTC_ELECTRUM_PROTOCOL = process.env.BTC_ELECTRUM_PROTOCOL;
+const BTC_ELECTRUM_URI = process.env.BTC_ELECTRUM_URI;
+
 /*
 2 of 2
-Cosigners: 
+Cosigners:
   - AB01: xpub6B7tTKXGVjdH99zkrPzdA8ybm9cL2b3c9oRB7RCQn38oRrGQkgMWEoCBbfL3SK5vreU8bg4XvTWW2YefRdLNxQzstZ9JM4Rdc63xd2yec2y
   - AB02:
 xpub6B1TUQ6VCqaNBdUA8u4ezd9SK2cYD2PZsqcJjYppgiwXBrGdrRTijvSU1DRfXPr5Lxo5EVKc6cDNt3Dok5PaWyuojyH9dWwEPwpvUMdBPxg
@@ -31,7 +35,7 @@ const NETWORK = (process.env.BLOCKCHAIN_ENV === 'testnet') ? bitcoinjs.networks.
 const XPUB1 = process.env.BTC_MULTISIG_XPUB1;
 const XPUB2 = process.env.BTC_MULTISIG_XPUB2;
 
-/* 
+/*
   Based on BIP-67 pubkeys must be lexographically sorted to create the multisig redeem script
   See: https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki
 */
@@ -42,15 +46,13 @@ function sortBuffers(bufArr) {
 async function connect() {
   try {
 
-    const client = new ElectrumClient(
-      "tn.not.fyi",
-      55002,
-      "ssl"
+    let client = new ElectrumClient(
+      BTC_ELECTRUM_URI,
+      BTC_ELECTRUM_PORT,
+      BTC_ELECTRUM_PROTOCOL
     );
 
     await client.connect();
-
-    console.log('------------------------------------------------');
 
     return client;
   } catch (error) {
@@ -73,7 +75,7 @@ function isAddressValid(address, _network) {
   }
 }
 
-/* 
+/*
   Function to batch derive N amount of multisig addresses based on ENV XPUBs
 */
 function deriveAddresess(_GAP_LIMIT) {
@@ -121,7 +123,7 @@ async function getAddrNextIndex() {
   return addresses.length == 0 ? 0 : addresses.length + 1;
 }
 
-/* 
+/*
   Return the next addr for the user to deposit based on the total addressess already used.
 */
 function deriveAddrByIndex(_index) {
