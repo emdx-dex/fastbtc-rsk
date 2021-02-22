@@ -4,6 +4,7 @@ const cors = require('cors');
 const express = require('express');
 const fs = require('fs');
 const logger = require('morgan');
+const history = require('connect-history-api-fallback');
 
 require('dotenv').config();
 
@@ -28,6 +29,13 @@ const accessLogStream = fs.createWriteStream(`${__dirname}/logs/access.log`, { f
 
 const app = express();
 
+/**
+ * Para servir VUE desde ExpressJS y en caso de que después sea multi pagina.
+ */
+app.use(express.static(process.cwd()));
+const publicPath = resolve(__dirname, '../dist/')
+const staticConf = { maxAge: '1y', etag: false }
+
 app.use(logger('combined', {
   stream: accessLogStream
 }));
@@ -47,6 +55,19 @@ const webhooks = require('./apis/webhooks');
 
 order(app);
 webhooks(app);
+
+app.use(express.static(publicPath, staticConf))
+app.use('/', history());
+
+
+app.all("*", (_req, res) => {
+  try {
+    res.sendFile(process.cwd() + "/dist/");
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Something went wrong" });
+  }
+});
 
 app.listen(process.env.PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV}`);
