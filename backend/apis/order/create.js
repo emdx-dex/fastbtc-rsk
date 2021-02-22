@@ -16,6 +16,9 @@ const BTC_NETWORK = process.env.BTC_NETWORK;
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
+const MAX_VALUE = process.env.APP_TRANSFER_MAX;
+const MIN_VALUE = process.env.APP_TRANSFER_MIN;
+
 const router = express.Router();
 
 require('dotenv').config();
@@ -55,11 +58,24 @@ router.post('/', rateLimiter, async (req, res) => {
     }
   }
 
+  /**
+   * Chequeo backend side que los valores esten dentro de los parámetros para evitar ataques con BURP client side.
+   */
+  if (Number(value) < MIN_VALUE || Number(value) > MAX_VALUE) {
+    return res.status(400).json({
+      error: 'Value error; check min/max caps.'
+    });
+  }
+
+  let netValue = Number(value) - (Number(value) * process.env.OPERATION_FEE_PERCENT);
+  
   try {
     const order = new ordersModel({
       rsk,
       flow,
-      value
+      value,
+      netValue: netValue,
+      operationFee: process.env.OPERATION_FEE_PERCENT
     });
 
     if (flow === BTC_TO_RBTC) {

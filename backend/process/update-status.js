@@ -69,18 +69,26 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         */
         const BTC_UNIT = 100000000;
         let network = bitcoinjs.networks.testnet;
-        let _VALUE_BTC = order.value;
-        let _VALUE_SATS = order.value * BTC_UNIT;//TODO: proper handle of stas.
+
+        /**
+         * Calculo con netValue de la orden que ya tiene descontados los fees.
+         */
+        let _NET_VALUE_BTC = order.netValue;
+        let _NET_VALUE_SATS = _NET_VALUE_BTC * BTC_UNIT;
+
         let _TO = order.btc.address;
+
         /**
          * Si el valor total de la orden es menor a 0.02 se puede hacer la
          * firma y relay automático de la tx
          */
-        if (_VALUE_BTC <= 0.02) {
+        if (_NET_VALUE_BTC <= 0.02) {
 
           try {
 
-            //Uso la HOT_WALLET definida en .ENV como origen de los fondos.
+            /**
+             * Uso la HOT_WALLET definida en .ENV como origen de los fondos.
+             */
             let _FROM = process.env.BTC_HOT_WALLET_ADDR;
             let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
 
@@ -89,7 +97,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
               network
             );
 
-            let createdSignedTx = await createAndSignTx(_FROM, _TO, _VALUE_SATS, RSKKeypair);
+            let createdSignedTx = await createAndSignTx(_FROM, _TO, _NET_VALUE_SATS, RSKKeypair);
 
             if (!createdSignedTx.signedRawTx) {
               console.log(createdSignedTx);
@@ -106,7 +114,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             order.btc.txId = broadcastedTxId;
             order.btc.status = UNCONFIRMED;
 
-            let depositMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Value: ${order.value} BTC\n TxId: ${order.btc.txId}`;
+            let depositMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Value: ${order.netValue} BTC\n TxId: ${order.btc.txId}`;
 
             sendTelegramAlert(depositMsg);
 
@@ -122,7 +130,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            * wallet para confirmar valores, revisar tx en general, firmar y 
            * enviar.
            */
-        } else if (_VALUE_BTC > 0.02 && _VALUE_BTC <= 0.1) {
+        } else if (_NET_VALUE_BTC > 0.02 && _NET_VALUE_BTC <= 0.1) {
 
           try {
 
@@ -131,7 +139,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             let unsignedRawHexTx = await createUnsignedRawtx(
               _FROM,
               _TO,
-              _VALUE_SATS
+              _NET_VALUE_SATS
             );
 
             order.btc.status = SIGNATURE_PENDING;
@@ -144,7 +152,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
              * unsignedRawHexTx.rawTx;
              */
 
-            let rawHexMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.value} BTC\n Ready to sign from HOT_WALLET\n rawHex: ${unsignedRawHexTx.rawTx}`;
+            let rawHexMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.netValue} BTC\n Ready to sign from HOT_WALLET\n rawHex: ${unsignedRawHexTx.rawTx}`;
             sendTelegramAlert(rawHexMsg);
 
           } catch (error) {
@@ -155,7 +163,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           /**
            * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
            */
-        } else if (_VALUE_BTC > 0.1) {
+        } else if (_NET_VALUE_BTC > 0.1) {
 
           /**
            * 
@@ -163,7 +171,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            */
           order.btc.status = MULTISIG_PENDING;
 
-          let multisigTxMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.value} BTC\n Ready to sign from MULTISIG_WALLET \n`;
+          let multisigTxMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.netValue} BTC\n Ready to sign from MULTISIG_WALLET \n`;
 
           sendTelegramAlert(multisigTxMsg);
 

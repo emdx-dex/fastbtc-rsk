@@ -45,7 +45,9 @@ const ordersSchema = new Schema({
     },
     txId: String
   },
-  value: String
+  value: String,
+  netValue: String,
+  operationFee: Number,
 }, schemaConfig);
 
 const ordersModel = model('ordersModel', ordersSchema);

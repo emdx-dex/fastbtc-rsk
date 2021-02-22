@@ -17,12 +17,17 @@ router.post('/', async (req, res) => {
     rawTransaction,
     status,
     txid,
-    watchedAddress
+    watchedAddress,
+    netBalanceChanges,
+    apiKey
   } = req.body;
 
   /**
-   * TODO: VALIDAR SOURCE DEL REQUEST, ojoo con el order 404 de abajo que puede unwatchear cosas mal, falta deleted: false.
+   * Reviso que esté apiKey en el request y lo comparo con la apiKey de blocknative para auth.
+   * En caso de fallar devuelvo http 401: unauthorized.
    */
+  if (!apiKey || apiKey != process.env.BLOCKNATIVE_APIKEY)
+    return res.sendStatus(401);
 
   console.log("\n####### Blocknative webhook received");
   console.log("WatchedAdress:", watchedAddress);
@@ -34,23 +39,32 @@ router.post('/', async (req, res) => {
   try {
     const order = await ordersModel.findOne({
       'btc.address': watchedAddress,
-      flow: FLOWS.BTC_TO_RBTC
+      flow: FLOWS.BTC_TO_RBTC,
+      deleted: false
     });
 
-    // TODO: What happened if user transfer less?
-    // const { delta } = netBalanceChanges.find(({ address }) => {
-    //   return address.toLowerCase() === watchedAddress;
-    // });
-
-    if (_.isEmpty(order)) {
-      /**
-       * Si no encuentra la orden, igual le devuelvo 200 status al webhook para que no siga llegando.
-       * Como la orden no existe más, le hago un unwatch al hook
-       */
-      console.log(`Order with address: ${watchedAddress} non existant, proceeding to unwatch that address.`)
-      await unwatchAddress(watchedAddress);
+    /**
+     * Si no encuentra la orden, igual le devuelvo 200 status al webhook para que no siga llegando.
+     */
+    if (_.isEmpty(order))
       return res.sendStatus(200);
-    }
+
+    /**
+     * Busco la dirección watcheAda y pongo en delta el value transferido
+     */
+    const { delta } = netBalanceChanges.find(({ address }) => {
+      return address === watchedAddress;
+    });
+
+    /**
+     * En delta tengo el valor que se transfirió a watchedAddress
+     * Por requerimiento:
+     * Si delta < value, el usuario se jode
+     * Si delta == value, ok triggereamos conversion
+     * Si delta > value, ok triggereamos conversion y después MANUALMENTE se le devuelve el excedente.
+     */
+    if (delta < Number(order.value))
+      return;
 
     // Se incluyo en el bloque de BTC pero no se mino
     if (status === STATUS.PENDING) {
