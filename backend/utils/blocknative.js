@@ -28,31 +28,29 @@ function registerAddress(address) {
   });
 }
 
-function unwatchAddress(address) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const options = {
-        data: {
-          address,
-          apiKey: process.env.BLOCKNATIVE_APIKEY,
-          blockchain: 'bitcoin',
-          networks: [process.env.BTC_NETWORK]
-        },
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8'
-        }
-      };
+async function unwatchAddress(address) {
+  try {
+    const options = {
+      data: {
+        address,
+        apiKey: process.env.BLOCKNATIVE_APIKEY,
+        blockchain: 'bitcoin',
+        networks: [process.env.BTC_NETWORK]
+      },
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8'
+      }
+    };
 
-      const response = await axios.delete(process.env.BLOCKNATIVE_ADDRESS, options);
-      const msg = _.get(response, 'data.msg');
+    const response = await axios.delete(process.env.BLOCKNATIVE_ADDRESS, options);
+    const msg = _.get(response, 'data.msg');
 
-      resolve(msg);
-    } catch (error) {
-      console.error(error);
+    return msg;
+  } catch (error) {
+    console.error(error);
 
-      resolve('Error removing hook');
-    }
-  });
+    return 'Error removing hook';
+  }
 }
 
 module.exports = {

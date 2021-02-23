@@ -1,25 +1,21 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PENDING } = require('../../shared/status');
+const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING } = require('../../shared/status');
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
 const { sendTelegramAlert } = require('../utils/alerts');
-const { getBTCAddressBalance, getRSKAddressBalance } = require('../utils/address');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
 const bitcoinjs = require('bitcoinjs-lib');
 const ordersModel = require('../models/orders');
-const { createWatchdogTimer } = require('watchdog-timer');
 
 require('dotenv').config();
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
-const MAX_VALUE = process.env.APP_TRANSFER_MAX;
-const MIN_VALUE = process.env.APP_TRANSFER_MIN;
 
 const network = process.env.BLOCKCHAIN_ENV;
 
@@ -199,6 +195,84 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
 }// function checkConfirmations();
 
+async function processOrder(order, btcBlockHeight, rskBlockHeight) {
+  try {
+    await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
+    await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
+
+    if (
+      order.flow === BTC_TO_RBTC &&
+      order.btc.status === CONFIRMED &&
+      order.rsk.status === UNCONFIRMED &&
+      order.rsk.txId
+    ) {
+      const receipt = await getTransactionReceipt(order.rsk.txId);
+      const blockNumber = _.get(receipt, 'blockNumber');
+      const status = _.get(receipt, 'status');
+
+      if (!_.isEmpty(receipt)) {
+        order.rsk.block = blockNumber;
+        order.rsk.status = (status) ?
+          ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
+          : FAILED;
+      } else {
+        order.rsk.status = UNCONFIRMED;
+      }
+    }
+
+    /* 
+      Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
+    */
+    if (
+      order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === UNCONFIRMED &&
+      order.btc.txId
+    ) {//caso 1 order value con txSigned hot_wallet y relay automático.
+      const confirmations = await getBTCTxConfirmations(order.btc.txId);
+
+      if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+        order.btc.status = CONFIRMED;
+      }
+    } else if (//caso 2: order value unsignedRawtx desde hot_wallet sin relay automático.
+      order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === SIGNATURE_PENDING
+    ) {
+
+      /**
+       * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
+       */
+      if (order.btc.txId) {
+        let confirmations = await getBTCTxConfirmations(order.btc.txId);
+        if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+          order.btc.status = CONFIRMED;
+        }
+      }
+
+    } else if (//caso 3: order value desde MULTISIG
+      order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === MULTISIG_PENDING
+    ) {
+
+      /**
+       * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
+       */
+      if (order.btc.txId) {
+        let confirmations = await getBTCTxConfirmations(order.btc.txId);
+        if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+          order.btc.status = CONFIRMED;
+        }
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    await order.save();
+  }
+}
+
 async function updateStatus() {
   console.log('Running update process...');
 
@@ -215,263 +289,14 @@ async function updateStatus() {
     const btcBlockHeight = await getBlockNumber();
     const rskBlockHeight = await getRSKBlockNumber();
 
-    const promises = orders.map((order) => {
-      return new Promise(async (resolve, reject) => {
-        try {
-          await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
-          await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
+    for (let index = 0; index < orders.length; index++) {
+      const order = orders[index];
 
-          if (
-            order.flow === BTC_TO_RBTC &&
-            order.btc.status === CONFIRMED &&
-            order.rsk.status === UNCONFIRMED &&
-            order.rsk.txId
-          ) {
-            const receipt = await getTransactionReceipt(order.rsk.txId);
-            const blockNumber = _.get(receipt, 'blockNumber');
-            const status = _.get(receipt, 'status');
-
-            if (!_.isEmpty(receipt)) {
-              order.rsk.block = blockNumber;
-              order.rsk.status = (status) ?
-                ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
-                : FAILED;
-            } else {
-              order.rsk.status = UNCONFIRMED;
-            }
-          }
-
-          /* 
-            Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
-          */
-          if (
-            order.flow === RBTC_TO_BTC &&
-            order.rsk.status === CONFIRMED &&
-            order.btc.status === UNCONFIRMED &&
-            order.btc.txId
-          ) {//caso 1 order value con txSigned hot_wallet y relay automático.
-            const confirmations = await getBTCTxConfirmations(order.btc.txId);
-
-            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-              order.btc.status = CONFIRMED;
-            }
-          } else if (//caso 2: order value unsignedRawtx desde hot_wallet sin relay automático.
-            order.flow === RBTC_TO_BTC &&
-            order.rsk.status === CONFIRMED &&
-            order.btc.status === SIGNATURE_PENDING
-          ) {
-
-            /**
-             * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
-             */
-            if (order.btc.txId) {
-              let confirmations = await getBTCTxConfirmations(order.btc.txId);
-              if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-                order.btc.status = CONFIRMED;
-              }
-            }
-
-          } else if (//caso 3: order value desde MULTISIG
-            order.flow === RBTC_TO_BTC &&
-            order.rsk.status === CONFIRMED &&
-            order.btc.status === MULTISIG_PENDING
-          ) {
-
-            /**
-             * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
-             */
-            if (order.btc.txId) {
-              let confirmations = await getBTCTxConfirmations(order.btc.txId);
-              if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-                order.btc.status = CONFIRMED;
-              }
-            }
-
-          }
-
-          resolve();
-        } catch (error) {
-          reject(error);
-        } finally {
-          await order.save();
-        }
-      });
-    });
-
-    Promise
-      .all(promises)
-      .then(() => { })
-      .catch((error) => {
-        console.log(error);
-      })
-      .finally(() => {
-        console.log('Finish update process.');
-      });
-
+      await processOrder(order, btcBlockHeight, rskBlockHeight);
+    }
   } catch (error) {
-    console.log(`[ERROR] Update status cron: ${error}`);
+    console.log(`[ERROR] Update status: ${error}`);
   }
 }
 
-
-/**
- * Busco ordenes que no estan borradas
- * Que estan en pending
- * el createdAt - now >= 2hs
- * unwatch de la adddr si el flow es btc a rbtc
- * pongo la orden en deleted: true
- */
-async function cleanUpOrders() {
-  console.log("Running cleanupOrders()");
-  try {
-    const X = 2;
-    const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
-
-    /**
-     * TODO: extender condicion a los 2 estados confirmados y que haya pasado N cantidad de tiempo.
-     */
-    let orders = await ordersModel.find({
-      $and: [
-        {
-          'btc.status': PENDING,
-          'rsk.status': PENDING,
-          createdAt: {
-            $lt: _XHourAgo
-          },
-          deleted: false
-        }
-      ]//TODO: borrar las ya confirmadas ~10 días.
-    });
-
-    await Promise.all(orders.map(async (order) => {
-
-      try {
-        /**
-         * Si el flow es de ida BTC a RBTC, limpio la address del hook de blocknative.
-         */
-        if (order.flow === BTC_TO_RBTC) {
-          let addr = order.btc.address;
-          console.log(`Unwatching address: ${addr}`)
-          await unwatchAddress(addr);
-        }
-
-        order.deleted = true;
-        console.log(`Marking as deleted order _id: ${order._id}`);
-        await order.save();
-
-      } catch (error) {
-        console.log(error);
-      }
-    }));
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-/**
- * Get balances of RSKSWAP important addresses.
- */
-async function fastSwapBalances() {
-  try {
-    let btcHotAddrBalance = await getBTCAddressBalance(process.env.BTC_HOT_WALLET_ADDR);
-    //let btcMultiSigAddrBalance = await getBTCAddressBalance();
-    let rskContractBalance = await getRSKAddressBalance(process.env.FAST_SWAP_ADDRESS.toLowerCase());
-
-    return {
-      btc: {
-        hot: {
-          address: process.env.BTC_HOT_WALLET_ADDR,
-          balance: btcHotAddrBalance
-        }
-      },
-      rsk: {
-        address: process.env.FAST_SWAP_ADDRESS,
-        balance: rskContractBalance
-      }
-    };
-
-  } catch (error) {
-    console.log(error);
-    return {};
-  }
-
-};
-
-/**
- * 
- * @param {Address to alert of} _addr String
- * @param {balance} _value number
- */
-async function lowBalanceAlert(_addr, _value) {
-  try {
-    let msg = `Address: ${_addr} with balance: ${_value} is running low.`
-    await sendTelegramAlert(msg);
-  } catch (error) {
-    console.log(error);
-    return error;
-  }
-}
-
-/**
- * Check all balances and send Telegram alerts accordingly.
- */
-async function checkBalances() {
-  try {
-    console.log("Checking fastswap balances ..");
-
-    let balances = await fastSwapBalances();
-
-    const MIN_RSK_VALUE = MIN_VALUE;
-    const MIN_BTC_VALUE = MIN_VALUE;
-
-    if (balances.rsk.balance <= MIN_RSK_VALUE)
-      await lowBalanceAlert(balances.rsk.address, balances.rsk.balance);
-
-    if (balances.btc.hot.balance <= MIN_BTC_VALUE)
-      await lowBalanceAlert(balances.btc.hot.address, balances.btc.hot.balance);
-
-    console.log("Fastswap balance check done, all good.");
-
-  } catch (error) {
-    console.log(error);
-    return -1;
-  }
-}
-
-// TODO: revisar que el tiempo sea optimo por cada chain.
-(async function () {
-  require('../utils/connection');
-
-  const ONE_MINUTE_IN_MILISECONDS = 60000;
-  const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 10000;
-
-  const watchdogTimer = createWatchdogTimer({
-    onTimeout: () => {
-      console.error('[-] Watchdog timer timeout; forcing program termination.');
-
-      process.nextTick(() => {
-        process.exit(1);
-      });
-    },
-    timeout: WATCHDOG_TIMEOUT_IN_MILISECONDS,
-  });
-
-  await cleanUpOrders();
-  await updateStatus();
-  await checkBalances();
-
-  setInterval(async () => {
-
-    /**
-     * Este es el reset del timer, si no pasa por acá durante WATCHDOG_TIMEOUT_IN_MILISECONDS mata el proceso.
-     * Comentar para deshabilitar watchdog.
-     */
-    watchdogTimer.reset();
-    console.log("WatchDog timer resets, no process killing ..\n");
-
-    await cleanUpOrders();
-    await updateStatus();
-    await checkBalances();
-
-  }, ONE_MINUTE_IN_MILISECONDS);
-}());
+module.exports = updateStatus;
