@@ -1,12 +1,11 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PENDING } = require('../../shared/status');
+const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING } = require('../../shared/status');
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
 const { sendTelegramAlert } = require('../utils/alerts');
-const { getBTCAddressBalance, getRSKAddressBalance } = require('../utils/address');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
@@ -196,6 +195,84 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
 }// function checkConfirmations();
 
+async function processOrder(order, btcBlockHeight, rskBlockHeight) {
+  try {
+    await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
+    await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
+
+    if (
+      order.flow === BTC_TO_RBTC &&
+      order.btc.status === CONFIRMED &&
+      order.rsk.status === UNCONFIRMED &&
+      order.rsk.txId
+    ) {
+      const receipt = await getTransactionReceipt(order.rsk.txId);
+      const blockNumber = _.get(receipt, 'blockNumber');
+      const status = _.get(receipt, 'status');
+
+      if (!_.isEmpty(receipt)) {
+        order.rsk.block = blockNumber;
+        order.rsk.status = (status) ?
+          ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
+          : FAILED;
+      } else {
+        order.rsk.status = UNCONFIRMED;
+      }
+    }
+
+    /* 
+      Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
+    */
+    if (
+      order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === UNCONFIRMED &&
+      order.btc.txId
+    ) {//caso 1 order value con txSigned hot_wallet y relay automático.
+      const confirmations = await getBTCTxConfirmations(order.btc.txId);
+
+      if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+        order.btc.status = CONFIRMED;
+      }
+    } else if (//caso 2: order value unsignedRawtx desde hot_wallet sin relay automático.
+      order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === SIGNATURE_PENDING
+    ) {
+
+      /**
+       * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
+       */
+      if (order.btc.txId) {
+        let confirmations = await getBTCTxConfirmations(order.btc.txId);
+        if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+          order.btc.status = CONFIRMED;
+        }
+      }
+
+    } else if (//caso 3: order value desde MULTISIG
+      order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === MULTISIG_PENDING
+    ) {
+
+      /**
+       * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
+       */
+      if (order.btc.txId) {
+        let confirmations = await getBTCTxConfirmations(order.btc.txId);
+        if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
+          order.btc.status = CONFIRMED;
+        }
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    await order.save();
+  }
+}
+
 async function updateStatus() {
   console.log('Running update process...');
 
@@ -212,99 +289,11 @@ async function updateStatus() {
     const btcBlockHeight = await getBlockNumber();
     const rskBlockHeight = await getRSKBlockNumber();
 
-    const promises = orders.map((order) => {
-      return new Promise(async (resolve, reject) => {
-        try {
-          await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
-          await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
+    for (let index = 0; index < array.length; index++) {
+      const order = orders[index];
 
-          if (
-            order.flow === BTC_TO_RBTC &&
-            order.btc.status === CONFIRMED &&
-            order.rsk.status === UNCONFIRMED &&
-            order.rsk.txId
-          ) {
-            const receipt = await getTransactionReceipt(order.rsk.txId);
-            const blockNumber = _.get(receipt, 'blockNumber');
-            const status = _.get(receipt, 'status');
-
-            if (!_.isEmpty(receipt)) {
-              order.rsk.block = blockNumber;
-              order.rsk.status = (status) ?
-                ((rskBlockHeight - blockNumber) >= RSK_BLOCK_HEIGHT_CONFIRMATION) ? CONFIRMED : UNCONFIRMED
-                : FAILED;
-            } else {
-              order.rsk.status = UNCONFIRMED;
-            }
-          }
-
-          /* 
-            Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
-          */
-          if (
-            order.flow === RBTC_TO_BTC &&
-            order.rsk.status === CONFIRMED &&
-            order.btc.status === UNCONFIRMED &&
-            order.btc.txId
-          ) {//caso 1 order value con txSigned hot_wallet y relay automático.
-            const confirmations = await getBTCTxConfirmations(order.btc.txId);
-
-            if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-              order.btc.status = CONFIRMED;
-            }
-          } else if (//caso 2: order value unsignedRawtx desde hot_wallet sin relay automático.
-            order.flow === RBTC_TO_BTC &&
-            order.rsk.status === CONFIRMED &&
-            order.btc.status === SIGNATURE_PENDING
-          ) {
-
-            /**
-             * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
-             */
-            if (order.btc.txId) {
-              let confirmations = await getBTCTxConfirmations(order.btc.txId);
-              if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-                order.btc.status = CONFIRMED;
-              }
-            }
-
-          } else if (//caso 3: order value desde MULTISIG
-            order.flow === RBTC_TO_BTC &&
-            order.rsk.status === CONFIRMED &&
-            order.btc.status === MULTISIG_PENDING
-          ) {
-
-            /**
-             * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
-             */
-            if (order.btc.txId) {
-              let confirmations = await getBTCTxConfirmations(order.btc.txId);
-              if (confirmations >= BTC_BLOCK_HEIGHT_CONFIRMATION) {
-                order.btc.status = CONFIRMED;
-              }
-            }
-
-          }
-
-          resolve();
-        } catch (error) {
-          reject(error);
-        } finally {
-          await order.save();
-        }
-      });
-    });
-
-    Promise
-      .all(promises)
-      .then(() => { })
-      .catch((error) => {
-        console.log(error);
-      })
-      .finally(() => {
-        console.log('Finish update process.');
-      });
-
+      await processOrder(order, btcBlockHeight, rskBlockHeight);
+    }
   } catch (error) {
     console.log(`[ERROR] Update status cron: ${error}`);
   }
