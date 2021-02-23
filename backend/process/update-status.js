@@ -289,13 +289,13 @@ async function updateStatus() {
     const btcBlockHeight = await getBlockNumber();
     const rskBlockHeight = await getRSKBlockNumber();
 
-    for (let index = 0; index < array.length; index++) {
+    for (let index = 0; index < orders.length; index++) {
       const order = orders[index];
 
       await processOrder(order, btcBlockHeight, rskBlockHeight);
     }
   } catch (error) {
-    console.log(`[ERROR] Update status cron: ${error}`);
+    console.log(`[ERROR] Update status: ${error}`);
   }
 }
 

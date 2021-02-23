@@ -4,7 +4,6 @@ const { unwatchAddress } = require('../utils/blocknative');
 const ordersModel = require('../models/orders');
 
 require('dotenv').config();
-require('../utils/connection');
 
 async function cleanOrder(order) {
   try {
