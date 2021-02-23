@@ -6,11 +6,17 @@ module.exports = {
     //disableHostCheck: true,
     compress: true,
     public: 'fastbtc.emdx.io', // That solved it
-    //https: false,
-    //hotOnly: false,
+    proxy: {
+      '^/sockjs-node': {
+        target: process.env.VUE_APP_BACKEND_URL,
+        ws: true,
+        changeOrigin: true
+      }
+    },
   },
   transpileDependencies: [
     'vuetify'
   ],
   runtimeCompiler: true,
+  outputDir: "../backend/dist"
 }

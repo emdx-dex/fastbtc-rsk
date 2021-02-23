@@ -27,11 +27,22 @@ Open another tab and run `node process/update-status.js` in order to run the upd
 
 ## Frontend
 
+### For run VUEjs on devmode
+
 In a new terminal tab run
 
-* Run `cd admin/frontend`
+* Run `cd frontend`
 * Run `npm install`
 * Run `cp .env.testnet .env`
 * Run `npm run serve`
+
+### For production ready assets
+
+In a new terminal tab run
+
+* Run `cd frontend`
+* Run `npm install`
+* Run `cp .env.testnet .env`
+* Run `npm run build`
 
 By default the frontend is served in `http://localhost:5558/`.
