@@ -63,8 +63,12 @@ router.post('/', async (req, res) => {
      * Si delta == value, ok triggereamos conversion
      * Si delta > value, ok triggereamos conversion y después MANUALMENTE se le devuelve el excedente.
      */
-    if (delta < Number(order.value))
+    if (delta < Number(order.value)){
+      console.log(`Value sent to watchedAddress: ${watchedAddress} detected, but value is less than expected.\n Value: ${order.value}\n Delta: ${delta} `);
       return;
+    }
+
+      
 
     // Se incluyo en el bloque de BTC pero no se mino
     if (status === STATUS.PENDING) {

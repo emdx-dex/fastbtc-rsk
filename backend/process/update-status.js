@@ -421,7 +421,6 @@ async function checkBalances() {
 
     let balances = await fastSwapBalances();
 
-    //TODO:Define ENV variables for threshold
     const MIN_RSK_VALUE = MIN_VALUE;
     const MIN_BTC_VALUE = MIN_VALUE;
 
