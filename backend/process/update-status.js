@@ -12,11 +12,16 @@ const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
 const bitcoinjs = require('bitcoinjs-lib');
 const ordersModel = require('../models/orders');
+const { createWatchdogTimer } = require('watchdog-timer');
 
 require('dotenv').config();
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
+const MAX_VALUE = process.env.APP_TRANSFER_MAX;
+const MIN_VALUE = process.env.APP_TRANSFER_MIN;
+
+const network = process.env.BLOCKCHAIN_ENV;
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
   // El block delta en -1 es para cuando no está definido el block en una chain.
@@ -50,7 +55,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         } catch (error) {
           order.rsk.status = FAILED;
 
-          throw(error);
+          throw (error);
         }
       }
     }
@@ -74,8 +79,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           multi-sig	0.2
         */
         const BTC_UNIT = 100000000;
-        let network = bitcoinjs.networks.testnet;
-
+        network == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
         /**
          * Calculo con netValue de la orden que ya tiene descontados los fees.
          */
@@ -154,7 +158,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             /**
              * Disparar alerta a grupo Telegram con:
              * order.btc.status
-             * order.value
+             * order.netValue
              * unsignedRawHexTx.rawTx;
              */
 
@@ -314,6 +318,7 @@ async function updateStatus() {
  * pongo la orden en deleted: true
  */
 async function cleanUpOrders() {
+  console.log("Running cleanupOrders()");
   try {
     const X = 2;
     const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
@@ -413,8 +418,8 @@ async function checkBalances() {
     let balances = await fastSwapBalances();
 
     //TODO:Define ENV variables for threshold
-    const MIN_RSK_VALUE = 0.05;
-    const MIN_BTC_VALUE = 0.05;
+    const MIN_RSK_VALUE = MIN_VALUE;
+    const MIN_BTC_VALUE = MIN_VALUE;
 
     if (balances.rsk.balance <= MIN_RSK_VALUE)
       await lowBalanceAlert(balances.rsk.address, balances.rsk.balance);
@@ -435,16 +440,35 @@ async function checkBalances() {
   require('../utils/connection');
 
   const ONE_MINUTE_IN_MILISECONDS = 60000;
+  const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 10000;
+
+  const watchdogTimer = createWatchdogTimer({
+    onTimeout: () => {
+      console.error('[-] Watchdog timer timeout; forcing program termination.');
+
+      process.nextTick(() => {
+        process.exit(1);
+      });
+    },
+    timeout: WATCHDOG_TIMEOUT_IN_MILISECONDS,
+  });
 
   await cleanUpOrders();
-  await checkBalances();
   await updateStatus();
+  await checkBalances();
 
   setInterval(async () => {
 
+    /**
+     * Este es el reset del timer, si no pasa por acá durante WATCHDOG_TIMEOUT_IN_MILISECONDS mata el proceso.
+     * Comentar para deshabilitar watchdog.
+     */
+    watchdogTimer.reset();
+    console.log("WatchDog timer resets, no process killing ..\n");
+
     await cleanUpOrders();
-    await checkBalances();
     await updateStatus();
+    await checkBalances();
 
   }, ONE_MINUTE_IN_MILISECONDS);
 }());
