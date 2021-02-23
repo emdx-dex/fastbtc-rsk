@@ -24,7 +24,8 @@ function getInstance() {
 }
 
 function getContract() {
-  const web3 = getInstance();
+  const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
+  const web3 = new Web3(web3Provider);
   const contract = new web3.eth.Contract(abi, fastSwapAddress);
 
   return contract;
@@ -63,12 +64,13 @@ async function swapIn(destiny, _amount, _orderId) {
   return new Promise(async (resolve, reject) => {
     try {
       const contract = getContract();
-      const web3 = getInstance();
+      const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
+      const web3 = new Web3(web3Provider);
       const amount = web3.utils.toWei(_amount);
       const method = contract.methods.rbtcSwapIn(destiny, amount);
       const gas = await method.estimateGas({ from: operatorAddress });
       const gasPrice = await web3.eth.getGasPrice();
-      const nonce = await web3.eth.getTransactionCount(operatorAddress, "pending");
+      const nonce = await web3.eth.getTransactionCount(operatorAddress, 'pending');
       const safeMarginGas = _.toInteger(gas * 0.1);
       const rawTx = {
         data: method.encodeABI(),
@@ -80,17 +82,20 @@ async function swapIn(destiny, _amount, _orderId) {
       };
       const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
-      return web3.eth.sendSignedTransaction(rawTransaction)
-        .on('transactionHash', (hash) => {
-          console.log(`Transaction hash: ${hash}`)
+      web3.eth.sendSignedTransaction(rawTransaction, (error, hash) => {
+        if (error) {
+          console.log('Swapin error ', error);
+          const msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
 
-          resolve(hash);
-        })
-        .on('error', async (error) => {
-          let msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
           sendTelegramAlert(msgToAlert);
-          reject(error);
-        });
+          
+          return reject(error);
+        }
+
+        console.log(`Transaction hash: ${hash}`)
+
+        resolve(hash);
+      });
     } catch (error) {
       console.log(`[ERROR] On Create signed transaction. ${error}`);
 

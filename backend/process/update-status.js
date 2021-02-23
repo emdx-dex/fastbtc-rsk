@@ -48,11 +48,15 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           /**
            * Envio netValue: el usuario recibe del lado de RSK el valor de la orden menos el fee de operación.
            */
+          console.log('antes transactionHash')
           const transactionHash = await swapIn(order.rsk.address, order.netValue, order._id);
+          console.log('despues transactionHash', transactionHash)
 
           order.rsk.status = UNCONFIRMED;
           order.rsk.txId = transactionHash;
         } catch (error) {
+          console.log('error transactionHash', error)
+
           order.rsk.status = FAILED;
 
           throw (error);
