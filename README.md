@@ -24,10 +24,10 @@
 * Add convesion rate btc<->rbtc taking operation_fee into account [x] @maxidev
 * Enable function that check that the tx value sent to blocknative watchess address is >= to order value [x] @maxidev
 * Add to package.json script to build production ready front end assets and serve from express [x] @maxidev/@agustin
+* add watchdog to restart process-status if it hangs [x] @maxidev
 #### Pending
 
-* add watchdog to restart process-status if it hangs [] @maxidev
-* Fine grain RSK Contract consumption calculation [-] @sebastian
+* Fine grain RSK Contract consumption calculation [] @sebastian
 
 ## Infrastructure overview
 
