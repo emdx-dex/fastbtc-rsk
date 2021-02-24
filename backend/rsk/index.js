@@ -7,21 +7,9 @@ const { sendTelegramAlert } = require('../utils/alerts');
 
 require('dotenv').config();
 
-let web3;
-
 const fastSwapAddress = process.env.FAST_SWAP_ADDRESS.toLowerCase();
 const operatorAddress = process.env.FAST_SWAP_OPERATOR_ADDRESS;
 const operatorPrivateKey = process.env.FAST_SWAP_OPERATOR_PRIV_KEY;
-
-function getInstance() {
-  if (web3) return web3;
-
-  const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS);
-
-  web3 = new Web3(web3Provider);
-
-  return web3;
-}
 
 function getContract() {
   const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
@@ -45,7 +33,8 @@ async function getBlockNumber() {
 
 async function getTransactionReceipt(txId) {
   try {
-    const web3 = getInstance();
+    const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
+    const web3 = new Web3(web3Provider);
     const receipt = await web3.eth.getTransactionReceipt(txId);
 
     return receipt;
@@ -105,6 +94,8 @@ async function swapIn(destiny, _amount, _orderId) {
 }
 
 function listenRBTCSwapOut() {
+  const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS);
+  const web3 = new Web3(web3Provider);
   const contract = getContract();
 
   contract.events.RBTCSwapOut().on('data', async function (event) {
