@@ -119,7 +119,6 @@ function listenRBTCSwapOut() {
 
       console.log(`[RBTCSwapOut] Order found: ${order._id}`);
 
-      // TODO: Check this with tx fees.
       if (amount < order.value) {
         console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.`);
 

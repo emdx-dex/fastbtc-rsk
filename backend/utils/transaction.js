@@ -17,8 +17,6 @@ async function connect() {
 
     await client.connect();
 
-    console.log('------------------------------------------------');
-
     return client;
   } catch (error) {
     console.log(error);
@@ -74,7 +72,7 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT = false, _NETW
     if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
 
-    let client = await connect();//TODO: check network/testnet before this
+    let client = await connect();
 
     const script = bitcoinjs.address.toOutputScript(_FROM, network);
     const hash = bitcoinjs.crypto.sha256(script);
@@ -177,7 +175,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT = false,
     if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
 
-    let client = await connect();//TODO: check network/testnet before this
+    let client = await connect();
 
     const script = bitcoinjs.address.toOutputScript(_FROM, network);
     const hash = bitcoinjs.crypto.sha256(script);

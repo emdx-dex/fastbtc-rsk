@@ -28,7 +28,7 @@ router.get('/:id', rateLimiter, async (req, res) => {
       return res
         .status(404)
         .json({
-          error: 'The order has been expired or not exist'
+          error: 'Order expired or does not exist.'
         }); 
     }
 
@@ -38,6 +38,9 @@ router.get('/:id', rateLimiter, async (req, res) => {
     const btcBlockNumber = await getBlockNumber();
     const rskBlockNumber = await getRSKBlockNumber();
 
+    /**
+     * TODO: cleanup order response.
+     */
     return res.json({
       data: {
         order: {

@@ -63,10 +63,13 @@ router.post('/', rateLimiter, async (req, res) => {
    */
   if (Number(value) < MIN_VALUE || Number(value) > MAX_VALUE) {
     return res.status(400).json({
-      error: 'Value error; check min/max caps.'
+      error: 'Value error; check MIN/MAX caps.'
     });
   }
 
+  /**
+   * Cálculo de value bruto de orden menos el fee de operación.
+   */
   let netValue = Number(value) - (Number(value) * process.env.OPERATION_FEE_PERCENT);
   
   try {

@@ -41,17 +41,18 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           /**
            * Envio netValue: el usuario recibe del lado de RSK el valor de la orden menos el fee de operación.
            */
-          console.log('antes transactionHash')
           const transactionHash = await swapIn(order.rsk.address, order.netValue, order._id);
-          console.log('despues transactionHash', transactionHash)
 
           order.rsk.status = UNCONFIRMED;
           order.rsk.txId = transactionHash;
+
+          /**
+           * TODO: Hemos visto algunos casos donde las propiedades de la orden no se guardan correctamente en el .save() del finally lo que causa infinito loop de txs a enviar. Creemos que está resuelto, pero en caso de falla, bastaría con habilitar el await.save siguiente.
+           */
+          //await order.save();
         } catch (error) {
           console.log('error transactionHash', error)
-
           order.rsk.status = FAILED;
-
           throw (error);
         }
       }
@@ -159,7 +160,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
              * unsignedRawHexTx.rawTx;
              */
 
-            let rawHexMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.netValue} BTC\n Ready to sign from HOT_WALLET\n rawHex: ${unsignedRawHexTx.rawTx}`;
+            let rawHexMsg = `Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
             sendTelegramAlert(rawHexMsg);
 
           } catch (error) {
@@ -178,7 +179,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            */
           order.btc.status = MULTISIG_PENDING;
 
-          let multisigTxMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Send To: ${_TO}\n Value: ${order.netValue} BTC\n Ready to sign from MULTISIG_WALLET \n`;
+          let multisigTxMsg = `Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from MULTISIG_WALLET\n`;
 
           sendTelegramAlert(multisigTxMsg);
 
@@ -196,7 +197,6 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
   try {
     await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
     await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
-    console.log("En process order, despues de checkConfirmations()");
 
     if (
       order.flow === BTC_TO_RBTC &&
@@ -204,13 +204,11 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       order.rsk.status === UNCONFIRMED &&
       order.rsk.txId
     ) {
-      console.log("Antes del receipt");
+      
       const receipt = await getTransactionReceipt(order.rsk.txId);
       const blockNumber = _.get(receipt, 'blockNumber');
       const status = _.get(receipt, 'status');
-      console.log("Despues del receipt");
 
-      console.log("Antes del isEmpty");
       if (!_.isEmpty(receipt)) {
         order.rsk.block = blockNumber;
         order.rsk.status = (status) ?
@@ -219,8 +217,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       } else {
         order.rsk.status = UNCONFIRMED;
       }
-      console.log("Despues del isEmtpy");
-    
+
     }
 
     /* 
@@ -258,7 +255,6 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       order.rsk.status === CONFIRMED &&
       order.btc.status === MULTISIG_PENDING
     ) {
-
       /**
        * Si order.btc.txId es null quiere decir que el admin/operador no hizo la tx todavia y no tiene sentido chequear las confirmaciones.
        */
@@ -273,7 +269,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
     console.log(error);
   } finally {
     try {
-      console.log(`En finally.id: ${order._id}. btc: ${order.btc.status}. rsk: ${order.rsk.status}`);
+      console.log(`About to save order: ${order._id}\nbtc: ${order.btc.status}\nrsk: ${order.rsk.status}`);
       await order.save();
     } catch (error) {
       console.log("Error saving order");

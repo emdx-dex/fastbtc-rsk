@@ -45,7 +45,6 @@ async function unwatchAddress(address) {
     const response = await axios.delete(process.env.BLOCKNATIVE_ADDRESS, options);
     const msg = _.get(response, 'data.msg');
     
-    console.log(msg);
     return msg;
   } catch (error) {
     console.log(error);

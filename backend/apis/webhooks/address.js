@@ -4,13 +4,13 @@ const express = require('express');
 const FLOWS = require('../../../shared/flows');
 const ordersModel = require('../../models/orders');
 const STATUS = require('../../../shared/status');
-const { unwatchAddress } = require('../../utils/blocknative');
+const { rateLimiter } = require('../../utils/rate-limiter');
 
 const router = express.Router();
 
 require('dotenv').config();
 
-router.post('/', async (req, res) => {
+router.post('/', rateLimiter, async (req, res) => {
   const {
     blockHeight,
     fee,

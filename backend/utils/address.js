@@ -7,28 +7,11 @@ const { BTC } = require('../../shared/chains');
 
 let web3;
 
-
 require('dotenv').config();
 
 const BTC_ELECTRUM_PORT = process.env.BTC_ELECTRUM_PORT;
 const BTC_ELECTRUM_PROTOCOL = process.env.BTC_ELECTRUM_PROTOCOL;
 const BTC_ELECTRUM_URI = process.env.BTC_ELECTRUM_URI;
-
-/*
-2 of 2
-Cosigners:
-  - AB01: xpub6B7tTKXGVjdH99zkrPzdA8ybm9cL2b3c9oRB7RCQn38oRrGQkgMWEoCBbfL3SK5vreU8bg4XvTWW2YefRdLNxQzstZ9JM4Rdc63xd2yec2y
-  - AB02:
-xpub6B1TUQ6VCqaNBdUA8u4ezd9SK2cYD2PZsqcJjYppgiwXBrGdrRTijvSU1DRfXPr5Lxo5EVKc6cDNt3Dok5PaWyuojyH9dWwEPwpvUMdBPxg
-
-Multisig
-Addresses:
-  1. 3ExgJ4Pr18HqHnXSQiSXUFQk2eswAPSkQr
-  2. 3DcwgVRxuKvdVGGovsGQJjhPkB9397pLom
-  3. 36vDPM4EuQseSDXDu3yyKFBBLKSQkZDGaq
-  4. 33jjgX4jeypVhGFnLvufa4GfDMy8UkKGkt
-  5. 3MBU9y8TG8CGzMMFTa9udpUQrQNhtgn2YL
-*/
 
 const M_OF_N = process.env.BTC_MULTISIG_M;
 const NETWORK = (process.env.BLOCKCHAIN_ENV === 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
@@ -169,7 +152,7 @@ async function getBTCAddressBalance(_address, _network = 'testnet') {
 
   try {
 
-    let client = await connect();//TODO: check network/testnet before this
+    let client = await connect();
 
     const script = bitcoinjs.address.toOutputScript(_address, network);
     const hash = bitcoinjs.crypto.sha256(script);
@@ -206,6 +189,9 @@ function getInstance() {
 async function getRSKAddressBalance(_addr) {
 
   try {
+    /**
+     * TODO: replace this with RPC.
+     */
     const web3 = getInstance();
 
     let balance = await web3.eth.getBalance(_addr);

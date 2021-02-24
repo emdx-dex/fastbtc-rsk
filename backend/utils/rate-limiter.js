@@ -1,12 +1,9 @@
 const RateLimiter = require('limiter').RateLimiter;
-const limiter = new RateLimiter(10, 'second', true);
+const limiter = new RateLimiter(15, 'second', true);
 
 module.exports = {
   /**
    * Limita la cantidad de requests en un período de tiempo
-   * @param  {object}   req  request
-   * @param  {object}   res  response
-   * @param  {Function} next next()
    * @return {function} Si no hay más tokens error, caso contrario ejecuta próxima instrucción
    */
   rateLimiter  (req, res, next) {
