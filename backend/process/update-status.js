@@ -34,11 +34,8 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         console.log(`Order Id: ${order._id}`);
         console.log(`Flow: ${BTC_TO_RBTC}`);
 
-        await unwatchAddress(order.btc.address);
+        unwatchAddress(order.btc.address);
 
-
-        console.log(`Sending transaction RSK transaction`);
-        // TODO: chequear porque esta tx es secuencial y depende de la confirmación del nonce.
         try {
 
           /**
@@ -269,7 +266,13 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
   } catch (error) {
     console.log(error);
   } finally {
-    await order.save();
+    try {
+      console.log("Saving order on finally.. ");
+      await order.save();
+    } catch (error) {
+      console.log("Error saving order");
+      console.log(error);
+    }
   }
 }
 
@@ -291,7 +294,6 @@ async function updateStatus() {
 
     for (let index = 0; index < orders.length; index++) {
       const order = orders[index];
-
       await processOrder(order, btcBlockHeight, rskBlockHeight);
     }
   } catch (error) {
