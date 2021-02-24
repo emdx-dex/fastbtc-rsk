@@ -65,10 +65,11 @@ router.post('/', async (req, res) => {
      */
     if (delta < Number(order.value)){
       console.log(`Value sent to watchedAddress: ${watchedAddress} detected, but value is less than expected.\n Value: ${order.value}\n Delta: ${delta} `);
-      return;
+      /**
+       * sendTelegramAlert() ??
+       */
+      return res.sendStatus(200);
     }
-
-      
 
     // Se incluyo en el bloque de BTC pero no se mino
     if (status === STATUS.PENDING) {
