@@ -196,6 +196,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
   try {
     await checkConfirmations(BTC, btcBlockHeight, BTC_BLOCK_HEIGHT_CONFIRMATION, order);
     await checkConfirmations(RSK, rskBlockHeight, RSK_BLOCK_HEIGHT_CONFIRMATION, order);
+    console.log("En process order, despues de checkConfirmations()");
 
     if (
       order.flow === BTC_TO_RBTC &&
@@ -203,10 +204,13 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       order.rsk.status === UNCONFIRMED &&
       order.rsk.txId
     ) {
+      console.log("Antes del receipt");
       const receipt = await getTransactionReceipt(order.rsk.txId);
       const blockNumber = _.get(receipt, 'blockNumber');
       const status = _.get(receipt, 'status');
+      console.log("Despues del receipt");
 
+      console.log("Antes del isEmpty");
       if (!_.isEmpty(receipt)) {
         order.rsk.block = blockNumber;
         order.rsk.status = (status) ?
@@ -215,6 +219,8 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       } else {
         order.rsk.status = UNCONFIRMED;
       }
+      console.log("Despues del isEmtpy");
+    
     }
 
     /* 
@@ -267,7 +273,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
     console.log(error);
   } finally {
     try {
-      console.log("Saving order on finally.. ");
+      console.log(`En finally.id: ${order._id}. btc: ${order.btc.status}. rsk: ${order.rsk.status}`);
       await order.save();
     } catch (error) {
       console.log("Error saving order");
