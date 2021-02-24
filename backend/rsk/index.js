@@ -39,6 +39,8 @@ async function getTransactionReceipt(txId) {
 
     return receipt;
   } catch (error) {
+    console.log('[ERROR] getTransactionReceipt', error);
+
     return {};
   }
 }
