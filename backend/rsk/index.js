@@ -184,23 +184,11 @@ async function asd() {
   const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
   const web3 = new Web3(web3Provider);
 
-  web3.eth.getPastLogs({ address: "0xbcd4d6443d4854cd254adc601ba113aff3697a04" })
+  web3.eth.getPastLogs({ fromBlock: 1639200,address: "0xbcd4d6443d4854cd254adc601ba113aff3697a04" })
     .then(res => {
       console.log("logs");
       console.log(res);
-      res.forEach(rec => {
-        console.log(rec.blockNumber, rec.transactionHash, rec.topics);
-      });
     }).catch(err => console.log("getPastLogs failed", err))
-
-  const contract = getContract(web3);
-  contract.getPastEvents('allEvents', {
-    fromBlock: 0,
-    toBlock: 'latest'
-  }, function (error, events) { console.log(events); })
-    .then(function (events) {
-      console.log(events) // same results as the optional callback above
-    });
 
 }
 
