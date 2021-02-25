@@ -11,9 +11,7 @@ const fastSwapAddress = process.env.FAST_SWAP_ADDRESS.toLowerCase();
 const operatorAddress = process.env.FAST_SWAP_OPERATOR_ADDRESS;
 const operatorPrivateKey = process.env.FAST_SWAP_OPERATOR_PRIV_KEY;
 
-function getContract() {
-  const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
-  const web3 = new Web3(web3Provider);
+function getContract(web3) {
   const contract = new web3.eth.Contract(abi, fastSwapAddress);
 
   return contract;
@@ -54,9 +52,9 @@ async function getTransactionReceipt(txId) {
 async function swapIn(destiny, _amount, _orderId) {
   return new Promise(async (resolve, reject) => {
     try {
-      const contract = getContract();
       const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
       const web3 = new Web3(web3Provider);
+      const contract = getContract(web3);
       const amount = web3.utils.toWei(_amount);
       const method = contract.methods.rbtcSwapIn(destiny, amount);
       const gas = await method.estimateGas({ from: operatorAddress });
@@ -98,7 +96,7 @@ async function swapIn(destiny, _amount, _orderId) {
 function listenRBTCSwapOut() {
   const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS);
   const web3 = new Web3(web3Provider);
-  const contract = getContract();
+  const contract = getContract(web3);
 
   contract.events.RBTCSwapOut().on('data', async function (event) {
     const blockNumber = _.get(event, 'blockNumber');
