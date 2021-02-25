@@ -42,8 +42,13 @@ async function fastSwapBalances() {
  */
 async function lowBalanceAlert(_addr, _value) {
   try {
-    let msg = `Address: ${_addr} with balance: ${_value} is running low.`
+
+    if(_value == -1)
+      await sendTelegramAlert("[ALERT] Error fetching balance for address:", _addr);
+
+    let msg = `[WARNING] Address: ${_addr} with balance: ${_value} is running low.`
     await sendTelegramAlert(msg);
+  
   } catch (error) {
     console.log(error);
     return error;

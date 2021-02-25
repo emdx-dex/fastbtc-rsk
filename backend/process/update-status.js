@@ -204,7 +204,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       order.rsk.status === UNCONFIRMED &&
       order.rsk.txId
     ) {
-      
+
       const receipt = await getTransactionReceipt(order.rsk.txId);
       const blockNumber = _.get(receipt, 'blockNumber');
       const status = _.get(receipt, 'status');
@@ -279,7 +279,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
 }
 
 async function updateStatus() {
-  console.log('Running update process...');
+  console.log('Running updateStatus() ..');
 
   try {
     const orders = await ordersModel.find({
@@ -298,6 +298,7 @@ async function updateStatus() {
       const order = orders[index];
       await processOrder(order, btcBlockHeight, rskBlockHeight);
     }
+    console.log('Completed updateStatus()');
   } catch (error) {
     console.log(`[ERROR] Update status: ${error}`);
   }

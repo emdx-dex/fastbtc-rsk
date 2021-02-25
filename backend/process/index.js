@@ -10,7 +10,7 @@ require('dotenv').config();
   require('../utils/connection');
 
   const ONE_MINUTE_IN_MILISECONDS = 60000;
-  const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 10000;
+  const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 15000;
 
   const watchdogTimer = createWatchdogTimer({
     onTimeout: () => {

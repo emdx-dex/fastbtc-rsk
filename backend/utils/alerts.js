@@ -15,11 +15,9 @@ async function sendTelegramAlert(_msg) {
     let alertMsg = _msg;
     let TG_QUERY = `${TG_BOT_URL}${TG_BOT_KEY}&name=${alertMsg}`;
 
-    console.log("Sending Alert:", alertMsg);
     let sendQuery = await axios.get(TG_QUERY);
-    
     console.log(sendQuery.data);
-    
+
     return;
 
   } catch (error) {

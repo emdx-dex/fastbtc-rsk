@@ -172,15 +172,6 @@ async function getBTCAddressBalance(_address, _network = 'testnet') {
 
 }
 
-function getInstance() {
-  if (web3) return web3;
-
-  const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS);
-
-  web3 = new Web3(web3Provider);
-
-  return web3;
-}
 
 /**
  * Returns Address balance in ETH.
@@ -189,19 +180,14 @@ function getInstance() {
 async function getRSKAddressBalance(_addr) {
 
   try {
-    /**
-     * TODO: replace this with RPC.
-     */
-    const web3 = getInstance();
-
+    const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
+    const web3 = new Web3(web3Provider);
     let balance = await web3.eth.getBalance(_addr);
-
     return web3.utils.fromWei(balance);
   } catch (error) {
     console.log(error);
     return -1;
   }
-
 }
 
 module.exports = {

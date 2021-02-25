@@ -56,6 +56,7 @@ async function cleanUpOrders() {
     for (let index = 0; index < orders.length; index++) {
       await cleanOrder(orders[index]);
     }
+    console.log("Completed cleanupOrders()");
   } catch (error) {
     console.log(error);
   }

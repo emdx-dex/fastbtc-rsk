@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const { FAILED, PENDING, UNCONFIRMED } = require('../../shared/status');
+const { RBTC_TO_BTC } = require('../../shared/flows');
 const abi = require('../../contracts/abi/FastSwap.abi.json');
 const ordersModel = require('../models/orders');
 const Web3 = require('web3');
@@ -77,7 +78,7 @@ async function swapIn(destiny, _amount, _orderId) {
           const msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
 
           sendTelegramAlert(msgToAlert);
-          
+
           return reject(error);
         }
 
@@ -94,7 +95,20 @@ async function swapIn(destiny, _amount, _orderId) {
 }
 
 function listenRBTCSwapOut() {
-  const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS);
+
+  /**
+   * TODO: Esto es para habilitar auto reconexión, revisar parametros para afinar.
+   */
+  const options = {
+    reconnect: {
+      auto: true,
+      delay: 5000,//ms
+      maxAttempts: 100,
+      onTimeout: false
+    }
+  };
+
+  const web3Provider = new Web3.providers.WebsocketProvider(process.env.RSK_WS, options);
   const web3 = new Web3(web3Provider);
   const contract = getContract(web3);
 
@@ -104,25 +118,30 @@ function listenRBTCSwapOut() {
     const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
     const amount = web3.utils.fromWei(value);
 
-    console.log(`[RBTCSwapOut] Tx received: ${transactionHash}`);
+    console.log(`\n[RBTCSwapOut] Tx recv: ${transactionHash}\n[RBTCSwapOut] Sender: ${senderAddress}\n[RBTCSwapOut] Amount: ${amount}`);
 
     try {
       const order = await ordersModel.findOne({
         'rsk.senderAddress': senderAddress,
         'rsk.status': PENDING,
+        flow: RBTC_TO_BTC,
         deleted: false
       });
 
-      if (_.isEmpty(order)) return;
+      if (_.isEmpty(order)) {
+        console.log(`[+] No order found corresponding to senderAddress: ${senderAddress}, ignoring ..`);
+        return;
+      }
 
-      console.log(`[RBTCSwapOut] Order found: ${order._id}`);
+      console.log(`[RBTCSwapOut] Order found: ${order._id}, processing ...\n`);
 
       if (amount < order.value) {
-        console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.`);
-
+        console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.\n`);
         order.rsk.status = FAILED;
+        let _msg = `Address ${senderAddress} sent ${amount} and ${order.value} expected. Marking rsk.status as failed.`
+        sendTelegramAlert(_msg);
       } else {
-        console.log(`[RBTCSwapOut] Order ${order._id}: user sent correct amount.`);
+        console.log(`[RBTCSwapOut] Order ${order._id}: Value transfered is correct, saving order new status: UNCONFIRMED`);
 
         order.rsk.block = blockNumber;
         order.rsk.status = UNCONFIRMED;
@@ -133,7 +152,24 @@ function listenRBTCSwapOut() {
     } catch (error) {
       console.log(`[ERROR] On listen RBTCSwapOut. ${error}`);
     }
-  });
+  }).on('connected', wsId => console.log("RSK WS connected with id:", wsId))
+    .on('error', e => {
+      let _msg = `[ALERT] RSKSwapOut connection ERROR: ${e}`;
+      console.log(_msg);
+      sendTelegramAlert(_msg);
+    })
+    .on("close", e => {
+      let _msg = `[ALERT] WebSocket connection CLOSED: ${e}`;
+      console.log(_msg);
+      sendTelegramAlert(_msg);
+    })
+    .on('end', e => {
+      console.log('WS closed, reason:', e);
+      let _msg = `[ALERT] RSKSwapOut connection END: ${e}`;
+      sendTelegramAlert(_msg);
+    });
+
+
 }
 
 module.exports = {
