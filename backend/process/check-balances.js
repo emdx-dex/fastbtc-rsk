@@ -63,12 +63,12 @@ async function checkBalances() {
     console.log("Checking fastswap balances ..");
 
     let balances = await fastSwapBalances();
-
+    
     const MIN_RSK_VALUE = MIN_VALUE;
     const MIN_BTC_VALUE = MIN_VALUE;
 
-    if (balances.rsk.balance <= MIN_RSK_VALUE)
-      await lowBalanceAlert(balances.rsk.address, balances.rsk.balance);
+    if (Number(balances.rsk.balance) <= MIN_RSK_VALUE)
+      await lowBalanceAlert(balances.rsk.address, Number(balances.rsk.balance));
 
     if (balances.btc.hot.balance <= MIN_BTC_VALUE)
       await lowBalanceAlert(balances.btc.hot.address, balances.btc.hot.balance);
@@ -80,5 +80,9 @@ async function checkBalances() {
     return -1;
   }
 }
+
+(async ()=>{
+  await checkBalances();
+})()
 
 module.exports = checkBalances;
