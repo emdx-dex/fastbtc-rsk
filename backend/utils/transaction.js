@@ -172,12 +172,15 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _NETWORK) {
 
     if (!_NETWORK)
       return "Missing network definition";
+
     if (!_FROM || !_TO || !_VALUE)
       return "Missing Parameters";
+
+    let network = _NETWORK;
+
     if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
 
-    let network = _NETWORK;
 
     let client = await connect();
 
