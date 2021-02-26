@@ -109,6 +109,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
             if (!createdSignedTx.signedRawTx) {
               console.log(createdSignedTx);
+              sendTelegramAlert("[RBTCSwapOut->BTC] Error creating signedRawTx");
               throw 'Error creating signedRawTx';
             }
 
@@ -116,18 +117,20 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
 
             if (!broadcastedTxId) {
               console.log(broadcastedTxId);
+              sendTelegramAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
               throw 'Error broadcasting transaction';
             }
 
             order.btc.txId = broadcastedTxId;
             order.btc.status = UNCONFIRMED;
 
-            let depositMsg = `Order: ${order._id}\n Status: ${order.btc.status}\n Value: ${order.netValue} BTC\n TxId: ${order.btc.txId}`;
+            let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nSent and marking btc.status as UNCONFIRMED.`;
 
             sendTelegramAlert(depositMsg);
 
           } catch (error) {
             console.log(error);
+            sendTelegramAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
             throw ("Error creating or relaying signed transaction")
           }
 
@@ -161,11 +164,12 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
              * unsignedRawHexTx.rawTx;
              */
 
-            let rawHexMsg = `Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
+            let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
             sendTelegramAlert(rawHexMsg);
 
           } catch (error) {
             console.log(error);
+            sendTelegramAlert("[RBTCSwapOut->BTC] Error creating unsignedRawTx");
             throw ("Error creating unsignedRawTx");
           }
 
@@ -180,7 +184,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
            */
           order.btc.status = MULTISIG_PENDING;
 
-          let multisigTxMsg = `Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from MULTISIG_WALLET\n`;
+          let multisigTxMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from MULTISIG COSIGNERS\n`;
 
           sendTelegramAlert(multisigTxMsg);
 

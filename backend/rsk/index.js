@@ -146,7 +146,7 @@ async function processSwapOut() {
     const latestBlock = await web3.eth.getBlockNumber();
 
     /**
-     * RSK bloque promedio cada 30 segundos, asi que busco 120 bloques atrás ~ 1h
+     * RSK bloque promedio cada 30 segundos, asi que busco 120 bloques atrás ~ 2h
      */
     const PAST_BLOCKS = 120;
     const searchFromBlock = latestBlock - PAST_BLOCKS;
@@ -161,12 +161,38 @@ async function processSwapOut() {
      * Disparo alerta?
      */
     if (pastEvents.length == 0) {
-      //TODO: sendTelegramAlert()?
+      sendTelegramAlert("[WARNING] RSK node returned empty pastEvents array ..");
       return;
     }
 
     pastEvents.forEach(async (event) => {
+      
       const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
+      
+      let orderFilter = {
+        $or: [
+          {
+            'rsk.senderAddress': {
+              $regex: new RegExp(senderAddress, 'i')
+            },
+            'rsk.status': PENDING,
+            deleted: false,
+            flow: RBTC_TO_BTC
+          },
+          {
+            flow: RBTC_TO_BTC,
+            'rsk.senderAddress': {
+              $regex: new RegExp(senderAddress, 'i')
+            },
+            'rsk.status': {
+              $ne: PENDING
+            },
+            'btc.status': PENDING,
+            deleted: false,
+          }
+        ]
+      };
+
       const order = await ordersModel.findOne({
         'rsk.senderAddress': {
           $regex: new RegExp(senderAddress, 'i')
@@ -174,7 +200,8 @@ async function processSwapOut() {
         'rsk.status': PENDING,
         deleted: false,
         flow: RBTC_TO_BTC
-      });
+      });//TODO: Reemplazar por orderFilter para cubrir ordenes más exhaustivamente.
+      
       const amount = web3.utils.fromWei(value);
 
       if (_.isEmpty(order)) {
