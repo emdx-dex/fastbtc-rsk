@@ -88,7 +88,7 @@ router.post('/', rateLimiter, async (req, res) => {
 
       newAddrDoc.orderId = order._id;
       newAddrDoc.address = depositAddr;
-      newAddrDoc.deriveAddrByIndex = idx;
+      newAddrDoc.derivationIndex = idx;
 
       await newAddrDoc.save();
       await registerAddress(depositAddr);

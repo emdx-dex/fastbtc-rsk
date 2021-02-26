@@ -5,6 +5,7 @@ const FLOWS = require('../../../shared/flows');
 const ordersModel = require('../../models/orders');
 const STATUS = require('../../../shared/status');
 const { rateLimiter } = require('../../utils/rate-limiter');
+const { sendTelegramAlert } = require('../../utils/alerts');
 
 const router = express.Router();
 
@@ -63,11 +64,10 @@ router.post('/', rateLimiter, async (req, res) => {
      * Si delta == value, ok triggereamos conversion
      * Si delta > value, ok triggereamos conversion y después MANUALMENTE se le devuelve el excedente.
      */
-    if (delta < Number(order.value)){
-      console.log(`Value sent to watchedAddress: ${watchedAddress} detected, but value is less than expected.\n Value: ${order.value}\n Delta: ${delta} `);
-      /**
-       * sendTelegramAlert() ??
-       */
+    if (delta < Number(order.value)) {
+      let msg = `Value sent to watchedAddress: ${watchedAddress} detected, but value is less than expected.\nValue: ${order.value}\nDelta: ${delta}\nOrder Id: ${order._id}`;
+      console.log(msg);
+      sendTelegramAlert(msg);
       return res.sendStatus(200);
     }
 
