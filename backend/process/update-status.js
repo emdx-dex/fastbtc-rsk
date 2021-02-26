@@ -105,7 +105,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
               network
             );
 
-            let createdSignedTx = await createAndSignTx(_FROM, _TO, _NET_VALUE_SATS, RSKKeypair);
+            let createdSignedTx = await createAndSignTx(_FROM, _TO, _NET_VALUE_SATS, RSKKeypair, network);
 
             if (!createdSignedTx.signedRawTx) {
               console.log(createdSignedTx);
@@ -147,7 +147,8 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
             let unsignedRawHexTx = await createUnsignedRawtx(
               _FROM,
               _TO,
-              _NET_VALUE_SATS
+              _NET_VALUE_SATS,
+              network
             );
 
             order.btc.status = SIGNATURE_PENDING;

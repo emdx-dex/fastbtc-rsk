@@ -5,24 +5,28 @@ const axios = require('axios');
 
 require('dotenv').config();
 
+const BTC_ELECTRUM_PORT = process.env.BTC_ELECTRUM_PORT;
+const BTC_ELECTRUM_PROTOCOL = process.env.BTC_ELECTRUM_PROTOCOL;
+const BTC_ELECTRUM_URI = process.env.BTC_ELECTRUM_URI;
+
 // Public Electrum server list: https://1209k.com/bitcoin-eye/ele.php?chain=btc
 async function connect() {
   try {
-
-    const client = new ElectrumClient(
-      "tn.not.fyi",
-      55002,
-      "ssl"
+    let client;
+    client = new ElectrumClient(
+      BTC_ELECTRUM_URI,
+      BTC_ELECTRUM_PORT,
+      BTC_ELECTRUM_PROTOCOL
     );
-
     await client.connect();
-
     return client;
   } catch (error) {
     console.log(error);
     return error;
   }
-}
+};
+
+
 /**
  * Get feeRate in Satothis to calculate total fee
  */
@@ -56,15 +60,15 @@ function isAddressValid(address, _network) {
  * @param {address from send funds} _FROM base58
  * @param {adress(s)  to send} _TO base58
  * @param {value to send} _VALUE integer in SATS
- * @param {boolean} _IS_SEGWIT to construct inputs/outputs
  * @param {testnet|mainnet} _NETWORK string
  */
-async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT = false, _NETWORK = 'testnet') {
+async function createUnsignedRawtx(_FROM, _TO, _VALUE, _NETWORK) {
 
   try {
 
-    let network;
-    _NETWORK == 'testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
+
+    if (!_NETWORK)
+      return "Missing network definition";
 
     if (!_FROM || !_TO || !_VALUE)
       return "Missing Parameters";
@@ -72,6 +76,7 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT = false, _NETW
     if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
 
+    let network = _NETWORK;
     let client = await connect();
 
     const script = bitcoinjs.address.toOutputScript(_FROM, network);
@@ -159,21 +164,20 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _IS_SEGWIT = false, _NETW
  * @param {base58 addr} _TO string
  * @param {target value in SATOSHIS} _VALUE integer
  * @param {bitcoinlib-js keypair format} _KEYPAIR object
- * @param {if segwit for UTXO processing} _IS_SEGWIT boolean
  * @param {testnet|mainnet} _NETWORK string
  */
-async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT = false, _NETWORK = 'testnet') {
+async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _NETWORK) {
 
   try {
 
-    let network;
-    _NETWORK == 'testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.networks.bitcoin;
-
+    if (!_NETWORK)
+      return "Missing network definition";
     if (!_FROM || !_TO || !_VALUE)
       return "Missing Parameters";
-
     if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
       return "Invalid Address";
+
+    let network = _NETWORK;
 
     let client = await connect();
 
@@ -270,7 +274,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _IS_SEGWIT = false,
 async function relaySignedTx(hexTx) {
 
   try {
-    let client = await connect();//TODO: check network/testnet before this
+    let client = await connect();
 
     if (!hexTx)
       return "Missing rawHexTx parameter";
@@ -297,7 +301,7 @@ async function getTxInfo(txId) {
 
   try {
 
-    let client = await connect();//TODO: check network/testnet before this
+    let client = await connect();
     let txInformation = await client.blockchain_transaction_get(txId, true);
 
     await client.close();
@@ -317,7 +321,7 @@ async function getBTCTxConfirmations(txId) {
 
     if (!txId)
       return "Missing txId (hash) parameter";
-    
+
     console.log(`Getting confirmations for tx: ${txId}`);
 
     let client = await connect();//TODO: check network/testnet before this
