@@ -219,7 +219,7 @@ async function processSwapOut() {
     pastEvents.forEach(async (event) => {
       const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
       // TODO: Que pasa si hay más de una orden que matchea con el sender address?
-      const order = orders.find(({ rsk }) => rsk.senderAddress === senderAddress);
+      const order = orders.find(({ rsk }) => rsk.senderAddress.toLowerCase() === senderAddress.toLowerCase());
       const blockNumber = _.get(event, 'blockNumber');
       const transactionHash = _.get(event, 'transactionHash');
       const amount = web3.utils.fromWei(value);
