@@ -184,9 +184,10 @@ function listenRBTCSwapOut() {
  * Function to replace socket event Watch.
  */
 async function processSwapOut() {
+  // TODO: Remove me
+  require('../utils/connection');
 
   try {
-
     const orders = await ordersModel.find({
       flow: RBTC_TO_BTC,
       'rsk.status': PENDING,
@@ -208,46 +209,52 @@ async function processSwapOut() {
     const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
     const web3 = new Web3(web3Provider);
     const contract = getContract(web3);
+    const latestBlock = await web3.eth.getBlockNumber();
+    //FIXME: lo puse en 500 porque es tarde y no hay txs.
+    const PAST_BLOCKS = 500;
+    const searchFromBlock = latestBlock - PAST_BLOCKS;
 
-    let latestBlock = await web3.eth.getBlockNumber();
-
-    const PAST_BLOCKS = 500;//FIXME: lo puse en 500 porque es tarde y no hay txs.
-    let searchFromBlock = latestBlock - PAST_BLOCKS;
-
-    let getPastEvents = await contract.getPastEvents('RBTCSwapOut', {
+    const pastEvents = await contract.getPastEvents('RBTCSwapOut', {
       fromBlock: searchFromBlock,
       toBlock: 'latest'
     });
 
-    console.log(getPastEvents);
+    pastEvents.forEach(async (event) => {
+      const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
+      // TODO: Que pasa si hay más de una orden que matchea con el sender address?
+      const order = orders.find(({ rsk }) => rsk.senderAddress === senderAddress);
+      const blockNumber = _.get(event, 'blockNumber');
+      const transactionHash = _.get(event, 'transactionHash');
+      const amount = web3.utils.fromWei(value);
 
-    /**
-     * Falta contrastar las ordenes pendientes con los pastEvents y ver si hay alguna sin procesar y dps hacer order.save()
-     */
-    // if (amount < order.value) {
-    //   console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.\n`);
-    //   order.rsk.status = FAILED;
-    //   let _msg = `Address ${senderAddress} sent ${amount} and ${order.value} expected. Marking rsk.status as failed.`
-    //   sendTelegramAlert(_msg);
-    // } else {
-    //   console.log(`[RBTCSwapOut] Order ${order._id}: Value transfered is correct, saving order new status: UNCONFIRMED`);
+      if (_.isEmpty(order)) {
+        console.log(`[+] No order found corresponding to senderAddress: ${senderAddress}, ignoring ...`);
+      } else {
+        if (amount < order.value) {
+          console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.\n`);
+          order.rsk.status = FAILED;
+          let _msg = `Address ${senderAddress} sent ${amount} and ${order.value} expected. Marking rsk.status as failed.`
+          sendTelegramAlert(_msg);
+        } else {
+          console.log(`[RBTCSwapOut] Order ${order._id}: Value transfered is correct, saving order new status: UNCONFIRMED`);
 
-    //   order.rsk.block = blockNumber;
-    //   order.rsk.status = UNCONFIRMED;
-    //   order.rsk.txId = transactionHash;
-    // }
+          order.rsk.block = blockNumber;
+          order.rsk.status = UNCONFIRMED;
+          order.rsk.txId = transactionHash;
+        }
 
-
+        await order.save();
+      }
+    });
   } catch (error) {
     console.log(error)
   }
-
 }
 
+// TODO: Remove me
 (async function () {
-  console.log(await processSwapOut());
+  await processSwapOut();
 })()
-
 
 module.exports = {
   getBlockNumber,
