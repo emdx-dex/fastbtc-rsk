@@ -6,7 +6,6 @@ const updateStatus = require('./update-status');
 
 require('dotenv').config();
 
-// TODO: revisar que el tiempo sea optimo por cada chain.
 (async function () {
   require('../utils/connection');
 

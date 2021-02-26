@@ -111,7 +111,7 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _NETWORK) {
         address: _TO,
         value: _VALUE
       }
-    ];//TODO: multiple targets?
+    ];
 
     let { inputs, outputs, fee } = coinSelect(proccessedUTXOs, targets, feeRate);
 
@@ -216,7 +216,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _NETWORK) {
         address: _TO,
         value: _VALUE
       }
-    ];//TODO: multiple targets?
+    ];
 
     let { inputs, outputs, fee } = coinSelect(proccessedUTXOs, targets, feeRate);
 

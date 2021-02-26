@@ -50,7 +50,7 @@ async function cleanUpOrders() {
           },
           deleted: false
         }
-      ]//TODO: borrar las ya confirmadas ~10 días.
+      ]
     });
 
     for (let index = 0; index < orders.length; index++) {
