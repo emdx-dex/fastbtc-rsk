@@ -1,4 +1,3 @@
-// const { listenRBTCSwapOut } = require('./rsk/index');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
@@ -47,9 +46,6 @@ app.use(cors());
 app.use(bodyParser.json());
 
 require('./utils/connection');
-
-// TODO: Remove if RPC approach works.
-// listenRBTCSwapOut();
 
 //Routes
 const order = require('./apis/order');
