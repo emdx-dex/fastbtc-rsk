@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { FAILED, PENDING, UNCONFIRMED } = require('../../shared/status');
+const { FAILED, PENDING, UNCONFIRMED, CONFIRMED } = require('../../shared/status');
 const { RBTC_TO_BTC } = require('../../shared/flows');
 const abi = require('../../contracts/abi/FastSwap.abi.json');
 const ordersModel = require('../models/orders');
@@ -184,12 +184,37 @@ function listenRBTCSwapOut() {
  * Function to replace socket event Watch.
  */
 async function processSwapOut() {
+
   try {
-    const orders = await ordersModel.find({
+
+    let filter = {
       flow: RBTC_TO_BTC,
       'rsk.status': PENDING,
       deleted: false
-    });
+    };
+
+    let advancedFilter = {
+      $or: [
+        {
+          flow: RBTC_TO_BTC,
+          'rsk.status': PENDING,
+          deleted: false
+        },
+        {
+          flow: RBTC_TO_BTC,
+          'rsk.status': {
+            $ne: PENDING
+          },
+          'btc.status': PENDING,
+          deleted: false
+        }
+      ],
+      sort: {
+        createdAt: 1
+      }
+    };
+
+    const orders = await ordersModel.find(filter);
 
     /**
      * Si no hay ordenes RBTC_TO_BTC no tiene sentido buscar getPastLogs()
@@ -207,14 +232,26 @@ async function processSwapOut() {
     const web3 = new Web3(web3Provider);
     const contract = getContract(web3);
     const latestBlock = await web3.eth.getBlockNumber();
-    //FIXME: lo puse en 500 porque es tarde y no hay txs.
-    const PAST_BLOCKS = 500;
+
+    /**
+     * RSK bloque promedio cada 30 segundos, asi que busco 120 bloques atrás ~ 1h
+     */
+    const PAST_BLOCKS = 120;
     const searchFromBlock = latestBlock - PAST_BLOCKS;
 
     const pastEvents = await contract.getPastEvents('RBTCSwapOut', {
       fromBlock: searchFromBlock,
       toBlock: 'latest'
     });
+
+    /**
+     * Si el nodo falla y devuelve un array vacio con los eventos, retorno y espero la próxima vuelta.
+     * Disparo alerta?
+     */
+    if (pastEvents.length == 0) {
+      //TODO: sendTelegramAlert()?
+      return;
+    }
 
     pastEvents.forEach(async (event) => {
       const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
