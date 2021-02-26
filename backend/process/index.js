@@ -38,8 +38,8 @@ require('dotenv').config();
     watchdogTimer.reset();
     console.log("WatchDog timer resets, no process killing ..\n");
 
-    await processSwapOut();
     await cleanUpOrders();
+    await processSwapOut();
     await updateStatus();
     await checkBalances();
 
