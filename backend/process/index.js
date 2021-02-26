@@ -24,8 +24,8 @@ require('dotenv').config();
     timeout: WATCHDOG_TIMEOUT_IN_MILISECONDS,
   });
 
-  await processSwapOut();
   await cleanUpOrders();
+  await processSwapOut();
   await updateStatus();
   await checkBalances();
 

@@ -17,7 +17,7 @@ require('dotenv').config();
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
-const network = process.env.BLOCKCHAIN_ENV;
+let network = process.env.BLOCKCHAIN_ENV == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.mainnet;
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
   // El block delta en -1 es para cuando no está definido el block en una chain.
@@ -77,7 +77,7 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           multi-sig	0.2
         */
         const BTC_UNIT = 100000000;
-        network == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
+
         /**
          * Calculo con netValue de la orden que ya tiene descontados los fees.
          */
