@@ -1,5 +1,5 @@
 const { BTC_TO_RBTC } = require('../../shared/flows');
-const { PENDING } = require('../../shared/status');
+const { PENDING, CONFIRMED } = require('../../shared/status');
 const { unwatchAddress } = require('../utils/blocknative');
 const ordersModel = require('../models/orders');
 
@@ -34,11 +34,37 @@ async function cleanOrder(order) {
 async function cleanUpOrders() {
   console.log("Running cleanupOrders()");
   try {
+
     const X = 2;
     const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
 
+    const D = 10;
+    const _XDaysAgo = new Date(Date.now() - D * 24 * 60 * 60 * 1000);
+
+    let filter = {
+      $or: [
+        {
+          'btc.status': PENDING,
+          'rsk.status': PENDING,
+          createdAt: {
+            $lt: _XHourAgo
+          },
+          deleted: false
+        },
+        {
+          'btc.status': CONFIRMED,
+          'rsk.status': CONFIRMED,
+          createdAt: {
+            $lt: _XDaysAgo
+          },
+          deleted: false
+        }
+      ]
+    }
+
     /**
      * TODO: extender condicion a los 2 estados confirmados y que haya pasado N cantidad de tiempo.
+     * FIXME: Esta query tiene un AND con una sola propiedad, afinar.
      */
     let orders = await ordersModel.find({
       $and: [
@@ -50,7 +76,7 @@ async function cleanUpOrders() {
           },
           deleted: false
         }
-      ]//TODO: borrar las ya confirmadas ~10 días.
+      ]
     });
 
     for (let index = 0; index < orders.length; index++) {
@@ -58,6 +84,7 @@ async function cleanUpOrders() {
     }
     console.log("Completed cleanupOrders()");
   } catch (error) {
+    console.log("[ERROR] trying to execute cleanUpOrders()");
     console.log(error);
   }
 }

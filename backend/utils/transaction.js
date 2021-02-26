@@ -327,7 +327,7 @@ async function getBTCTxConfirmations(txId) {
 
     console.log(`Getting confirmations for tx: ${txId}`);
 
-    let client = await connect();//TODO: check network/testnet before this
+    let client = await connect();
     let txInformation = await client.blockchain_transaction_get(txId, true);
 
     let confirmations;
