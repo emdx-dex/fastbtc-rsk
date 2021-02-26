@@ -1,4 +1,5 @@
 const { createWatchdogTimer } = require('watchdog-timer');
+const { processSwapOut } = require('../rsk/index');
 const checkBalances = require('./check-balances');
 const cleanUpOrders = require('./clean-orders');
 const updateStatus = require('./update-status');
@@ -23,6 +24,7 @@ require('dotenv').config();
     timeout: WATCHDOG_TIMEOUT_IN_MILISECONDS,
   });
 
+  await processSwapOut();
   await cleanUpOrders();
   await updateStatus();
   await checkBalances();
@@ -36,6 +38,7 @@ require('dotenv').config();
     watchdogTimer.reset();
     console.log("WatchDog timer resets, no process killing ..\n");
 
+    await processSwapOut();
     await cleanUpOrders();
     await updateStatus();
     await checkBalances();

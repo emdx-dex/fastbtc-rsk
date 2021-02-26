@@ -184,9 +184,6 @@ function listenRBTCSwapOut() {
  * Function to replace socket event Watch.
  */
 async function processSwapOut() {
-  // TODO: Remove me
-  require('../utils/connection');
-
   try {
     const orders = await ordersModel.find({
       flow: RBTC_TO_BTC,
@@ -251,14 +248,10 @@ async function processSwapOut() {
   }
 }
 
-// TODO: Remove me
-(async function () {
-  await processSwapOut();
-})()
-
 module.exports = {
   getBlockNumber,
   getTransactionReceipt,
   listenRBTCSwapOut,
+  processSwapOut,
   swapIn
 };
