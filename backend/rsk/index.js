@@ -46,7 +46,7 @@ async function getTransactionReceipt(txId) {
 
 /**
  * Flow: BTC_TO_RBTC: cuando el usuario final recibe RBTC, previo depósito BTC.
- * @param {eth address} destiny string  
+ * @param {eth address} destiny string
  * @param {_amount netValue to transfer} string
  * @param {mongoID} _orderId string
  */
@@ -180,20 +180,72 @@ function listenRBTCSwapOut() {
 }
 
 
-async function asd() {
-  const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
-  const web3 = new Web3(web3Provider);
+/**
+ * Function to replace socket event Watch.
+ */
+async function processSwapOut() {
 
-  web3.eth.getPastLogs({ fromBlock: 1639200,address: "0xbcd4d6443d4854cd254adc601ba113aff3697a04" })
-    .then(res => {
-      console.log("logs");
-      console.log(res);
-    }).catch(err => console.log("getPastLogs failed", err))
+  try {
+
+    const orders = await ordersModel.find({
+      flow: RBTC_TO_BTC,
+      'rsk.status': PENDING,
+      deleted: false
+    });
+
+    /**
+     * Si no hay ordenes RBTC_TO_BTC no tiene sentido buscar getPastLogs()
+     * hago return;
+     */
+    if (orders.length == 0) {
+      console.log(`No pending RBTC_TO_BTC orders found ...`);
+      return;
+    }
+
+    /**
+     * Inicializo web3 por RPC
+     */
+    const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
+    const web3 = new Web3(web3Provider);
+    const contract = getContract(web3);
+
+    let latestBlock = await web3.eth.getBlockNumber();
+
+    const PAST_BLOCKS = 500;//FIXME: lo puse en 500 porque es tarde y no hay txs.
+    let searchFromBlock = latestBlock - PAST_BLOCKS;
+
+    let getPastEvents = await contract.getPastEvents('RBTCSwapOut', {
+      fromBlock: searchFromBlock,
+      toBlock: 'latest'
+    });
+
+    console.log(getPastEvents);
+
+    /**
+     * Falta contrastar las ordenes pendientes con los pastEvents y ver si hay alguna sin procesar y dps hacer order.save()
+     */
+    // if (amount < order.value) {
+    //   console.log(`[RBTCSwapOut] Order ${order._id}: sent less value than needed.\n`);
+    //   order.rsk.status = FAILED;
+    //   let _msg = `Address ${senderAddress} sent ${amount} and ${order.value} expected. Marking rsk.status as failed.`
+    //   sendTelegramAlert(_msg);
+    // } else {
+    //   console.log(`[RBTCSwapOut] Order ${order._id}: Value transfered is correct, saving order new status: UNCONFIRMED`);
+
+    //   order.rsk.block = blockNumber;
+    //   order.rsk.status = UNCONFIRMED;
+    //   order.rsk.txId = transactionHash;
+    // }
+
+
+  } catch (error) {
+    console.log(error)
+  }
 
 }
 
 (async function () {
-  await asd();
+  console.log(await processSwapOut());
 })()
 
 
