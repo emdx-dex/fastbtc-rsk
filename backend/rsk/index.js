@@ -166,11 +166,13 @@ async function processSwapOut() {
     }
 
     pastEvents.forEach(async (event) => {
-      
       const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});
-      
-      let orderFilter = {
-        $or: [
+      const amount = web3.utils.fromWei(value);
+      const blockNumber = _.get(event, 'blockNumber');
+      const transactionHash = _.get(event, 'transactionHash');
+
+      const order = await ordersModel.findOne({
+        $and: [
           {
             'rsk.senderAddress': {
               $regex: new RegExp(senderAddress, 'i')
@@ -180,29 +182,14 @@ async function processSwapOut() {
             flow: RBTC_TO_BTC
           },
           {
-            flow: RBTC_TO_BTC,
-            'rsk.senderAddress': {
-              $regex: new RegExp(senderAddress, 'i')
-            },
-            'rsk.status': {
-              $ne: PENDING
-            },
-            'btc.status': PENDING,
-            deleted: false,
+            'rsk.txId': {
+              $not: {
+                $eq: transactionHash
+              }
+            }
           }
         ]
-      };
-
-      const order = await ordersModel.findOne({
-        'rsk.senderAddress': {
-          $regex: new RegExp(senderAddress, 'i')
-        },
-        'rsk.status': PENDING,
-        deleted: false,
-        flow: RBTC_TO_BTC
-      });//TODO: Reemplazar por orderFilter para cubrir ordenes más exhaustivamente.
-      
-      const amount = web3.utils.fromWei(value);
+      });
 
       if (_.isEmpty(order)) {
         console.log(`[+] No order found corresponding to senderAddress: ${senderAddress}, ignoring ...`);
@@ -217,9 +204,6 @@ async function processSwapOut() {
           sendTelegramAlert(_msg);
         } else {
           console.log(`[RBTCSwapOut] Order ${order._id}: Value transfered is correct, saving order new status: UNCONFIRMED`);
-
-          const blockNumber = _.get(event, 'blockNumber');
-          const transactionHash = _.get(event, 'transactionHash');
 
           order.rsk.block = blockNumber;
           order.rsk.status = UNCONFIRMED;
