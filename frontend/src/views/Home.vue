@@ -36,9 +36,10 @@
       <v-row>
         <v-col cols="12" md="12" v-if="isRbtcToBtc">
           <v-text-field
+            :label="fromCoin + ' Sender address (Source funds)'"
             :required="isRbtcToBtc"
             :rules="[senderAddressRule]"
-            :label="fromCoin + ' Sender address (Source funds)'"
+            @input="handleSenderAddressChange"
             v-model="senderAddress"
           ></v-text-field>
         </v-col>
@@ -59,7 +60,9 @@
         </v-col>
       </v-row>
       <div class="order-alert">
-       <p v-show="timeToApproved">Order completion will take an estimate between {{ timeToApproved }}</p>
+        <p v-show="timeToApproved">
+          Order completion will take an estimate between {{ timeToApproved }}
+        </p>
       </div>
       <div class="home__form__footer">
         <v-btn :disabled="!valid" @click="submit" class="mr-4" color="success">
@@ -183,8 +186,11 @@ export default {
 
       this.removePooling();
     },
-    handleValueChange(value) {
-      this.netValue = value - (value * OPERATION_FEE_PERCENT);
+    handleSenderAddressChange(v) {
+      this.senderAddress = v.toLowerCase();
+    },
+    handleValueChange(v) {
+      this.netValue = v - v * OPERATION_FEE_PERCENT;
     },
     removePooling() {
       clearInterval(this.interval);
@@ -293,20 +299,18 @@ export default {
     },
   },
   computed: {
-    timeToApproved(){
-      if(this.value >= 0.2){
-        return "2 to 8 hours"
+    timeToApproved() {
+      if (this.value >= 0.2) {
+        return '2 to 8 hours';
+      } else if (this.value >= 0.02) {
+        return '60 to 120 minutes';
+      } else if (this.value < 0.02 && this.value > 0) {
+        return '15 to 30 minutes';
+      } else {
+        return '';
       }
-      else if(this.value >= 0.02){
-        return "60 to 120 minutes"
-      }
-      else if(this.value < 0.02 && this.value > 0) {
-        return "15 to 30 minutes"
-      }else {
-        return ""
-      }
-    }
-  }
+    },
+  },
 };
 </script>
 
