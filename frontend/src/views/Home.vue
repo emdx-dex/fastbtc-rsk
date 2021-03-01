@@ -79,12 +79,13 @@
         <order :order="order"></order>
       </v-card>
     </div>
+    <instructions :flow="flow" />
     <v-alert
       border="left"
-      colored-border
-      type="warning"
-      elevation="2"
       class="mt-8"
+      colored-border
+      elevation="2"
+      type="warning"
     >
       In case you need assistance or have any questions you can write to us:
       <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>
@@ -110,6 +111,7 @@ import { CONFIRMED, PENDING, UNCONFIRMED } from '../../../shared/status';
 import SYMBOLS from '../../../shared/symbols';
 import ConfirmationModal from '@/components/confirmation-dialog';
 import ErrorNotification from '@/components/error-notification';
+import Instructions from '@/components/instructions';
 import Order from '@/components/order';
 import Page from '@/components/page';
 import Web3 from 'web3';
@@ -123,8 +125,9 @@ export default {
   components: {
     'confirmation-dialog': ConfirmationModal,
     'error-notification': ErrorNotification,
+    Instructions,
     Order,
-    Page,
+    Page
   },
   data: () => ({
     address: '',
