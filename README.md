@@ -25,9 +25,14 @@
 * Enable function that check that the tx value sent to blocknative watchess address is >= to order value [x] @maxidev
 * Add to package.json script to build production ready front end assets and serve from express [x] @maxidev/@agustin
 * add watchdog to restart process-status if it hangs [x] @maxidev
+* Fine grain RSK Contract consumption calculation [x] @sebastian
 #### Pending
 
-* Fine grain RSK Contract consumption calculation [] @sebastian
+* Add qr code to show deposit addresses []
+* Force toLowerCase() on RSK addresss []
+* Tune block confirmations []
+* Create some step indicators for better user understanding []
+
 
 ## Infrastructure overview
 
