@@ -28,8 +28,11 @@ async function btcWithdraw(order) {
 
   const existTxInMempool = await checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network);
 
-  if (existTxInMempool)
+  if (existTxInMempool){
+    console.log(`[RBTCSwapOut->BTC] still unconfirmed txs from ${process.env.BTC_HOT_WALLET_ADDR}, waiting next cycle.`);
     return;
+  }
+    
 
   /* 
   automatico	hot_wallet 0.02

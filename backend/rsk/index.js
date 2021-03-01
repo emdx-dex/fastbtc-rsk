@@ -161,7 +161,7 @@ async function processSwapOut() {
      * Disparo alerta?
      */
     if (pastEvents.length == 0) {
-      sendTelegramAlert("[WARNING] RSK node returned empty pastEvents array ..");
+      //FIXME: better condition sino triggerea todo el tiempo.sendTelegramAlert("[WARNING] RSK node returned empty pastEvents array ..");
       return;
     }
 
