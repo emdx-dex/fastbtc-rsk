@@ -2,7 +2,7 @@ const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
 const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PENDING } = require('../../shared/status');
-const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx, checkIfPendingTXs } = require('../utils/transaction');
+const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx, checkIfPendingTXs, validateTxId } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
 const { sendTelegramAlert } = require('../utils/alerts');
@@ -25,7 +25,7 @@ async function btcWithdraw(order) {
   /**
    * Espero que no haya transacciones pendientes para que no haya UTXO en mempool.
    */
-  if(checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network))
+  if (checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network))
     return;
 
   /* 
@@ -77,6 +77,11 @@ async function btcWithdraw(order) {
         sendTelegramAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
         throw 'Error broadcasting transaction';
       }
+
+      let isValidTx = await validateTxId(broadcastedTxId);
+
+      if (!isValidTx)
+        return;
 
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
@@ -237,13 +242,13 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
 
     }
 
-    if(order.flow === RBTC_TO_BTC &&
+    if (order.flow === RBTC_TO_BTC &&
       order.rsk.status === CONFIRMED &&
-      order.btc.status === PENDING){
+      order.btc.status === PENDING) {
 
-        await btcWithdraw();
+      await btcWithdraw(order);
 
-    }else if (
+    } else if (
       order.flow === RBTC_TO_BTC &&
       order.rsk.status === CONFIRMED &&
       order.btc.status === UNCONFIRMED &&

@@ -382,11 +382,26 @@ async function checkIfPendingTXs(_HOT_WALLET, _NETWORK) {
   }
 }
 
+async function validateTxId(txId) {
+  try {
+    const client = await connect();
+    const tx = await client.blockchain_transaction_get(txId, true);
+
+    await client.close();
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+}
+
 module.exports = {
   createUnsignedRawtx: createUnsignedRawtx,
   createAndSignTx: createAndSignTx,
   relaySignedTx: relaySignedTx,
   getTxInfo: getTxInfo,
   getBTCTxConfirmations: getBTCTxConfirmations,
-  checkIfPendingTXs: checkIfPendingTXs
+  checkIfPendingTXs: checkIfPendingTXs,
+  validateTxId: validateTxId
 }
