@@ -25,7 +25,10 @@ async function btcWithdraw(order) {
   /**
    * Espero que no haya transacciones pendientes para que no haya UTXO en mempool.
    */
-  if (checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network))
+
+  const existTxInMempool = await checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network);
+
+  if (existTxInMempool)
     return;
 
   /* 
