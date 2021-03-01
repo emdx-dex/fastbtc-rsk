@@ -55,6 +55,7 @@ function isAddressValid(address, _network) {
   }
 }
 
+
 /**
  * 
  * @param {address from send funds} _FROM base58
@@ -344,10 +345,48 @@ async function getBTCTxConfirmations(txId) {
   }
 }
 
+async function checkIfPendingTXs(_HOT_WALLET, _NETWORK) {
+
+  try {
+
+    if (!_NETWORK)
+      return "Missing network definition";
+
+    if (!_HOT_WALLET)
+      return "Missing Parameters";
+
+    let network = _NETWORK;
+
+    if (!isAddressValid(_HOT_WALLET, network))
+      return "Invalid Address";
+
+    let client = await connect();
+
+    const script = bitcoinjs.address.toOutputScript(_HOT_WALLET, network);
+    const hash = bitcoinjs.crypto.sha256(script);
+    const reversedHash = new Buffer.from(hash.reverse());
+    const rScriptHash = reversedHash.toString('hex');
+
+    const pendingtxs = await client.blockchain_scripthash_getMempool(rScriptHash);
+
+    await client.close();
+
+    if (pendingtxs.length > 0)
+      return true;
+    else
+      return false;
+
+  } catch (error) {
+    console.log(error);
+    return true;
+  }
+}
+
 module.exports = {
   createUnsignedRawtx: createUnsignedRawtx,
   createAndSignTx: createAndSignTx,
   relaySignedTx: relaySignedTx,
   getTxInfo: getTxInfo,
-  getBTCTxConfirmations: getBTCTxConfirmations
+  getBTCTxConfirmations: getBTCTxConfirmations,
+  checkIfPendingTXs: checkIfPendingTXs
 }

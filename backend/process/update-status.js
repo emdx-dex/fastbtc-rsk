@@ -1,8 +1,8 @@
 const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../shared/flows');
 const { BTC, RSK } = require('../../shared/chains');
-const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING } = require('../../shared/status');
-const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx } = require('../utils/transaction');
+const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PENDING } = require('../../shared/status');
+const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx, checkIfPendingTXs } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
 const { sendTelegramAlert } = require('../utils/alerts');
@@ -18,6 +18,136 @@ const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
 let network = process.env.BLOCKCHAIN_ENV == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.mainnet;
+
+
+async function btcWithdraw(order) {
+
+  /**
+   * Espero que no haya transacciones pendientes para que no haya UTXO en mempool.
+   */
+  if(checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network))
+    return;
+
+  /* 
+  automatico	hot_wallet 0.02
+  manual	hot_wallet 0.1
+  multi-sig	0.2
+*/
+  const BTC_UNIT = 100000000;
+
+  /**
+   * Calculo con netValue de la orden que ya tiene descontados los fees.
+   */
+  let _NET_VALUE_BTC = order.netValue;
+  let _NET_VALUE_SATS = _NET_VALUE_BTC * BTC_UNIT;
+
+  let _TO = order.btc.address;
+
+  /**
+   * Si el valor total de la orden es menor a 0.02 se puede hacer la
+   * firma y relay automático de la tx
+   */
+  if (_NET_VALUE_BTC <= 0.02) {
+
+    try {
+
+      /**
+       * Uso la HOT_WALLET definida en .ENV como origen de los fondos.
+       */
+      let _FROM = process.env.BTC_HOT_WALLET_ADDR;
+      let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
+
+      const RSKKeypair = bitcoinjs.ECPair.fromWIF(
+        _PRIVKEY,
+        network
+      );
+
+      let createdSignedTx = await createAndSignTx(_FROM, _TO, _NET_VALUE_SATS, RSKKeypair, network);
+
+      if (!createdSignedTx.signedRawTx) {
+        console.log(createdSignedTx);
+        sendTelegramAlert("[RBTCSwapOut->BTC] Error creating signedRawTx");
+        throw 'Error creating signedRawTx';
+      }
+
+      let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
+
+      if (!broadcastedTxId) {
+        console.log(broadcastedTxId);
+        sendTelegramAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
+        throw 'Error broadcasting transaction';
+      }
+
+      order.btc.txId = broadcastedTxId;
+      order.btc.status = UNCONFIRMED;
+
+      let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nSent and marking btc.status as UNCONFIRMED.`;
+
+      sendTelegramAlert(depositMsg);
+
+    } catch (error) {
+      console.log(error);
+      sendTelegramAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
+      throw ("Error creating or relaying signed transaction")
+    }
+
+    /**
+     * Si el order.value es mayor a 0.02 y menor o igual a 0.1 
+     * entonces también sale desde la hotwallet pero se guarda la 
+     * rawHex cruda en base, se ĺevantará después de Electrum u otra 
+     * wallet para confirmar valores, revisar tx en general, firmar y 
+     * enviar.
+     */
+  } else if (_NET_VALUE_BTC > 0.02 && _NET_VALUE_BTC <= 0.1) {
+
+    try {
+
+      let _FROM = process.env.BTC_HOT_WALLET_ADDR;
+
+      let unsignedRawHexTx = await createUnsignedRawtx(
+        _FROM,
+        _TO,
+        _NET_VALUE_SATS,
+        network
+      );
+
+      order.btc.status = SIGNATURE_PENDING;
+      order.btc.unsignedRawHexTx = unsignedRawHexTx;
+
+      /**
+       * Disparar alerta a grupo Telegram con:
+       * order.btc.status
+       * order.netValue
+       * unsignedRawHexTx.rawTx;
+       */
+
+      let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
+      sendTelegramAlert(rawHexMsg);
+
+    } catch (error) {
+      console.log(error);
+      sendTelegramAlert("[RBTCSwapOut->BTC] Error creating unsignedRawTx");
+      throw ("Error creating unsignedRawTx");
+    }
+
+    /**
+     * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
+     */
+  } else if (_NET_VALUE_BTC > 0.1) {
+
+    /**
+     * 
+     * Se dispara alerta en Telegram y se maneja desde adentro de 
+     */
+    order.btc.status = MULTISIG_PENDING;
+
+    let multisigTxMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from MULTISIG COSIGNERS\n`;
+
+    sendTelegramAlert(multisigTxMsg);
+
+  }//else if multiSig
+
+}
 
 async function checkConfirmations(chain, height, heightConfirmation, order) {
   // El block delta en -1 es para cuando no está definido el block en una chain.
@@ -71,124 +201,6 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
         console.log(`Order Id: ${order._id}`);
         console.log(`Flow: ${RBTC_TO_BTC}`);
 
-        /* 
-          automatico	hot_wallet 0.02
-          manual	hot_wallet 0.1
-          multi-sig	0.2
-        */
-        const BTC_UNIT = 100000000;
-
-        /**
-         * Calculo con netValue de la orden que ya tiene descontados los fees.
-         */
-        let _NET_VALUE_BTC = order.netValue;
-        let _NET_VALUE_SATS = _NET_VALUE_BTC * BTC_UNIT;
-
-        let _TO = order.btc.address;
-
-        /**
-         * Si el valor total de la orden es menor a 0.02 se puede hacer la
-         * firma y relay automático de la tx
-         */
-        if (_NET_VALUE_BTC <= 0.02) {
-
-          try {
-
-            /**
-             * Uso la HOT_WALLET definida en .ENV como origen de los fondos.
-             */
-            let _FROM = process.env.BTC_HOT_WALLET_ADDR;
-            let _PRIVKEY = process.env.BTC_HOT_WALLET_PRIVKEY;
-
-            const RSKKeypair = bitcoinjs.ECPair.fromWIF(
-              _PRIVKEY,
-              network
-            );
-
-            let createdSignedTx = await createAndSignTx(_FROM, _TO, _NET_VALUE_SATS, RSKKeypair, network);
-
-            if (!createdSignedTx.signedRawTx) {
-              console.log(createdSignedTx);
-              sendTelegramAlert("[RBTCSwapOut->BTC] Error creating signedRawTx");
-              throw 'Error creating signedRawTx';
-            }
-
-            let broadcastedTxId = await relaySignedTx(createdSignedTx.signedRawTx);
-
-            if (!broadcastedTxId) {
-              console.log(broadcastedTxId);
-              sendTelegramAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
-              throw 'Error broadcasting transaction';
-            }
-
-            order.btc.txId = broadcastedTxId;
-            order.btc.status = UNCONFIRMED;
-
-            let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nSent and marking btc.status as UNCONFIRMED.`;
-
-            sendTelegramAlert(depositMsg);
-
-          } catch (error) {
-            console.log(error);
-            sendTelegramAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
-            throw ("Error creating or relaying signed transaction")
-          }
-
-          /**
-           * Si el order.value es mayor a 0.02 y menor o igual a 0.1 
-           * entonces también sale desde la hotwallet pero se guarda la 
-           * rawHex cruda en base, se ĺevantará después de Electrum u otra 
-           * wallet para confirmar valores, revisar tx en general, firmar y 
-           * enviar.
-           */
-        } else if (_NET_VALUE_BTC > 0.02 && _NET_VALUE_BTC <= 0.1) {
-
-          try {
-
-            let _FROM = process.env.BTC_HOT_WALLET_ADDR;
-
-            let unsignedRawHexTx = await createUnsignedRawtx(
-              _FROM,
-              _TO,
-              _NET_VALUE_SATS,
-              network
-            );
-
-            order.btc.status = SIGNATURE_PENDING;
-            order.btc.unsignedRawHexTx = unsignedRawHexTx;
-
-            /**
-             * Disparar alerta a grupo Telegram con:
-             * order.btc.status
-             * order.netValue
-             * unsignedRawHexTx.rawTx;
-             */
-
-            let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
-            sendTelegramAlert(rawHexMsg);
-
-          } catch (error) {
-            console.log(error);
-            sendTelegramAlert("[RBTCSwapOut->BTC] Error creating unsignedRawTx");
-            throw ("Error creating unsignedRawTx");
-          }
-
-          /**
-           * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
-           */
-        } else if (_NET_VALUE_BTC > 0.1) {
-
-          /**
-           * 
-           * Se dispara alerta en Telegram y se maneja desde adentro de 
-           */
-          order.btc.status = MULTISIG_PENDING;
-
-          let multisigTxMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from MULTISIG COSIGNERS\n`;
-
-          sendTelegramAlert(multisigTxMsg);
-
-        }//else if multiSig
 
       }// if chain === RSK && _.isEmpty(order.btc.txId))
 
@@ -225,10 +237,13 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
 
     }
 
-    /* 
-      Una vez que la tx del lado de RSK está confirmado y ya mandamos la tx del lado de BTC, esperamos las confirmaciones como está definido del lado del ENV.
-    */
-    if (
+    if(order.flow === RBTC_TO_BTC &&
+      order.rsk.status === CONFIRMED &&
+      order.btc.status === PENDING){
+
+        await btcWithdraw();
+
+    }else if (
       order.flow === RBTC_TO_BTC &&
       order.rsk.status === CONFIRMED &&
       order.btc.status === UNCONFIRMED &&
@@ -292,7 +307,11 @@ async function updateStatus() {
         { 'btc.status': UNCONFIRMED },
         { 'btc.status': SIGNATURE_PENDING },
         { 'btc.status': MULTISIG_PENDING },
-        { 'rsk.status': UNCONFIRMED }
+        { 'rsk.status': UNCONFIRMED },
+        {
+          'rsk.status': CONFIRMED,
+          'btc.status': PENDING
+        }
       ],
       deleted: false
     });
