@@ -163,7 +163,6 @@ async function processSwapOut() {
 
       const order = await ordersModel.findOne({
         'rsk.status': PENDING,
-        'rsk.senderAddress': senderAddress,
         'rsk.senderAddress': {
           $regex: new RegExp(senderAddress, 'i')
         },
