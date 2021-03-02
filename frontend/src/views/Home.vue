@@ -80,7 +80,7 @@
       </v-card>
     </div>
     <instructions :flow="flow" />
-    <v-alert
+    <!-- <v-alert
       border="left"
       class="mt-8"
       colored-border
@@ -89,7 +89,7 @@
     >
       In case you need assistance or have any questions you can write to us:
       <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>
-    </v-alert>
+    </v-alert> -->
     <confirmation-dialog
       :onCancel="handleCancel"
       :onConfirm="handleConfirm"

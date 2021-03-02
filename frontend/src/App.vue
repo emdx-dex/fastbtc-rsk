@@ -1,17 +1,23 @@
 <template>
   <v-app>
-    <v-app-bar app dark height="100">
+    <v-app-bar app color="#FFFFFF" height="100">
       <router-link class="app__header__link" to="/">
         <v-img
-          alt="RSK Logo"
+          alt="rSwap Logo"
           class="shrink mr-2"
           contain
-          src="./assets/rsk_logo_reverse.svg"
+          src="./assets/logo.png"
           transition="scale-transition"
           width="100"
         />
-        <!-- <div class="d-flex align-center">Fast BTC-RSK</div> -->
       </router-link>
+
+      <div class="d-flex align-center flex-column">
+        <div class="text-h4 font-weight-bold">rSwap</div>
+        <div class="app__header__subtitle font-weight-bold" v-if="isTestnet">
+          Testnet
+        </div>
+      </div>
 
       <v-spacer></v-spacer>
     </v-app-bar>
@@ -23,12 +29,14 @@
 </template>
 
 <script>
+const BLOCKCHAIN_ENV = process.env.VUE_APP_BLOCKCHAIN_ENV;
+
 export default {
   name: 'App',
 
-  components: {},
-
-  data: () => ({}),
+  data: () => ({
+    isTestnet: BLOCKCHAIN_ENV === 'testnet',
+  }),
 };
 </script>
 

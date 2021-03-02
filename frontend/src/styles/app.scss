@@ -1,3 +1,5 @@
+$TESTNET_COLOR: #e53929;
+
 .app {
   &__header {
     &__link {
@@ -7,6 +9,9 @@
       &:hover {
         text-decoration: underline;
       }
+    }
+    &__subtitle {
+      color: $TESTNET_COLOR;
     }
   }
 }
