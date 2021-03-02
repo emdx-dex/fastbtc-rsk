@@ -4,7 +4,7 @@ const { RBTC_TO_BTC } = require('../../shared/flows');
 const abi = require('../../contracts/abi/FastSwap.abi.json');
 const ordersModel = require('../models/orders');
 const Web3 = require('web3');
-const { sendTelegramAlert } = require('../utils/alerts');
+const { sendLogAlert } = require('../utils/alerts');
 
 require('dotenv').config();
 
@@ -77,7 +77,7 @@ async function swapIn(destiny, _amount, _orderId) {
           console.log('Swapin error ', error);
           const msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
 
-          sendTelegramAlert(msgToAlert);
+          sendLogAlert(msgToAlert);
 
           return reject(error);
         }
@@ -140,7 +140,7 @@ async function processSwapOut() {
      * Disparo alerta?
      */
     if (pastEvents.length == 0) {
-      //FIXME: better condition sino triggerea todo el tiempo.sendTelegramAlert("[WARNING] RSK node returned empty pastEvents array ..");
+      //FIXME: better condition sino triggerea todo el tiempo.sendLogAlert("[WARNING] RSK node returned empty pastEvents array ..");
       return;
     }
 
@@ -156,7 +156,7 @@ async function processSwapOut() {
         flow: RBTC_TO_BTC
       });
 
-      if (checkifTxExist != null){
+      if (checkifTxExist != null) {
         console.log(`[RBTCSwapOut]txId ${transactionHash} already saved, ignoring`);
         return;
       }
@@ -164,6 +164,9 @@ async function processSwapOut() {
       const order = await ordersModel.findOne({
         'rsk.status': PENDING,
         'rsk.senderAddress': senderAddress,
+        'rsk.senderAddress': {
+          $regex: new RegExp(senderAddress, 'i')
+        },
         deleted: false,
         flow: RBTC_TO_BTC
       });
@@ -178,7 +181,7 @@ async function processSwapOut() {
 
           let _msg = `Address ${senderAddress} sent ${amount} and ${order.value} expected. Marking rsk.status as failed.`
 
-          sendTelegramAlert(_msg);
+          sendLogAlert(_msg);
         } else {
           console.log(`[RBTCSwapOut] Order ${order._id}: Value transfered is correct, saving order new status: UNCONFIRMED`);
 

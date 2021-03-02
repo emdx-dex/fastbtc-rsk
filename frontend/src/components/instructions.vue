@@ -2,7 +2,7 @@
   <v-alert class="mt-8" elevation="2" type="info">
     <div class="font-weight-bold">Instructions</div>
     <ol>
-      <li v-for="instruction in instructions">
+      <li v-for="(instruction, index) in instructions" :key="index">
         {{ instruction }}
       </li>
     </ol>

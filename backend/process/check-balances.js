@@ -1,5 +1,5 @@
 const { getBTCAddressBalance, getRSKAddressBalance } = require('../utils/address');
-const { sendTelegramAlert } = require('../utils/alerts');
+const { sendLogAlert } = require('../utils/alerts');
 
 require('dotenv').config();
 
@@ -44,10 +44,10 @@ async function lowBalanceAlert(_addr, _value) {
   try {
 
     if(_value == -1)
-      await sendTelegramAlert("[ALERT] Error fetching balance for address:", _addr);
+      await sendLogAlert("[ALERT] Error fetching balance for address:", _addr);
 
     let msg = `[WARNING] Address: ${_addr} with balance: ${_value} is running low.`
-    await sendTelegramAlert(msg);
+    await sendLogAlert(msg);
   
   } catch (error) {
     console.log(error);

@@ -5,7 +5,7 @@ const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PEN
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx, checkIfPendingTXs, validateTxId } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
 const { getBlockNumber } = require('../utils/block');
-const { sendTelegramAlert } = require('../utils/alerts');
+const { sendLogAlert, sendNotificationAlert } = require('../utils/alerts');
 const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
@@ -72,7 +72,7 @@ async function btcWithdraw(order) {
 
       if (!createdSignedTx.signedRawTx) {
         console.log(createdSignedTx);
-        sendTelegramAlert("[RBTCSwapOut->BTC] Error creating signedRawTx");
+        sendLogAlert("[RBTCSwapOut->BTC] Error creating signedRawTx");
         throw 'Error creating signedRawTx';
       }
 
@@ -80,7 +80,7 @@ async function btcWithdraw(order) {
 
       if (!broadcastedTxId) {
         console.log(broadcastedTxId);
-        sendTelegramAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
+        sendLogAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
         throw 'Error broadcasting transaction';
       }
 
@@ -94,11 +94,11 @@ async function btcWithdraw(order) {
 
       let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nSent and marking btc.status as UNCONFIRMED.`;
 
-      sendTelegramAlert(depositMsg);
+      sendLogAlert(depositMsg);
 
     } catch (error) {
       console.log(error);
-      sendTelegramAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
+      sendLogAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
       throw ("Error creating or relaying signed transaction")
     }
 
@@ -133,11 +133,11 @@ async function btcWithdraw(order) {
        */
 
       let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
-      sendTelegramAlert(rawHexMsg);
-
+      
+      sendNotificationAlert(rawHexMsg);
     } catch (error) {
       console.log(error);
-      sendTelegramAlert("[RBTCSwapOut->BTC] Error creating unsignedRawTx");
+      sendLogAlert("[RBTCSwapOut->BTC] Error creating unsignedRawTx");
       throw ("Error creating unsignedRawTx");
     }
 
@@ -154,7 +154,7 @@ async function btcWithdraw(order) {
 
     let multisigTxMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\n Ready to sign from MULTISIG COSIGNERS\n`;
 
-    sendTelegramAlert(multisigTxMsg);
+    sendNotificationAlert(multisigTxMsg);
 
   }//else if multiSig
 

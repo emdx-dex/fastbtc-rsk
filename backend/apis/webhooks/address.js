@@ -5,7 +5,7 @@ const FLOWS = require('../../../shared/flows');
 const ordersModel = require('../../models/orders');
 const STATUS = require('../../../shared/status');
 const { rateLimiter } = require('../../utils/rate-limiter');
-const { sendTelegramAlert } = require('../../utils/alerts');
+const { sendLogAlert } = require('../../utils/alerts');
 
 const router = express.Router();
 
@@ -67,7 +67,7 @@ router.post('/', rateLimiter, async (req, res) => {
     if (delta < Number(order.value)) {
       let msg = `Value sent to watchedAddress: ${watchedAddress} detected, but value is less than expected.\nValue: ${order.value}\nDelta: ${delta}\nOrder Id: ${order._id}`;
       console.log(msg);
-      sendTelegramAlert(msg);
+      sendLogAlert(msg);
       return res.sendStatus(200);
     }
 

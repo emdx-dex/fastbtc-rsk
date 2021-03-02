@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const axios = require('axios');
 const ElectrumClient = require('@codewarriorr/electrum-client-js');
-const { sendTelegramAlert } = require('./alerts');
+const { sendLogAlert } = require('./alerts');
 
 require('dotenv').config();
 
@@ -75,13 +75,13 @@ async function getBlockNumber() {
   if (latestBlock != -1)
     return latestBlock;
 
-  await sendTelegramAlert("Warning: failed to fetch Electrum block height, falling back to API query ..");
+  await sendLogAlert("Warning: failed to fetch Electrum block height, falling back to API query ..");
   latestBlock = await getBlockNumberApi();
 
   if (latestBlock != -1)
     return latestBlock;
 
-  await sendTelegramAlert("ALERT: failed to fetch Electrum and API block height, returning -1");
+  await sendLogAlert("ALERT: failed to fetch Electrum and API block height, returning -1");
   return -1;
 
 };
