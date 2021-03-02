@@ -26,12 +26,12 @@
 * Add to package.json script to build production ready front end assets and serve from express [x] @maxidev/@agustin
 * add watchdog to restart process-status if it hangs [x] @maxidev
 * Fine grain RSK Contract consumption calculation [x] @sebastian
+* Add qr code to show deposit addresses [x]
+* Force toLowerCase() on RSK addresss [x]
+* Create some step indicators for better user understanding [x]
 #### Pending
 
-* Add qr code to show deposit addresses []
-* Force toLowerCase() on RSK addresss []
 * Tune block confirmations []
-* Create some step indicators for better user understanding []
 
 
 ## Infrastructure overview
