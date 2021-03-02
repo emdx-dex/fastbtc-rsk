@@ -32,6 +32,7 @@
 
 * Tune block confirmations []
 * Add qr code to show deposit addresses [] WIP
+* Add telegram channel for support at the bottom of the app []
 
 ## Infrastructure overview
 
