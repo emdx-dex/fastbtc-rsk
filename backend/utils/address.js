@@ -13,10 +13,12 @@ const BTC_ELECTRUM_PORT = process.env.BTC_ELECTRUM_PORT;
 const BTC_ELECTRUM_PROTOCOL = process.env.BTC_ELECTRUM_PROTOCOL;
 const BTC_ELECTRUM_URI = process.env.BTC_ELECTRUM_URI;
 
-const M_OF_N = process.env.BTC_MULTISIG_M;
+const M_OF_N = Number(process.env.BTC_MULTISIG_M);
 const NETWORK = (process.env.BLOCKCHAIN_ENV === 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
 const XPUB1 = process.env.BTC_MULTISIG_XPUB1;
 const XPUB2 = process.env.BTC_MULTISIG_XPUB2;
+const XPUB3 = process.env.BTC_MULTISIG_XPUB3;
+const XPUB4 = process.env.BTC_MULTISIG_XPUB4;
 
 /*
   Based on BIP-67 pubkeys must be lexographically sorted to create the multisig redeem script
@@ -60,6 +62,7 @@ function isAddressValid(address, _network) {
 
 /*
   Function to batch derive N amount of multisig addresses based on ENV XPUBs
+  TODO:// Extender el batch derive para detectar network.
 */
 function deriveAddresess(_GAP_LIMIT) {
 
@@ -108,6 +111,7 @@ async function getAddrNextIndex() {
 
 /*
   Return the next addr for the user to deposit based on the total addressess already used.
+  TODO: Esto se puede mejorar haciendo que reciba un array dinámico de XPUBS, queda como mejora, siendo que se configuran una vez y quedan, no habría problema.
 */
 function deriveAddrByIndex(_index) {
 
@@ -127,9 +131,27 @@ function deriveAddrByIndex(_index) {
       .publicKey,
   }, NETWORK).pubkey;
 
+  if(process.env.BLOCKCHAIN_ENV != 'testnet'){
+
+    arr[2] = bitcoinjs.payments.p2pkh({
+      pubkey: bip32.fromBase58(XPUB3, NETWORK)
+        .derive(0)
+        .derive(_index)
+        .publicKey,
+    }, NETWORK).pubkey;
+  
+    arr[3] = bitcoinjs.payments.p2pkh({
+      pubkey: bip32.fromBase58(XPUB4, NETWORK)
+        .derive(0)
+        .derive(_index)
+        .publicKey,
+    }, NETWORK).pubkey;
+
+  }
+
   let addr = bitcoinjs.payments.p2sh({
     redeem: bitcoinjs.payments.p2ms({
-      m: 2, pubkeys: sortBuffers(arr), network: NETWORK
+      m: M_OF_N, pubkeys: sortBuffers(arr), network: NETWORK
     }),
   }, NETWORK).address
   return addr;
