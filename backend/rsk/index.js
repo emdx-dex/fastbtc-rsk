@@ -105,27 +105,6 @@ async function processSwapOut() {
       deleted: false
     };
 
-    let advancedFilter = {
-      $or: [
-        {
-          flow: RBTC_TO_BTC,
-          'rsk.status': PENDING,
-          deleted: false
-        },
-        {
-          flow: RBTC_TO_BTC,
-          'rsk.status': {
-            $ne: PENDING
-          },
-          'btc.status': PENDING,
-          deleted: false
-        }
-      ],
-      sort: {
-        createdAt: 1
-      }
-    };
-
     const orders = await ordersModel.count(filter);
 
     /**
@@ -171,24 +150,22 @@ async function processSwapOut() {
       const blockNumber = _.get(event, 'blockNumber');
       const transactionHash = _.get(event, 'transactionHash');
 
+      const checkifTxExist = await ordersModel.findOne({
+        'rsk.txId': transactionHash,
+        deleted: false,
+        flow: RBTC_TO_BTC
+      });
+
+      if (checkifTxExist != null){
+        console.log(`[RBTCSwapOut]txId ${transactionHash} already saved, ignoring`);
+        return;
+      }
+
       const order = await ordersModel.findOne({
-        $and: [
-          {
-            'rsk.senderAddress': {
-              $regex: new RegExp(senderAddress, 'i')
-            },
-            'rsk.status': PENDING,
-            deleted: false,
-            flow: RBTC_TO_BTC
-          },
-          {
-            'rsk.txId': {
-              $not: {
-                $eq: transactionHash
-              }
-            }
-          }
-        ]
+        'rsk.status': PENDING,
+        'rsk.senderAddress': senderAddress,
+        deleted: false,
+        flow: RBTC_TO_BTC
       });
 
       if (_.isEmpty(order)) {
