@@ -30,15 +30,10 @@ async function getBlockNumberApi() {
 async function getBlockNumberElectrumX() {
   try {
     const client = await connect();
-    try {
-      const { height } = await client.blockchain_headers_subscribe();
-      return height;
-    } catch (error) {
-      console.log("[ERROR] Failing to get method blockchain_headers_subscribe(), retrying ..");
-      await getBlockNumberElectrumX();
-    }
+    const { height } = await client.blockchain_headers_subscribe();
+    return height;
   } catch (error) {
-    console.log(error);
+    console.log("[getBlockNumberElectrumX] Error:", error.message);
     return -1;
   }
 }
