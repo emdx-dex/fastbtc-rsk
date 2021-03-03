@@ -4,17 +4,9 @@ const bitcoinjs = require('bitcoinjs-lib');
 const ElectrumClient = require('@codewarriorr/electrum-client-js');
 const Web3 = require('web3');
 const { BTC } = require('../../shared/chains');
-
-let web3;
+const { connect } = require('./electrumx');
 
 require('dotenv').config();
-
-var ss = process.env.BTC_ELECTRUM_SERVERS.split(",");
-var server = ss[Math.floor(Math.random() * Math.floor(ss.length))].split("|");
-
-const BTC_ELECTRUM_URI = server[0];
-const BTC_ELECTRUM_PORT = server[1];
-const BTC_ELECTRUM_PROTOCOL = server[2];
 
 const M_OF_N = Number(process.env.BTC_MULTISIG_M);
 const NETWORK = (process.env.BLOCKCHAIN_ENV === 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
@@ -31,25 +23,6 @@ function sortBuffers(bufArr) {
   return bufArr.sort(Buffer.compare);
 }
 
-async function connect() {
-  try {
-
-    let client = new ElectrumClient(
-      BTC_ELECTRUM_URI,
-      BTC_ELECTRUM_PORT,
-      BTC_ELECTRUM_PROTOCOL
-    );
-
-    await client.connect();
-
-    return client;
-  } catch (error) {
-    console.log("SERVER: " + BTC_ELECTRUM_PROTOCOL + " " + BTC_ELECTRUM_URI + " " + BTC_ELECTRUM_PORT);
-    console.log(error);
-    return error;
-  }
-}
-
 /**
  * Validates any address, including legacy, p2sh and bech32
  * @param address
@@ -64,46 +37,6 @@ function isAddressValid(address, _network) {
   }
 }
 
-/*
-  Function to batch derive N amount of multisig addresses based on ENV XPUBs
-  TODO:// Extender el batch derive para detectar network.
-*/
-function deriveAddresess(_GAP_LIMIT) {
-
-  let pubkeyArray = [];
-
-  for (let i = 0; i < _GAP_LIMIT; i++) {
-
-    let arr = [];
-
-    arr[0] = bitcoinjs.payments.p2pkh({
-      pubkey: bip32.fromBase58(XPUB1).derive(0).derive(i).publicKey,
-    }).pubkey;
-
-    arr[1] = bitcoinjs.payments.p2pkh({
-      pubkey: bip32.fromBase58(XPUB2).derive(0).derive(i).publicKey,
-    }).pubkey;
-
-    pubkeyArray.push(sortBuffers(arr));
-
-  }
-
-  let addresses = [];
-
-  pubkeyArray.forEach(pubArr => {
-
-    addresses.push(
-      bitcoinjs.payments.p2sh({
-        redeem: bitcoinjs.payments.p2ms({
-          m: M_OF_N, pubkeys: pubArr
-        }),
-      }).address
-    )
-
-  });
-
-  return addresses
-};
 
 /*
   Get the next addr derivation path by checking the length of total addresses document found on MongoDB
@@ -164,22 +97,18 @@ function deriveAddrByIndex(_index) {
 /**
  * Returns address balance in BTC
  * @param {base58 Bitcoin address} _address string
- * @param {testnet|mainnet} _network string
  */
-async function getBTCAddressBalance(_address, _network = 'testnet') {
+async function getBTCAddressBalance(_address) {
 
   const BTC_UNIT = 100000000;
-  let network;
 
-  _network == 'testnet' ? network = bitcoinjs.networks.testnet : network = bitcoinjs.network.bitcoin;
-
-  if (!isAddressValid(_address, network))
+  if (!isAddressValid(_address, NETWORK))
     return "Invalid Address";
 
   try {
 
     let client = await connect();
-    const script = bitcoinjs.address.toOutputScript(_address, network);
+    const script = bitcoinjs.address.toOutputScript(_address, NETWORK);
     const hash = bitcoinjs.crypto.sha256(script);
     const reversedHash = new Buffer.from(hash.reverse());
     const rScriptHash = reversedHash.toString('hex');
@@ -217,7 +146,6 @@ async function getRSKAddressBalance(_addr) {
 
 module.exports = {
   deriveAddrByIndex,
-  deriveAddresess,
   getBTCAddressBalance,
   getRSKAddressBalance,
   getAddrNextIndex,

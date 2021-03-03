@@ -7,12 +7,12 @@ const MAX_VALUE = process.env.APP_TRANSFER_MAX;
 const MIN_VALUE = process.env.APP_TRANSFER_MIN;
 
 /**
- * Get balances of RSKSWAP important addresses.
+ * Get balances of RSKSWAP HOT addresses.
  */
 async function fastSwapBalances() {
   try {
+
     let btcHotAddrBalance = await getBTCAddressBalance(process.env.BTC_HOT_WALLET_ADDR);
-    //let btcMultiSigAddrBalance = await getBTCAddressBalance();
     let rskContractBalance = await getRSKAddressBalance(process.env.FAST_SWAP_ADDRESS.toLowerCase());
 
     return {
@@ -43,12 +43,12 @@ async function fastSwapBalances() {
 async function lowBalanceAlert(_addr, _value) {
   try {
 
-    if(_value == -1)
+    if (_value == -1)
       await sendLogAlert("[ALERT] Error fetching balance for address:", _addr);
 
     let msg = `[WARNING] Address: ${_addr} with balance: ${_value} is running low.`
     await sendLogAlert(msg);
-  
+
   } catch (error) {
     console.log(error);
     return error;
@@ -63,7 +63,7 @@ async function checkBalances() {
     console.log("Checking fastswap balances ..");
 
     let balances = await fastSwapBalances();
-    
+
     const MIN_RSK_VALUE = MIN_VALUE;
     const MIN_BTC_VALUE = MIN_VALUE;
 
