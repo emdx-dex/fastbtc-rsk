@@ -12,6 +12,9 @@ require('dotenv').config();
   const ONE_MINUTE_IN_MILISECONDS = 60000;
   const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 15000;
 
+  const X = 6;
+  const _XHS_IN_MILISECONDS = 60000 * X;
+
   const watchdogTimer = createWatchdogTimer({
     onTimeout: () => {
       console.error('[-] Watchdog timer timeout; forcing program termination.');
@@ -26,7 +29,6 @@ require('dotenv').config();
   await cleanUpOrders();
   await processSwapOut();
   await updateStatus();
-  await checkBalances();
 
   setInterval(async () => {
 
@@ -40,7 +42,14 @@ require('dotenv').config();
     await cleanUpOrders();
     await processSwapOut();
     await updateStatus();
-    await checkBalances();
 
   }, ONE_MINUTE_IN_MILISECONDS);
+
+  /**
+   * Separo el interval de checkeo de balances para no reventar ElectrumX cada 1 minuto.
+   */
+  setInterval(async () => {
+    await checkBalances();
+  }, _XHS_IN_MILISECONDS);
+
 }());

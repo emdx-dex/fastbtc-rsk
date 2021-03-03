@@ -23,7 +23,8 @@ const ordersSchema = new Schema({
       enum: Object.values(STATUS),
       type: String
     },
-    txId: String
+    txId: String,
+    confirmations: Number,
   },
   deleted: {
     type: Boolean,
@@ -43,7 +44,8 @@ const ordersSchema = new Schema({
       enum: Object.values(STATUS),
       type: String
     },
-    txId: String
+    txId: String,
+    confirmations: Number,
   },
   value: String,
   netValue: String,

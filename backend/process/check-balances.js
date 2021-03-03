@@ -81,8 +81,4 @@ async function checkBalances() {
   }
 }
 
-(async ()=>{
-  await checkBalances();
-})()
-
 module.exports = checkBalances;

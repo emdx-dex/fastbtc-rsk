@@ -99,22 +99,21 @@ async function swapIn(destiny, _amount, _orderId) {
  */
 async function processSwapOut() {
   try {
+
     let filter = {
       flow: RBTC_TO_BTC,
       'rsk.status': PENDING,
       deleted: false
     };
 
-    const orders = await ordersModel.count(filter);
+    const orders = await ordersModel.countDocuments(filter);
 
     /**
      * Si no hay ordenes RBTC_TO_BTC no tiene sentido buscar getPastLogs()
      * hago return;
      */
-    if (orders <= 0) {
-      console.log(`No pending RBTC_TO_BTC orders found ...`);
+    if (orders <= 0)
       return;
-    }
 
     /**
      * Inicializo web3 por RPC
@@ -125,9 +124,10 @@ async function processSwapOut() {
     const latestBlock = await web3.eth.getBlockNumber();
 
     /**
-     * RSK bloque promedio cada 30 segundos, asi que busco 120 bloques atrás ~ 2h
+     * RSK bloque promedio cada 30 segundos
+     * Busco 240 bloques atrás ~ 2h
      */
-    const PAST_BLOCKS = 120;
+    const PAST_BLOCKS = 240;
     const searchFromBlock = latestBlock - PAST_BLOCKS;
 
     const pastEvents = await contract.getPastEvents('RBTCSwapOut', {
@@ -137,12 +137,9 @@ async function processSwapOut() {
 
     /**
      * Si el nodo falla y devuelve un array vacio con los eventos, retorno y espero la próxima vuelta.
-     * Disparo alerta?
      */
-    if (pastEvents.length == 0) {
-      //FIXME: better condition sino triggerea todo el tiempo.sendLogAlert("[WARNING] RSK node returned empty pastEvents array ..");
+    if (pastEvents.length == 0)
       return;
-    }
 
     pastEvents.forEach(async (event) => {
       const { source: senderAddress, amount: value } = _.get(event, 'returnValues', {});

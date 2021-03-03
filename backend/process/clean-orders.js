@@ -20,6 +20,7 @@ async function cleanOrder(order) {
     console.log(`Marking as deleted order _id: ${order._id}`);
     await order.save();
   } catch (error) {
+    console.log("[WARNING] Error on cleanOrder() ");
     console.log(error);
   }
 }
@@ -63,21 +64,9 @@ async function cleanUpOrders() {
     }
 
     /**
-     * TODO: extender condicion a los 2 estados confirmados y que haya pasado N cantidad de tiempo.
-     * FIXME: Esta query tiene un AND con una sola propiedad, afinar.
+     * Limpio ordenes pending de más de 2hs o confirmadas (en ambos lados de más de 10 dias)
      */
-    let orders = await ordersModel.find({
-      $and: [
-        {
-          'btc.status': PENDING,
-          'rsk.status': PENDING,
-          createdAt: {
-            $lt: _XHourAgo
-          },
-          deleted: false
-        }
-      ]
-    });
+    let orders = await ordersModel.find(filter);
 
     for (let index = 0; index < orders.length; index++) {
       await cleanOrder(orders[index]);
