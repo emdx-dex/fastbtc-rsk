@@ -23,9 +23,8 @@ async function connect() {
 
     return client;
   } catch (error) {
-    console.log("SERVER: " + BTC_ELECTRUM_PROTOCOL + " " + BTC_ELECTRUM_URI + " " + BTC_ELECTRUM_PORT);
-    console.log(error);
-    return error;
+    console.log("Failed to connect to ElectrumX server, retrying ..");
+    await connect();
   }
 }
 

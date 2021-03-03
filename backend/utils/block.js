@@ -35,7 +35,6 @@ async function getBlockNumberElectrumX() {
     return height;
   } catch (error) {
     console.log(error);
-    await client.close();
     return -1;
   }
 }
