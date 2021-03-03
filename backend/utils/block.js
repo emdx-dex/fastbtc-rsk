@@ -5,9 +5,12 @@ const { sendLogAlert } = require('./alerts');
 
 require('dotenv').config();
 
-const BTC_ELECTRUM_PORT = process.env.BTC_ELECTRUM_PORT;
-const BTC_ELECTRUM_PROTOCOL = process.env.BTC_ELECTRUM_PROTOCOL;
-const BTC_ELECTRUM_URI = process.env.BTC_ELECTRUM_URI;
+var ss = process.env.BTC_ELECTRUM_SERVERS.split(",");
+var server = ss[Math.floor(Math.random() * Math.floor(ss.length))].split("|");
+
+const BTC_ELECTRUM_URI = server[0];
+const BTC_ELECTRUM_PORT = server[1];
+const BTC_ELECTRUM_PROTOCOL = server[2];
 const BTC_INFO_URL = process.env.BTC_INFO_URL;
 
 
@@ -22,6 +25,7 @@ async function connect() {
     await client.connect();
     return client;
   } catch (error) {
+    console.log("SERVER: " + BTC_ELECTRUM_PROTOCOL + " " + BTC_ELECTRUM_URI + " " + BTC_ELECTRUM_PORT);
     console.log(error);
     return error;
   }
