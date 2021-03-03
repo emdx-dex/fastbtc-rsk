@@ -4,12 +4,12 @@ const { BTC, RSK } = require('../../shared/chains');
 const { CONFIRMED, FAILED, UNCONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING, PENDING } = require('../../shared/status');
 const { createAndSignTx, getBTCTxConfirmations, relaySignedTx, createUnsignedRawtx, checkIfPendingTXs, validateTxId } = require('../utils/transaction');
 const { getBlockHeight } = require('../utils/block-height');
-const { getBlockNumber } = require('../utils/block');
 const { sendLogAlert, sendNotificationAlert } = require('../utils/alerts');
-const { getBlockNumber: getRSKBlockNumber, getTransactionReceipt } = require('../rsk/index');
+const { getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
 const bitcoinjs = require('bitcoinjs-lib');
+const blocksModel = require('../models/blocks');
 const ordersModel = require('../models/orders');
 
 require('dotenv').config();
@@ -326,12 +326,14 @@ async function updateStatus() {
       ],
       deleted: false
     });
-    const btcBlockHeight = await getBlockNumber();
-    const rskBlockHeight = await getRSKBlockNumber();
+
+    const block = await blocksModel.findOne().sort({ createdAt: -1 });
+    const btcBlockNumber = _.get(block, BTC);
+    const rskBlockNumber = _.get(block, RSK);
 
     for (let index = 0; index < orders.length; index++) {
       const order = orders[index];
-      await processOrder(order, btcBlockHeight, rskBlockHeight);
+      await processOrder(order, btcBlockNumber, rskBlockNumber);
     }
     console.log('Completed updateStatus()');
   } catch (error) {

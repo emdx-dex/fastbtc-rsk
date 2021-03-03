@@ -1,10 +1,9 @@
 const _ = require('lodash');
 const { BTC, RSK } = require('../../../shared/chains');
-const { getBlockNumber } = require('../../utils/block');
-const { getBlockNumber: getRSKBlockNumber } = require('../../rsk/index');
+const { rateLimiter } = require('../../utils/rate-limiter');
+const blocksModel = require('../../models/blocks');
 const express = require('express');
 const ordersModel = require('../../models/orders');
-const { rateLimiter } = require('../../utils/rate-limiter');
 
 require('dotenv').config();
 
@@ -24,19 +23,17 @@ router.get('/:id', rateLimiter, async (req, res) => {
       deleted: false
     });
 
-    if (_.isEmpty(order)) { 
+    if (_.isEmpty(order)) {
       return res
         .status(404)
         .json({
           error: 'Order expired or does not exist.'
-        }); 
+        });
     }
 
-    /**
-     * Esto se reemplaza por socket en el futuro, pero por ahora con el estado que viene de orden va a alcanzar.
-     */
-    const btcBlockNumber = await getBlockNumber();
-    const rskBlockNumber = await getRSKBlockNumber();
+    const block = await blocksModel.findOne().sort({ createdAt: -1 });
+    const btcBlockNumber = _.get(block, BTC);
+    const rskBlockNumber = _.get(block, RSK);
 
     /**
      * TODO: cleanup order response.

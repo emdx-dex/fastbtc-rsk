@@ -2,6 +2,7 @@ const { createWatchdogTimer } = require('watchdog-timer');
 const { processSwapOut } = require('../rsk/index');
 const checkBalances = require('./check-balances');
 const cleanUpOrders = require('./clean-orders');
+const updateBlocks = require('./update-blocks');
 const updateStatus = require('./update-status');
 
 require('dotenv').config();
@@ -27,6 +28,7 @@ require('dotenv').config();
   });
 
   await cleanUpOrders();
+  await updateBlocks();
   await processSwapOut();
   await updateStatus();
 
@@ -40,6 +42,7 @@ require('dotenv').config();
     console.log("WatchDog timer resets, no process killing ..\n");
 
     await cleanUpOrders();
+    await updateBlocks();
     await processSwapOut();
     await updateStatus();
 
