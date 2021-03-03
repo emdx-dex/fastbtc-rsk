@@ -135,7 +135,7 @@ function deriveAddrByIndex(_index) {
       .publicKey,
   }, NETWORK).pubkey;
 
-  if(process.env.BLOCKCHAIN_ENV != 'testnet'){
+  if (process.env.BLOCKCHAIN_ENV != 'testnet') {
 
     arr[2] = bitcoinjs.payments.p2pkh({
       pubkey: bip32.fromBase58(XPUB3, NETWORK)
@@ -143,7 +143,7 @@ function deriveAddrByIndex(_index) {
         .derive(_index)
         .publicKey,
     }, NETWORK).pubkey;
-  
+
     arr[3] = bitcoinjs.payments.p2pkh({
       pubkey: bip32.fromBase58(XPUB4, NETWORK)
         .derive(0)
@@ -179,7 +179,6 @@ async function getBTCAddressBalance(_address, _network = 'testnet') {
   try {
 
     let client = await connect();
-
     const script = bitcoinjs.address.toOutputScript(_address, network);
     const hash = bitcoinjs.crypto.sha256(script);
     const reversedHash = new Buffer.from(hash.reverse());

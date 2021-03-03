@@ -12,8 +12,8 @@ require('dotenv').config();
   const ONE_MINUTE_IN_MILISECONDS = 60000;
   const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 15000;
 
-  const X = 6;
-  const _XHS_IN_MILISECONDS = 60000 * X;
+  const X = 3;
+  const _XHS_IN_MILISECONDS = 3600000 * X;
 
   const watchdogTimer = createWatchdogTimer({
     onTimeout: () => {
