@@ -88,8 +88,11 @@ async function btcWithdraw(order) {
 
       let isValidTx = await validateTxId(broadcastedTxId);
 
-      if (!isValidTx)
-        return;
+      if (!isValidTx){
+        console.log("Error validating existing TX");
+        throw "Error validating existing TX";
+      }
+        
 
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
