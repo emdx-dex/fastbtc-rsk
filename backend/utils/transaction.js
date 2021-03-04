@@ -1,7 +1,8 @@
-const bitcoinjs = require('bitcoinjs-lib');
-const coinSelect = require('coinselect')
-const axios = require('axios');
+const _ = require('lodash');
 const { connect } = require('./electrumx');
+const axios = require('axios');
+const bitcoinjs = require('bitcoinjs-lib');
+const coinSelect = require('coinselect');
 
 require('dotenv').config();
 
@@ -308,10 +309,7 @@ async function getBTCTxConfirmations(txId) {
 
     let client = await connect();
     let txInformation = await client.blockchain_transaction_get(txId, true);
-
-    let confirmations;
-
-    txInformation.confirmations ? confirmations = txInformation.confirmations : confirmations = 0;
+    let confirmations = _.get(txInformation, 'confirmations', 0);
 
     await client.close();
 
