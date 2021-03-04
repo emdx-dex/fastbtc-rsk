@@ -19,6 +19,8 @@ const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
 let network = process.env.BLOCKCHAIN_ENV == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.mainnet;
 
+const AUTOMATIC_TX_THRESHOLD = process.env.AUTOMATIC_TX_THRESHOLD;
+const MULTISIG_TX_THRESHOLD = process.env.MULTISIG_TX_THRESHOLD;
 
 async function btcWithdraw(order) {
 
@@ -28,16 +30,16 @@ async function btcWithdraw(order) {
 
   const existTxInMempool = await checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network);
 
-  if (existTxInMempool){
+  if (existTxInMempool) {
     console.log(`[RBTCSwapOut->BTC] still unconfirmed txs from ${process.env.BTC_HOT_WALLET_ADDR}, waiting next cycle.`);
     return;
   }
-    
+
 
   /* 
-  automatico	hot_wallet 0.02
-  manual	hot_wallet 0.1
-  multi-sig	0.2
+  AUTOMATIC_THRESHOLD <= 0.02
+  MANUAL_THRESHOLD > 0.02 && MANUAL_THRESHOLD <= 0.1
+  MULTISIG_THRESHOLD > 0.1
 */
   const BTC_UNIT = 100000000;
 
@@ -50,10 +52,10 @@ async function btcWithdraw(order) {
   let _TO = order.btc.address;
 
   /**
-   * Si el valor total de la orden es menor a 0.02 se puede hacer la
+   * Si el valor total de la orden es menor o igual a AUTOMATIC_TX_THRESHOLD se puede hacer la
    * firma y relay automático de la tx
    */
-  if (_NET_VALUE_BTC <= 0.02) {
+  if (_NET_VALUE_BTC <= AUTOMATIC_TX_THRESHOLD) {
 
     try {
 
@@ -103,13 +105,9 @@ async function btcWithdraw(order) {
     }
 
     /**
-     * Si el order.value es mayor a 0.02 y menor o igual a 0.1 
-     * entonces también sale desde la hotwallet pero se guarda la 
-     * rawHex cruda en base, se ĺevantará después de Electrum u otra 
-     * wallet para confirmar valores, revisar tx en general, firmar y 
-     * enviar.
+     * Source HOT_WALLET pero previo review y firma.
      */
-  } else if (_NET_VALUE_BTC > 0.02 && _NET_VALUE_BTC <= 0.1) {
+  } else if (_NET_VALUE_BTC > AUTOMATIC_TX_THRESHOLD && _NET_VALUE_BTC < MULTISIG_TX_THRESHOLD) {
 
     try {
 
@@ -133,7 +131,7 @@ async function btcWithdraw(order) {
        */
 
       let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
-      
+
       sendNotificationAlert(rawHexMsg);
     } catch (error) {
       console.log(error);
@@ -142,9 +140,9 @@ async function btcWithdraw(order) {
     }
 
     /**
-     * Si el order.value es mayor a 0.1 entonces directamente tiene que pasar por multisig.
+     * Si el order.value es mayor a MULTISIG_TX_THRESHOLD entonces directamente tiene que pasar por multisig.
      */
-  } else if (_NET_VALUE_BTC > 0.1) {
+  } else if (_NET_VALUE_BTC >= MULTISIG_TX_THRESHOLD) {
 
     /**
      * 
@@ -182,15 +180,12 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           /**
            * Envio netValue: el usuario recibe del lado de RSK el valor de la orden menos el fee de operación.
            */
-          const transactionHash = await swapIn(order.rsk.address, order.netValue, order._id);
+          const {transactionHash, txStatus} = await swapIn(order.rsk.address, order.netValue, order._id);
 
-          order.rsk.status = UNCONFIRMED;
           order.rsk.txId = transactionHash;
+          order.rsk.status = txStatus;
+          order.rsk.rawTransaction = rawTransaction;
 
-          /**
-           * TODO: Hemos visto algunos casos donde las propiedades de la orden no se guardan correctamente en el .save() del finally lo que causa infinito loop de txs a enviar. Creemos que está resuelto, pero en caso de falla, bastaría con habilitar el await.save siguiente.
-           */
-          //await order.save();
         } catch (error) {
           console.log('error transactionHash', error)
           order.rsk.status = FAILED;
@@ -233,6 +228,11 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       order.rsk.txId
     ) {
 
+      if(order.rsk.status == SIGNATURE_PENDING || order.rsk.status == MULTISIG_PENDING){
+        console.log("[RBTCSwapIn->RSK] Awaiting user signature/multisig signature, checking next cycle ..");
+        return;
+      }
+      
       const receipt = await getTransactionReceipt(order.rsk.txId);
       const blockNumber = _.get(receipt, 'blockNumber');
       const status = _.get(receipt, 'status');

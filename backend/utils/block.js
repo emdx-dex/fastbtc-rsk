@@ -52,13 +52,13 @@ async function getBlockNumber() {
   if (latestBlock != -1)
     return latestBlock;
 
-  await sendLogAlert("Warning: failed to fetch Electrum block height, falling back to API query ..");
+  console.log("[Warning] Failed to fetch Electrum block height, falling back to API query ..");
   latestBlock = await getBlockNumberApi();
 
   if (latestBlock != -1)
     return latestBlock;
 
-  await sendLogAlert("ALERT: failed to fetch Electrum and API block height, returning -1");
+  await sendLogAlert("[ALERT] Failed to fetch Electrum and API block height, returning -1");
   return -1;
 
 };

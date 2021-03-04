@@ -42,6 +42,9 @@ async function cleanUpOrders() {
     const D = 10;
     const _XDaysAgo = new Date(Date.now() - D * 24 * 60 * 60 * 1000);
 
+    /**
+     * Limpio ordenes pending de más de 2hs o confirmadas (en ambos lados de más de 10 dias)
+     */
     let filter = {
       $or: [
         {
@@ -63,9 +66,6 @@ async function cleanUpOrders() {
       ]
     }
 
-    /**
-     * Limpio ordenes pending de más de 2hs o confirmadas (en ambos lados de más de 10 dias)
-     */
     let orders = await ordersModel.find(filter);
 
     for (let index = 0; index < orders.length; index++) {
