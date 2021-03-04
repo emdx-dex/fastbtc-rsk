@@ -76,7 +76,7 @@ async function swapIn(destiny, _amount, _orderId) {
         to: fastSwapAddress
       };
 
-      if (amount <= AUTOMATIC_TX_THRESHOLD) {
+      if (_amount <= AUTOMATIC_TX_THRESHOLD) {
 
         const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
@@ -95,17 +95,17 @@ async function swapIn(destiny, _amount, _orderId) {
           resolve({ transactionHash: hash, txStatus: UNCONFIRMED, rawTransaction: rawTransaction });
         });
 
-      } else if (amount > AUTOMATIC_TX_THRESHOLD && amount < MULTISIG_TX_THRESHOLD) {
+      } else if (_amount > AUTOMATIC_TX_THRESHOLD && _amount < MULTISIG_TX_THRESHOLD) {
 
-        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${amount}\nStatus: SIGNATURE_PENDING\nrawTx: ${rawTx}`;
+        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nStatus: SIGNATURE_PENDING`;
 
         sendNotificationAlert(rawHexMsg);
 
         resolve({ transactionHash: '', txStatus: SIGNATURE_PENDING, rawTransaction: rawTx });
 
-      } else if (amount >= MULTISIG_TX_THRESHOLD) {
+      } else if (_amount >= MULTISIG_TX_THRESHOLD) {
 
-        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${amount}\nStatus: MULTISIG_PENDING\nrawTx: ${rawTx}`;
+        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nStatus: MULTISIG_PENDING`;
 
         sendNotificationAlert(rawHexMsg);
 

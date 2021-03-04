@@ -180,14 +180,14 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           /**
            * Envio netValue: el usuario recibe del lado de RSK el valor de la orden menos el fee de operación.
            */
-          const {transactionHash, txStatus} = await swapIn(order.rsk.address, order.netValue, order._id);
+          const { transactionHash, txStatus, rawTransaction } = await swapIn(order.rsk.address, order.netValue, order._id);
 
           order.rsk.txId = transactionHash;
           order.rsk.status = txStatus;
           order.rsk.rawTransaction = rawTransaction;
 
         } catch (error) {
-          console.log('error transactionHash', error)
+          console.log('[RBTCSwapIn->RSK] Error:', error)
           order.rsk.status = FAILED;
           throw (error);
         }
@@ -228,11 +228,11 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
       order.rsk.txId
     ) {
 
-      if(order.rsk.status == SIGNATURE_PENDING || order.rsk.status == MULTISIG_PENDING){
+      if (order.rsk.status == SIGNATURE_PENDING || order.rsk.status == MULTISIG_PENDING) {
         console.log("[RBTCSwapIn->RSK] Awaiting user signature/multisig signature, checking next cycle ..");
         return;
       }
-      
+
       const receipt = await getTransactionReceipt(order.rsk.txId);
       const blockNumber = _.get(receipt, 'blockNumber');
       const status = _.get(receipt, 'status');
