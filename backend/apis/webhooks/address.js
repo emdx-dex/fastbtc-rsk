@@ -95,7 +95,7 @@ router.post('/', rateLimiter, async (req, res) => {
 
     return res.sendStatus(200);
   } catch (error) {
-    console.log(error);
+    console.log(error.message);
     return res.sendStatus(500);
   }
 });

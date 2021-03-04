@@ -43,7 +43,8 @@ app.use(logger('combined', {
 app.set('json spaces', 2);
 app.use(logger('dev'));
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb', extended: true}))
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
 
 require('./utils/connection');
 

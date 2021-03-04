@@ -92,12 +92,15 @@ async function swapIn(destiny, _amount, _orderId) {
 
           console.log(`[RBTCSwapIn->RSK] Tx Sent; hash: ${hash}`);
 
+          let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nStatus: UNCONFIRMED\n Tx Sent; hash: ${hash}`;
+          sendNotificationAlert(rawHexMsg);
+
           resolve({ transactionHash: hash, txStatus: UNCONFIRMED, rawTransaction: rawTransaction });
         });
 
       } else if (_amount > AUTOMATIC_TX_THRESHOLD && _amount < MULTISIG_TX_THRESHOLD) {
 
-        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nStatus: SIGNATURE_PENDING`;
+        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nTo: ${destiny}\nStatus: SIGNATURE_PENDING`;
 
         sendNotificationAlert(rawHexMsg);
 
@@ -105,7 +108,7 @@ async function swapIn(destiny, _amount, _orderId) {
 
       } else if (_amount >= MULTISIG_TX_THRESHOLD) {
 
-        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nStatus: MULTISIG_PENDING`;
+        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nTo: ${destiny}\nStatus: MULTISIG_PENDING`;
 
         sendNotificationAlert(rawHexMsg);
 
