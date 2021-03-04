@@ -54,6 +54,7 @@
               ' Recipient address ' +
               (toCoin === 'RBTC' ? '(To deposit)' : '')
             "
+            @input="handleRecipientAddressChange"
             required
             v-model="address"
           ></v-text-field>
@@ -127,7 +128,7 @@ export default {
     'error-notification': ErrorNotification,
     Instructions,
     Order,
-    Page
+    Page,
   },
   data: () => ({
     address: '',
@@ -188,6 +189,11 @@ export default {
       this.valid = true;
 
       this.removePooling();
+    },
+    handleRecipientAddressChange(v) {
+      if (this.flow === BTC_TO_RBTC) {
+        this.address = v.toLowerCase();
+      }
     },
     handleSenderAddressChange(v) {
       this.senderAddress = v.toLowerCase();
