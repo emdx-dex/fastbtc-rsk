@@ -11,6 +11,13 @@ const BTC_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.BTC_BLOCK_HEIGHT_CONFIR
 const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIRMATION);
 const router = express.Router();
 
+const getConfirmations = (chain, blockNumber) => {
+  const block = _.get(chain, 'block', 0);
+  const delta = blockNumber - block;
+
+  return (delta <= 0) ? 0 : delta;
+}
+
 router.get('/:id', rateLimiter, async (req, res) => {
   const { id } = req.params;
 
@@ -44,12 +51,12 @@ router.get('/:id', rateLimiter, async (req, res) => {
           ...order.toJSON(),
           btc: {
             ...order.btc,
-            confirmations: (order.btc.block) ? btcBlockNumber - order.btc.block : 0,
+            confirmations: getConfirmations(order.btc, btcBlockNumber),
             requiredConfirmations: BTC_BLOCK_HEIGHT_CONFIRMATION
           },
           rsk: {
             ...order.rsk,
-            confirmations: (order.rsk.block) ? rskBlockNumber - order.rsk.block : 0,
+            confirmations: getConfirmations(order.rsk, rskBlockNumber),
             requiredConfirmations: RSK_BLOCK_HEIGHT_CONFIRMATION
           }
         }
