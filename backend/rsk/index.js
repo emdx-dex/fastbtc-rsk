@@ -67,16 +67,17 @@ async function swapIn(destiny, _amount, _orderId) {
       const nonce = await web3.eth.getTransactionCount(operatorAddress, 'pending');
       const safeMarginGas = _.toInteger(gas * 0.1);
 
+      const rawTx = {
+        data: method.encodeABI(),
+        from: operatorAddress,
+        gas: web3.utils.toHex(gas + safeMarginGas),
+        gasPrice: web3.utils.toHex(gasPrice),
+        nonce: web3.utils.toHex(nonce),
+        to: fastSwapAddress
+      };
+
       if (amount <= AUTOMATIC_TX_THRESHOLD) {
 
-        const rawTx = {
-          data: method.encodeABI(),
-          from: operatorAddress,
-          gas: web3.utils.toHex(gas + safeMarginGas),
-          gasPrice: web3.utils.toHex(gasPrice),
-          nonce: web3.utils.toHex(nonce),
-          to: fastSwapAddress
-        };
         const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
         web3.eth.sendSignedTransaction(rawTransaction, (error, hash) => {
@@ -89,21 +90,12 @@ async function swapIn(destiny, _amount, _orderId) {
             return reject(error);
           }
 
-          console.log(`Transaction hash: ${hash}`)
+          console.log(`[RBTCSwapIn->RSK] Tx Sent; hash: ${hash}`);
 
           resolve({ transactionHash: hash, txStatus: UNCONFIRMED, rawTransaction: rawTransaction });
         });
 
       } else if (amount > AUTOMATIC_TX_THRESHOLD && amount < MULTISIG_TX_THRESHOLD) {
-
-        const rawTx = {
-          data: method.encodeABI(),
-          from: operatorAddress,
-          gas: web3.utils.toHex(gas + safeMarginGas),
-          gasPrice: web3.utils.toHex(gasPrice),
-          nonce: web3.utils.toHex(nonce),
-          to: fastSwapAddress
-        };
 
         let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${amount}\nStatus: SIGNATURE_PENDING\nrawTx: ${rawTx}`;
 
@@ -112,15 +104,6 @@ async function swapIn(destiny, _amount, _orderId) {
         resolve({ transactionHash: '', txStatus: SIGNATURE_PENDING, rawTransaction: rawTx });
 
       } else if (amount >= MULTISIG_TX_THRESHOLD) {
-
-        const rawTx = {
-          data: method.encodeABI(),
-          from: operatorAddress,
-          gas: web3.utils.toHex(gas + safeMarginGas),
-          gasPrice: web3.utils.toHex(gasPrice),
-          nonce: web3.utils.toHex(nonce),
-          to: fastSwapAddress
-        };
 
         let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${amount}\nStatus: MULTISIG_PENDING\nrawTx: ${rawTx}`;
 
