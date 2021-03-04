@@ -100,6 +100,7 @@ async function btcWithdraw(order) {
 
     } catch (error) {
       console.log(error);
+      order.btc.status = FAILED;
       sendLogAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
       throw ("Error creating or relaying signed transaction")
     }
@@ -300,7 +301,7 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
     console.log(error);
   } finally {
     try {
-      console.log(`About to save order: ${order._id}\nbtc: ${order.btc.status}\nrsk: ${order.rsk.status}`);
+      console.log(`Saving: ${order._id}\nbtc: ${order.btc.status}\nrsk: ${order.rsk.status}`);
       await order.save();
     } catch (error) {
       console.log("Error saving order");
