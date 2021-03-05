@@ -3,8 +3,7 @@ const { sendLogAlert } = require('../utils/alerts');
 
 require('dotenv').config();
 
-const MAX_VALUE = process.env.APP_TRANSFER_MAX;
-const MIN_VALUE = process.env.APP_TRANSFER_MIN;
+const BALANCE_ALERT_VALUE = process.env.AUTOMATIC_TX_THRESHOLD;
 
 /**
  * Get balances of RSKSWAP HOT addresses.
@@ -64,8 +63,8 @@ async function checkBalances() {
 
     let balances = await fastSwapBalances();
 
-    const MIN_RSK_VALUE = MIN_VALUE;
-    const MIN_BTC_VALUE = MIN_VALUE;
+    const MIN_RSK_VALUE = BALANCE_ALERT_VALUE * 10;
+    const MIN_BTC_VALUE = BALANCE_ALERT_VALUE * 10;
 
     if (Number(balances.rsk.balance) <= MIN_RSK_VALUE)
       await lowBalanceAlert(balances.rsk.address, Number(balances.rsk.balance));

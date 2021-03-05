@@ -13,8 +13,8 @@ require('dotenv').config();
   const ONE_MINUTE_IN_MILISECONDS = 60000;
   const WATCHDOG_TIMEOUT_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS + 15000;
 
-  const X = 3;
-  const _XHS_IN_MILISECONDS = 3600000 * X;
+  const X = 20;
+  const _XMIN_IN_MILISECONDS = ONE_MINUTE_IN_MILISECONDS * X;
 
   const watchdogTimer = createWatchdogTimer({
     onTimeout: () => {
@@ -53,6 +53,6 @@ require('dotenv').config();
    */
   setInterval(async () => {
     await checkBalances();
-  }, _XHS_IN_MILISECONDS);
+  }, _XMIN_IN_MILISECONDS);
 
 }());
