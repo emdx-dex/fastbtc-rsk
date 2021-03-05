@@ -1,7 +1,6 @@
 const { getBlockNumber } = require('../utils/block');
 const { getBlockNumber: getRSKBlockNumber } = require('../rsk/index');
 const blocksModel = require('../models/blocks');
-const { delete, delete } = require('../apis/webhooks/address');
 
 /**
  * Dejo historial de bloques solo desde 6hs atrás
