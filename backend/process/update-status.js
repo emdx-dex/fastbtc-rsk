@@ -86,13 +86,14 @@ async function btcWithdraw(order) {
         throw 'Error broadcasting transaction';
       }
 
+      /*FIXME: Esto parecia una buena idea como una validación adicional, pero saltando entre servers de electrum produce resultados inconsistentes.
       let isValidTx = await validateTxId(broadcastedTxId);
 
       if (!isValidTx){
         console.log("Error validating existing TX");
         throw "Error validating existing TX";
       }
-        
+      */  
 
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
