@@ -1,16 +1,19 @@
 const _ = require('lodash');
-const { FAILED, PENDING, UNCONFIRMED, CONFIRMED } = require('../../shared/status');
+const { FAILED, PENDING, UNCONFIRMED, CONFIRMED, SIGNATURE_PENDING, MULTISIG_PENDING } = require('../../shared/status');
 const { RBTC_TO_BTC } = require('../../shared/flows');
 const abi = require('../../contracts/abi/FastSwap.abi.json');
 const ordersModel = require('../models/orders');
 const Web3 = require('web3');
-const { sendLogAlert } = require('../utils/alerts');
+const { sendLogAlert, sendNotificationAlert } = require('../utils/alerts');
 
 require('dotenv').config();
 
 const fastSwapAddress = process.env.FAST_SWAP_ADDRESS.toLowerCase();
 const operatorAddress = process.env.FAST_SWAP_OPERATOR_ADDRESS;
 const operatorPrivateKey = process.env.FAST_SWAP_OPERATOR_PRIV_KEY;
+
+const AUTOMATIC_TX_THRESHOLD = process.env.AUTOMATIC_TX_THRESHOLD;
+const MULTISIG_TX_THRESHOLD = process.env.MULTISIG_TX_THRESHOLD;
 
 function getContract(web3) {
   const contract = new web3.eth.Contract(abi, fastSwapAddress);
@@ -53,6 +56,7 @@ async function getTransactionReceipt(txId) {
 async function swapIn(destiny, _amount, _orderId) {
   return new Promise(async (resolve, reject) => {
     try {
+
       const web3Provider = new Web3.providers.HttpProvider(process.env.RSK_RPC);
       const web3 = new Web3(web3Provider);
       const contract = getContract(web3);
@@ -62,6 +66,7 @@ async function swapIn(destiny, _amount, _orderId) {
       const gasPrice = await web3.eth.getGasPrice();
       const nonce = await web3.eth.getTransactionCount(operatorAddress, 'pending');
       const safeMarginGas = _.toInteger(gas * 0.1);
+
       const rawTx = {
         data: method.encodeABI(),
         from: operatorAddress,
@@ -70,22 +75,47 @@ async function swapIn(destiny, _amount, _orderId) {
         nonce: web3.utils.toHex(nonce),
         to: fastSwapAddress
       };
-      const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
-      web3.eth.sendSignedTransaction(rawTransaction, (error, hash) => {
-        if (error) {
-          console.log('Swapin error ', error);
-          const msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
+      if (_amount <= AUTOMATIC_TX_THRESHOLD) {
 
-          sendLogAlert(msgToAlert);
+        const { rawTransaction } = await web3.eth.accounts.signTransaction(rawTx, operatorPrivateKey);
 
-          return reject(error);
-        }
+        web3.eth.sendSignedTransaction(rawTransaction, (error, hash) => {
+          if (error) {
+            console.log('Swapin error ', error);
+            const msgToAlert = `Failed to execute rsk sawpIn() tx.\n OrderId: ${_orderId}\n To: ${destiny}\n Value: ${_amount}\n RawTx: ${rawTransaction}`;
 
-        console.log(`Transaction hash: ${hash}`)
+            sendLogAlert(msgToAlert);
 
-        resolve(hash);
-      });
+            return reject(error);
+          }
+
+          console.log(`[RBTCSwapIn->RSK] Tx Sent; hash: ${hash}`);
+
+          let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nStatus: UNCONFIRMED\n Tx Sent; hash: ${hash}`;
+          sendNotificationAlert(rawHexMsg);
+
+          resolve({ transactionHash: hash, txStatus: UNCONFIRMED, rawTransaction: rawTransaction });
+        });
+
+      } else if (_amount > AUTOMATIC_TX_THRESHOLD && _amount < MULTISIG_TX_THRESHOLD) {
+
+        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nTo: ${destiny}\nStatus: SIGNATURE_PENDING`;
+
+        sendNotificationAlert(rawHexMsg);
+
+        resolve({ transactionHash: '', txStatus: SIGNATURE_PENDING, rawTransaction: rawTx });
+
+      } else if (_amount >= MULTISIG_TX_THRESHOLD) {
+
+        let rawHexMsg = `[RBTCSwapIn->RSK] OrderId: ${_orderId}\nValue: ${_amount}\nTo: ${destiny}\nStatus: MULTISIG_PENDING`;
+
+        sendNotificationAlert(rawHexMsg);
+
+        resolve({ transactionHash: '', txStatus: MULTISIG_PENDING, rawTransaction: rawTx });
+      }
+
+
     } catch (error) {
       console.log(`[ERROR] On Create signed transaction. ${error}`);
 

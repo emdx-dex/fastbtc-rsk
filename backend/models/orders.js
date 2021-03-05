@@ -43,6 +43,7 @@ const ordersSchema = new Schema({
       enum: Object.values(STATUS),
       type: String
     },
+    rawTransaction: Object,
     txId: String
   },
   value: String,
