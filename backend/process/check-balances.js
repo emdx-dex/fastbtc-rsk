@@ -44,10 +44,10 @@ async function lowBalanceAlert(_addr, _value) {
 
     if (_value == -1)
       await sendLogAlert("[ALERT] Error fetching balance for address:", _addr);
-
-    let msg = `[WARNING] Address: ${_addr} with balance: ${_value} is running low.`
-    await sendLogAlert(msg);
-
+    else {
+      let msg = `[WARNING] Address: ${_addr} with balance: ${_value} is running low.`
+      await sendLogAlert(msg);
+    }
   } catch (error) {
     console.log(error);
     return error;
