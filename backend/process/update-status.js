@@ -98,9 +98,9 @@ async function btcWithdraw(order) {
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
 
-      let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nSent and marking btc.status as UNCONFIRMED.`;
+      let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nAutomatically sent.`;
 
-      sendLogAlert(depositMsg);
+      sendNotificationAlert(depositMsg);
 
     } catch (error) {
       console.log(error);
