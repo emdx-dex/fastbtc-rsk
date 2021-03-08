@@ -4,7 +4,7 @@ export const NAMES = {
   'ORDER': 'order'
 };
 const options = {
-  expires: 1
+  expires: 365
 };
 
 export function set(name, value) {
