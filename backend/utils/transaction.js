@@ -48,18 +48,17 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _NETWORK) {
 
 
     if (!_NETWORK)
-      return "Missing network definition";
+      throw "Missing network definition";
 
     if (!_FROM || !_TO || !_VALUE)
-      return "Missing Parameters";
+      throw "Missing Parameters";
 
-    if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
-      return "Invalid Address";
+    if (!isAddressValid(_FROM, _NETWORK) || !isAddressValid(_TO, _NETWORK))
+      throw "Invalid Address";
 
-    let network = _NETWORK;
     let client = await connect();
 
-    const script = bitcoinjs.address.toOutputScript(_FROM, network);
+    const script = bitcoinjs.address.toOutputScript(_FROM, _NETWORK);
     const hash = bitcoinjs.crypto.sha256(script);
     const reversedHash = new Buffer.from(hash.reverse());
     const rScriptHash = reversedHash.toString('hex');
@@ -69,7 +68,7 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _NETWORK) {
     let feeRate = await getFeeRates();
 
     if (!feeRate)
-      return "Unable to fetch fee rates, aborting";
+      throw "Unable to fetch fee rates, aborting";
 
     let proccessedUTXOs = [];
     let bufferRawTx;
@@ -96,9 +95,9 @@ async function createUnsignedRawtx(_FROM, _TO, _VALUE, _NETWORK) {
     let { inputs, outputs, fee } = coinSelect(proccessedUTXOs, targets, feeRate);
 
     if (!inputs || !outputs)
-      return "No coin selection solution found; check if enough balance"
+      throw "No coin selection solution found; check if enough balance"
 
-    let psbt = new bitcoinjs.Psbt({ network: network });
+    let psbt = new bitcoinjs.Psbt({ network: _NETWORK });
 
     inputs.forEach(input =>
       psbt.addInput({
@@ -151,15 +150,15 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _NETWORK) {
   try {
 
     if (!_NETWORK)
-      return "Missing network definition";
+      throw "Missing network definition";
 
     if (!_FROM || !_TO || !_VALUE)
-      return "Missing Parameters";
+      throw "Missing Parameters";
 
     let network = _NETWORK;
 
     if (!isAddressValid(_FROM, network) || !isAddressValid(_TO, network))
-      return "Invalid Address";
+      throw "Invalid Address";
 
 
     let client = await connect();
@@ -174,7 +173,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _NETWORK) {
     let feeRate = await getFeeRates();
 
     if (!feeRate)
-      return "Unable to fetch fee rates, aborting";
+      throw "Unable to fetch fee rates, aborting";
 
     let proccessedUTXOs = [];
     let bufferRawTx;
@@ -202,7 +201,7 @@ async function createAndSignTx(_FROM, _TO, _VALUE, _KEYPAIR, _NETWORK) {
 
 
     if (!inputs || !outputs)
-      return "No coin selection solution found; check if enough balance"
+      throw "No coin selection solution found; check if enough balance"
 
     let psbt = new bitcoinjs.Psbt({ network: network });
 
@@ -260,7 +259,7 @@ async function relaySignedTx(hexTx) {
     let client = await connect();
 
     if (!hexTx)
-      return "Missing rawHexTx parameter";
+      throw "Missing rawHexTx parameter";
 
     let broadcastResult = await client.blockchain_transaction_broadcast(hexTx);
     await client.close();

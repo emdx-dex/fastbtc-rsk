@@ -28,9 +28,9 @@
 * Fine grain RSK Contract consumption calculation [x] @sebastian
 * Force toLowerCase() on RSK addresss [x]
 * Create some step indicators for better user understanding [x]
+* Tune block confirmations [x]
 #### Pending
 
-* Tune block confirmations []
 * Add qr code to show deposit addresses [] WIP
 * Add telegram channel for support at the bottom of the app []
 

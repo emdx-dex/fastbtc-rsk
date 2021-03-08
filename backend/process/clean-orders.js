@@ -36,7 +36,7 @@ async function cleanUpOrders() {
   console.log("Running cleanupOrders()");
   try {
 
-    const X = 2;
+    const X = 6;
     const _XHourAgo = new Date(Date.now() - X * 60 * 60 * 1000);
 
     const D = 10;
