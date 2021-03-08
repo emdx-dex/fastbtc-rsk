@@ -98,9 +98,9 @@ async function btcWithdraw(order) {
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
 
-      let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nSent and marking btc.status as UNCONFIRMED.`;
+      let depositMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nTo: ${_TO}\nValue: ${order.netValue} BTC\nTxId: ${order.btc.txId}\nAutomatically sent.`;
 
-      sendLogAlert(depositMsg);
+      sendNotificationAlert(depositMsg);
 
     } catch (error) {
       console.log(error);
@@ -135,11 +135,12 @@ async function btcWithdraw(order) {
        * unsignedRawHexTx.rawTx;
        */
 
-      let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHex: ${unsignedRawHexTx.rawTx}`;
+      let rawHexMsg = `[RBTCSwapOut->BTC] Order: ${order._id}\nStatus: ${order.btc.status}\nSend To: ${_TO}\nValue: ${order.netValue} BTC\nReady to sign from HOT_WALLET\nrawHexTx: ${unsignedRawHexTx.rawTx}`;
 
       sendNotificationAlert(rawHexMsg);
     } catch (error) {
       console.log(error);
+      order.btc.status = FAILED;
       sendLogAlert("[RBTCSwapOut->BTC] Error creating unsignedRawTx");
       throw ("Error creating unsignedRawTx");
     }

@@ -77,7 +77,7 @@ router.post('/', rateLimiter, async (req, res) => {
       rsk,
       flow,
       value,
-      netValue: netValue,
+      netValue: netValue.toFixed(5),
       operationFee: process.env.OPERATION_FEE_PERCENT
     });
 
