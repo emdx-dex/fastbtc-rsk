@@ -192,6 +192,13 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           order.rsk.status = txStatus;
           order.rsk.rawTransaction = rawTransaction;
 
+          if(txStatus == "failed"){
+            let errorMsg = `Contract reverted Tx Id: ${transactionHash}; Status: ${txStatus}`;
+            console.log(errorMsg);
+            sendLogAlert(errorMsg)
+          }
+
+
         } catch (error) {
           console.log('[RBTCSwapIn->RSK] Error:', error)
           order.rsk.status = FAILED;
