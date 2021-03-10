@@ -12,7 +12,10 @@ const RSK_BLOCK_HEIGHT_CONFIRMATION = Number(process.env.RSK_BLOCK_HEIGHT_CONFIR
 const router = express.Router();
 
 const getConfirmations = (chain, blockNumber) => {
-  const block = _.get(chain, 'block', 0);
+  const block = _.get(chain, 'block');
+
+  if (!block) return 0;
+
   const delta = blockNumber - block;
 
   return (delta <= 0) ? 0 : delta;
