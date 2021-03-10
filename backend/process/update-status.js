@@ -252,6 +252,28 @@ async function processOrder(order, btcBlockHeight, rskBlockHeight) {
         order.rsk.status = UNCONFIRMED;
       }
 
+    } else if (
+      order.flow === BTC_TO_RBTC &&
+      order.btc.status === CONFIRMED &&
+      order.rsk.status === PENDING &&
+      !order.rsk.txId
+    ) {
+      try {
+
+        /**
+         * Envio netValue: el usuario recibe del lado de RSK el valor de la orden menos el fee de operación.
+         */
+        const { transactionHash, txStatus, rawTransaction } = await swapIn(order.rsk.address, order.netValue, order._id);
+
+        order.rsk.txId = transactionHash;
+        order.rsk.status = txStatus;
+        order.rsk.rawTransaction = rawTransaction;
+
+      } catch (error) {
+        console.log('[RBTCSwapIn->RSK] Error:', error);
+        order.rsk.status = FAILED;
+        throw (error);
+      }
     }
 
     if (order.flow === RBTC_TO_BTC &&
@@ -328,6 +350,10 @@ async function updateStatus() {
         {
           'rsk.status': CONFIRMED,
           'btc.status': PENDING
+        },
+        {
+          'rsk.status': PENDING,
+          'btc.status': CONFIRMED
         }
       ],
       deleted: false
