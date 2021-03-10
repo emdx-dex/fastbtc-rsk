@@ -117,7 +117,11 @@ async function swapIn(destiny, _amount, _orderId) {
 
 
     } catch (error) {
-      console.log(`[ERROR] On Create signed transaction. ${error}`);
+      const errorMessage = `[ERROR] On Create signed transaction. ${error}`;
+
+      console.log(errorMessage);
+
+      sendLogAlert(errorMessage)
 
       reject(error);
     }
