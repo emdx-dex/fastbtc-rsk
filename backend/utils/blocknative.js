@@ -47,7 +47,7 @@ async function unwatchAddress(address) {
     
     return msg;
   } catch (error) {
-    console.log(error);
+    console.log(`[unwatchAddress] Error: ${error.message}`);
     return 'Error removing hook';
   }
 }

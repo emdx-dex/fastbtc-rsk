@@ -6,8 +6,8 @@ const { getBlockHeight } = require('../../utils/block-height');
 const { isAddressValid } = require('../../utils/address');
 const { registerAddress } = require('../../utils/blocknative');
 const { rateLimiter } = require('../../utils/rate-limiter');
+const { getBlockchainEnv } = require('../../utils/environments');
 const addressesModel = require('../../models/addresses');
-const bitcoinjs = require('bitcoinjs-lib');
 const express = require('express');
 const ordersModel = require('../../models/orders');
 const BigNumber = require('bignumber.js');
@@ -46,7 +46,7 @@ router.post('/', rateLimiter, async (req, res) => {
   }
 
   if (_.isEqual(flow, RBTC_TO_BTC)) {
-    const network = _.isEqual(BTC_NETWORK, 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
+    const network = getBlockchainEnv();
 
     if (!isAddressValid(btc.address, network)) {
       return res.status(400).json({
