@@ -1,15 +1,15 @@
+require('dotenv').config();
 const addressesModel = require('../models/addresses');
 const bip32 = require('bip32');
 const bitcoinjs = require('bitcoinjs-lib');
-const ElectrumClient = require('@codewarriorr/electrum-client-js');
 const Web3 = require('web3');
-const { BTC } = require('../../shared/chains');
 const { connect } = require('./electrumx');
-
-require('dotenv').config();
+const { getBlockchainEnv } = require('./environments');
 
 const M_OF_N = Number(process.env.BTC_MULTISIG_M);
-const NETWORK = (process.env.BLOCKCHAIN_ENV === 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
+
+const NETWORK = getBlockchainEnv();
+
 const XPUB1 = process.env.BTC_MULTISIG_XPUB1;
 const XPUB2 = process.env.BTC_MULTISIG_XPUB2;
 const XPUB3 = process.env.BTC_MULTISIG_XPUB3;
@@ -103,7 +103,7 @@ async function getBTCAddressBalance(_address) {
   const BTC_UNIT = 100000000;
 
   if (!isAddressValid(_address, NETWORK))
-    return "Invalid Address";
+    throw "Invalid Address";
 
   try {
 

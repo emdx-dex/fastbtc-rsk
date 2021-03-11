@@ -8,16 +8,16 @@ const { sendLogAlert, sendNotificationAlert } = require('../utils/alerts');
 const { getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
+const { getBlockchainEnv } = require('../utils/environments');
 const bitcoinjs = require('bitcoinjs-lib');
 const blocksModel = require('../models/blocks');
 const ordersModel = require('../models/orders');
 
 require('dotenv').config();
+const network = getBlockchainEnv();
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
-
-let network = process.env.BLOCKCHAIN_ENV == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
 
 const AUTOMATIC_TX_THRESHOLD = process.env.AUTOMATIC_TX_THRESHOLD;
 const MULTISIG_TX_THRESHOLD = process.env.MULTISIG_TX_THRESHOLD;
