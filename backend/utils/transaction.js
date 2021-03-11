@@ -342,7 +342,7 @@ async function checkIfPendingTXs(_HOT_WALLET, _NETWORK) {
 
     const pendingtxs = await client.blockchain_scripthash_getMempool(rScriptHash);
 
-    await client.close();
+    client.close();
 
     if (pendingtxs.length > 0)
       return true;
