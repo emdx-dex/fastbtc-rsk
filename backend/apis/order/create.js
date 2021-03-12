@@ -6,10 +6,11 @@ const { getBlockHeight } = require('../../utils/block-height');
 const { isAddressValid } = require('../../utils/address');
 const { registerAddress } = require('../../utils/blocknative');
 const { rateLimiter } = require('../../utils/rate-limiter');
+const { getBlockchainEnv } = require('../../utils/environments');
 const addressesModel = require('../../models/addresses');
-const bitcoinjs = require('bitcoinjs-lib');
 const express = require('express');
 const ordersModel = require('../../models/orders');
+const BigNumber = require('bignumber.js');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const BTC_NETWORK = process.env.BTC_NETWORK;
@@ -45,7 +46,7 @@ router.post('/', rateLimiter, async (req, res) => {
   }
 
   if (_.isEqual(flow, RBTC_TO_BTC)) {
-    const network = _.isEqual(BTC_NETWORK, 'testnet') ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin;
+    const network = getBlockchainEnv();
 
     if (!isAddressValid(btc.address, network)) {
       return res.status(400).json({
@@ -70,15 +71,22 @@ router.post('/', rateLimiter, async (req, res) => {
   /**
    * Cálculo de value bruto de orden menos el fee de operación.
    */
-  let netValue = Number(value) - (Number(value) * process.env.OPERATION_FEE_PERCENT);
-  
+  const OPERATION_FEE = process.env.OPERATION_FEE_PERCENT;
+
+  let valueBn = new BigNumber(Number(value));
+  let valueFeeBn = new BigNumber(Number(OPERATION_FEE));
+
+  let dcPlaces = valueBn.dp() + valueFeeBn.dp();
+
+  let netValue = (Number(value) - (Number(value) * OPERATION_FEE)).toFixed(dcPlaces);
+
   try {
     const order = new ordersModel({
       rsk,
       flow,
       value,
-      netValue: netValue.toFixed(5),
-      operationFee: process.env.OPERATION_FEE_PERCENT
+      netValue: netValue,
+      operationFee: OPERATION_FEE
     });
 
     if (flow === BTC_TO_RBTC) {

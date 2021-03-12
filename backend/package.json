@@ -11,6 +11,7 @@
   "dependencies": {
     "@codewarriorr/electrum-client-js": "^0.1.1",
     "axios": "^0.21.1",
+    "bignumber.js": "^9.0.1",
     "bip32": "^2.0.6",
     "bitcoinjs-lib": "^5.2.0",
     "body-parse": "^0.1.0",

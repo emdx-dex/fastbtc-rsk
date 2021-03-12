@@ -66,7 +66,6 @@ app.all("*", (_req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-  console.log(`Environment: ${process.env.NODE_ENV}`);
   console.log(`Server URL: ${process.env.SERVER_URL}`);
   console.log(`Example app listening on port: ${process.env.PORT}`);
 });

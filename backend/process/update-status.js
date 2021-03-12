@@ -8,33 +8,21 @@ const { sendLogAlert, sendNotificationAlert } = require('../utils/alerts');
 const { getTransactionReceipt } = require('../rsk/index');
 const { swapIn } = require('../rsk/index');
 const { unwatchAddress } = require('../utils/blocknative');
+const { getBlockchainEnv } = require('../utils/environments');
 const bitcoinjs = require('bitcoinjs-lib');
 const blocksModel = require('../models/blocks');
 const ordersModel = require('../models/orders');
 
 require('dotenv').config();
+const network = getBlockchainEnv();
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
-
-let network = process.env.BLOCKCHAIN_ENV == 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.mainnet;
 
 const AUTOMATIC_TX_THRESHOLD = process.env.AUTOMATIC_TX_THRESHOLD;
 const MULTISIG_TX_THRESHOLD = process.env.MULTISIG_TX_THRESHOLD;
 
 async function btcWithdraw(order) {
-
-  /**
-   * Espero que no haya transacciones pendientes para que no haya UTXO en mempool.
-   */
-
-  const existTxInMempool = await checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network);
-
-  if (existTxInMempool) {
-    console.log(`[RBTCSwapOut->BTC] still unconfirmed txs from ${process.env.BTC_HOT_WALLET_ADDR}, waiting next cycle.`);
-    return;
-  }
-
 
   /* 
   AUTOMATIC_THRESHOLD <= 0.02
@@ -58,6 +46,17 @@ async function btcWithdraw(order) {
   if (_NET_VALUE_BTC <= AUTOMATIC_TX_THRESHOLD) {
 
     try {
+
+      /**
+     * Espero que no haya transacciones pendientes para que no haya UTXO en mempool.
+     */
+
+      const existTxInMempool = await checkIfPendingTXs(process.env.BTC_HOT_WALLET_ADDR, network);
+
+      if (existTxInMempool) {
+        console.log(`[RBTCSwapOut->BTC] still unconfirmed txs from ${process.env.BTC_HOT_WALLET_ADDR}, waiting next cycle.`);
+        return;
+      }
 
       /**
        * Uso la HOT_WALLET definida en .ENV como origen de los fondos.
@@ -93,7 +92,7 @@ async function btcWithdraw(order) {
         console.log("Error validating existing TX");
         throw "Error validating existing TX";
       }
-      */  
+      */
 
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
@@ -191,6 +190,13 @@ async function checkConfirmations(chain, height, heightConfirmation, order) {
           order.rsk.txId = transactionHash;
           order.rsk.status = txStatus;
           order.rsk.rawTransaction = rawTransaction;
+
+          if (txStatus == "failed") {
+            let errorMsg = `Contract reverted Tx Id: ${transactionHash}; Status: ${txStatus}`;
+            console.log(errorMsg);
+            sendLogAlert(errorMsg)
+          }
+
 
         } catch (error) {
           console.log('[RBTCSwapIn->RSK] Error:', error)
