@@ -5,7 +5,7 @@ const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
 const { getBlockchainEnv } = require('../../utils/environments');
 const { getBlockHeight } = require('../../utils/block-height');
 const { isAddressValid } = require('../../utils/address');
-const { PENDING, SIGNATURE_PENDING, MULTISIG_PENDING, UNCONFIRMED, FAILED } = require('../../../shared/status');
+const { CONFIRMED, PENDING } = require('../../../shared/status');
 const { rateLimiter } = require('../../utils/rate-limiter');
 const { registerAddress } = require('../../utils/blocknative');
 const addressesModel = require('../../models/addresses');
@@ -25,13 +25,12 @@ const router = express.Router();
 require('dotenv').config();
 
 const existOrderWithSenderAddress = async (senderAddress) => {
-  const pendingStatus = [PENDING, SIGNATURE_PENDING, MULTISIG_PENDING, UNCONFIRMED, FAILED];
   const order = await ordersModel.find({
-    'btc.status': { $in: pendingStatus },
+    'btc.status': { $ne: CONFIRMED },
     flow: RBTC_TO_BTC,
     deleted: false,
     'rsk.senderAddress': senderAddress,
-    'rsk.status': { $in: pendingStatus }
+    'rsk.status': { $ne: CONFIRMED }
   });
 
   return !_.isEmpty(order);
@@ -70,14 +69,6 @@ router.post('/', rateLimiter, async (req, res) => {
         }
       });
     }
-  }
-
-  const existOrder = await existOrderWithSenderAddress(rsk.senderAddress);
-
-  if (existOrder) {
-    return res.status(400).json({
-      error: 'Order with sender address already exist.'
-    });
   }
 
   /**
@@ -134,6 +125,14 @@ router.post('/', rateLimiter, async (req, res) => {
     }
 
     if (flow === RBTC_TO_BTC) {
+      const existOrder = await existOrderWithSenderAddress(rsk.senderAddress);
+
+      if (existOrder) {
+        return res.status(400).json({
+          error: 'Order with sender address already exist.'
+        });
+      }
+      
       order.btc = {
         address: btc.address,
         status: PENDING
