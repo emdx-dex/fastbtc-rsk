@@ -4,7 +4,7 @@
       <v-row>
         <v-col lg="6" md="6" class="pa-8">
           <p
-            class="order__title subtitle-1 text--primary rsk-address"
+            class="order__title subtitle-1 text--primary"
             v-if="rbtcSenderAddress"
           >
             RBTC sender address
@@ -98,7 +98,7 @@
 
           <v-row class="d-flex align-center mb-2">
             <v-col class="col-10">
-              <span class="font-weight-black rsk-address">{{ transferAddress }}</span>
+              <span class="font-weight-black">{{ transferAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
               <v-btn x-small class="mr-2" @click="copyToClipboard(transferAddress)">
@@ -254,9 +254,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.rsk-address {
-  text-transform: lowercase!important;
-}
-</style>

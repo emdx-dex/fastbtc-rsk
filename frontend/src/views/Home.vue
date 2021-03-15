@@ -191,7 +191,7 @@ export default {
       this.removePooling();
     },
     handleRecipientAddressChange(v) {
-      if (this.flow === BTC_TO_RBTC) {
+      if (v && this.flow === BTC_TO_RBTC) {
         this.address = v.toLowerCase();
       }
     },

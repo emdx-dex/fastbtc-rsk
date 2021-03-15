@@ -2,18 +2,18 @@ const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
 const { BTC, RSK } = require('../../../shared/chains');
 const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
+const { getBlockchainEnv } = require('../../utils/environments');
 const { getBlockHeight } = require('../../utils/block-height');
 const { isAddressValid } = require('../../utils/address');
-const { registerAddress } = require('../../utils/blocknative');
+const { PENDING, SIGNATURE_PENDING, MULTISIG_PENDING, UNCONFIRMED, FAILED } = require('../../../shared/status');
 const { rateLimiter } = require('../../utils/rate-limiter');
-const { getBlockchainEnv } = require('../../utils/environments');
+const { registerAddress } = require('../../utils/blocknative');
 const addressesModel = require('../../models/addresses');
+const BigNumber = require('bignumber.js');
 const express = require('express');
 const ordersModel = require('../../models/orders');
-const BigNumber = require('bignumber.js');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
-const BTC_NETWORK = process.env.BTC_NETWORK;
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
@@ -23,6 +23,19 @@ const MIN_VALUE = process.env.APP_TRANSFER_MIN;
 const router = express.Router();
 
 require('dotenv').config();
+
+const existOrderWithSenderAddress = async (senderAddress) => {
+  const pendingStatus = [PENDING, SIGNATURE_PENDING, MULTISIG_PENDING, UNCONFIRMED, FAILED];
+  const order = await ordersModel.find({
+    'btc.status': { $in: pendingStatus },
+    flow: RBTC_TO_BTC,
+    deleted: false,
+    'rsk.senderAddress': senderAddress,
+    'rsk.status': { $in: pendingStatus }
+  });
+
+  return !_.isEmpty(order);
+}
 
 router.post('/', rateLimiter, async (req, res) => {
   const { btc, flow, rsk, value } = req.body;
@@ -59,6 +72,14 @@ router.post('/', rateLimiter, async (req, res) => {
     }
   }
 
+  const existOrder = await existOrderWithSenderAddress(rsk.senderAddress);
+
+  if (existOrder) {
+    return res.status(400).json({
+      error: 'Order with sender address already exist.'
+    });
+  }
+
   /**
    * Chequeo backend side que los valores esten dentro de los parámetros para evitar ataques con BURP client side.
    */
@@ -82,7 +103,6 @@ router.post('/', rateLimiter, async (req, res) => {
 
   try {
     const order = new ordersModel({
-      rsk,
       flow,
       value,
       netValue: netValue,
@@ -102,23 +122,28 @@ router.post('/', rateLimiter, async (req, res) => {
       await registerAddress(depositAddr);
 
       order.btc = {
-        ...order.btc,
         address: depositAddr,
         confirmations: 0,
-        requiredConfirmations: BTC_BLOCK_HEIGHT_CONFIRMATION
+        requiredConfirmations: BTC_BLOCK_HEIGHT_CONFIRMATION,
+        status: PENDING
+      };
+      order.rsk = {
+        address: rsk.address,
+        status: PENDING
       };
     }
 
     if (flow === RBTC_TO_BTC) {
       order.btc = {
-        ...order.btc,
-        ...btc
+        address: btc.address,
+        status: PENDING
       };
       order.rsk = {
-        ...order.rsk,
         address: FAST_SWAP_ADDRESS,
         confirmations: 0,
-        requiredConfirmations: RSK_BLOCK_HEIGHT_CONFIRMATION
+        requiredConfirmations: RSK_BLOCK_HEIGHT_CONFIRMATION,
+        senderAddress: rsk.senderAddress,
+        status: PENDING
       }
     }
 
