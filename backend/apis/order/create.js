@@ -58,16 +58,32 @@ router.post('/', rateLimiter, async (req, res) => {
   }
 
   if (_.isEqual(flow, RBTC_TO_BTC)) {
-    const network = getBlockchainEnv();
 
-    if (!isAddressValid(btc.address, network)) {
-      return res.status(400).json({
-        error: {
-          form: {
-            address: 'Recipient address must be a valid BTC address.'
+    try {
+
+      const existOrder = await existOrderWithSenderAddress(rsk.senderAddress);
+
+      if (existOrder) {
+        return res.status(400).json({
+          error: 'Order with sender address already exist.'
+        });
+      }
+
+      const network = getBlockchainEnv();
+
+      if (!isAddressValid(btc.address, network)) {
+        return res.status(400).json({
+          error: {
+            form: {
+              address: 'Recipient address must be a valid BTC address.'
+            }
           }
-        }
-      });
+        });
+      }
+
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error });
     }
   }
 
@@ -125,14 +141,7 @@ router.post('/', rateLimiter, async (req, res) => {
     }
 
     if (flow === RBTC_TO_BTC) {
-      const existOrder = await existOrderWithSenderAddress(rsk.senderAddress);
 
-      if (existOrder) {
-        return res.status(400).json({
-          error: 'Order with sender address already exist.'
-        });
-      }
-      
       order.btc = {
         address: btc.address,
         status: PENDING
