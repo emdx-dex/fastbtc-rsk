@@ -12,6 +12,7 @@ const addressesModel = require('../../models/addresses');
 const BigNumber = require('bignumber.js');
 const express = require('express');
 const ordersModel = require('../../models/orders');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
@@ -36,8 +37,25 @@ const existOrderWithSenderAddress = async (senderAddress) => {
   return !_.isEmpty(order);
 }
 
+const getNetValue = (_operationFee, _value) => {
+
+  let valueBn = new BigNumber(Number(_value));
+  let valueFeeBn = new BigNumber(Number(_operationFee));
+
+  let dcPlaces = valueBn.dp() + valueFeeBn.dp();
+
+  return (Number(_value) - (Number(_value) * _operationFee)).toFixed(dcPlaces);
+
+};
+
 router.post('/', rateLimiter, async (req, res) => {
-  const { btc, flow, rsk, value } = req.body;
+
+  /**
+   * Sanitizo los objetos del body para evitar NoSQL injection.
+   */
+  let _body = mongoSanitize.sanitize(req.body);
+
+  const { btc, flow, rsk, value } = _body;
 
   if (_.isEmpty(flow)) {
     return res.status(400).json({
@@ -101,12 +119,7 @@ router.post('/', rateLimiter, async (req, res) => {
    */
   const OPERATION_FEE = process.env.OPERATION_FEE_PERCENT;
 
-  let valueBn = new BigNumber(Number(value));
-  let valueFeeBn = new BigNumber(Number(OPERATION_FEE));
-
-  let dcPlaces = valueBn.dp() + valueFeeBn.dp();
-
-  let netValue = (Number(value) - (Number(value) * OPERATION_FEE)).toFixed(dcPlaces);
+  let netValue = getNetValue(OPERATION_FEE, value);
 
   try {
     const order = new ordersModel({

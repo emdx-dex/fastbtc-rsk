@@ -32,7 +32,7 @@ const app = express();
 /**
  * Para servir VUE desde ExpressJS y en caso de que después sea multi pagina.
  */
-app.use(express.static(process.cwd()));
+//app.use(express.static(process.cwd()));
 const publicPath = resolve(__dirname, 'dist/')
 const staticConf = { maxAge: '1y', etag: false }
 
@@ -42,7 +42,7 @@ app.use(logger('combined', {
 
 app.set('json spaces', 2);
 app.use(logger('dev'));
-app.use(cors());
+//app.use(cors());
 app.use(bodyParser.json({limit: '50mb', extended: true}))
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
 
