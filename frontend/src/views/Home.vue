@@ -99,12 +99,12 @@ import {
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { CONFIRMED, PENDING, UNCONFIRMED } from '../../../shared/status';
-import SYMBOLS from '../../../shared/symbols';
 import ConfirmationModal from '@/components/confirmation-dialog';
 import ErrorNotification from '@/components/error-notification';
 import Instructions from '@/components/instructions';
 import Order from '@/components/order';
 import Page from '@/components/page';
+import SYMBOLS from '../../../shared/symbols';
 import Web3 from 'web3';
 
 const OPERATION_FEE_PERCENT = process.env.VUE_APP_OPERATION_FEE_PERCENT;
