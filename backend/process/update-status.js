@@ -73,7 +73,6 @@ async function btcWithdraw(order) {
 
       if (!createdSignedTx.signedRawTx) {
         console.log(createdSignedTx);
-        sendLogAlert("[RBTCSwapOut->BTC] Error creating signedRawTx");
         throw 'Error creating signedRawTx';
       }
 
@@ -81,18 +80,8 @@ async function btcWithdraw(order) {
 
       if (!broadcastedTxId) {
         console.log(broadcastedTxId);
-        sendLogAlert("[RBTCSwapOut->BTC] Error broadcasting transaction");
         throw 'Error broadcasting transaction';
       }
-
-      /*FIXME: Esto parecia una buena idea como una validación adicional, pero saltando entre servers de electrum produce resultados inconsistentes.
-      let isValidTx = await validateTxId(broadcastedTxId);
-
-      if (!isValidTx){
-        console.log("Error validating existing TX");
-        throw "Error validating existing TX";
-      }
-      */
 
       order.btc.txId = broadcastedTxId;
       order.btc.status = UNCONFIRMED;
@@ -104,7 +93,7 @@ async function btcWithdraw(order) {
     } catch (error) {
       console.log(error);
       order.btc.status = FAILED;
-      sendLogAlert("[RBTCSwapOut->BTC] Error creating or relaying signed transaction");
+      sendLogAlert(`[RBTCSwapOut->BTC] Order: ${order._id}\nError: ${error}`);
       throw ("Error creating or relaying signed transaction")
     }
 
