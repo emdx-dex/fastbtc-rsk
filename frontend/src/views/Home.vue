@@ -34,7 +34,7 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="12" v-if="isRbtcToBtc">
+        <v-col cols="12" md="12" v-show="isRbtcToBtc">
           <v-text-field
             :label="fromCoin + ' Sender address (Source funds)'"
             :required="isRbtcToBtc"
@@ -81,16 +81,6 @@
       </v-card>
     </div>
     <instructions :flow="flow" />
-    <!-- <v-alert
-      border="left"
-      class="mt-8"
-      colored-border
-      elevation="2"
-      type="warning"
-    >
-      In case you need assistance or have any questions you can write to us:
-      <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>
-    </v-alert> -->
     <confirmation-dialog
       :onCancel="handleCancel"
       :onConfirm="handleConfirm"
@@ -109,12 +99,12 @@ import {
 } from '@/utils/cookies';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { CONFIRMED, PENDING, UNCONFIRMED } from '../../../shared/status';
-import SYMBOLS from '../../../shared/symbols';
 import ConfirmationModal from '@/components/confirmation-dialog';
 import ErrorNotification from '@/components/error-notification';
 import Instructions from '@/components/instructions';
 import Order from '@/components/order';
 import Page from '@/components/page';
+import SYMBOLS from '../../../shared/symbols';
 import Web3 from 'web3';
 
 const OPERATION_FEE_PERCENT = process.env.VUE_APP_OPERATION_FEE_PERCENT;
@@ -161,14 +151,12 @@ export default {
 
       switch (true) {
         case _.isEmpty(address):
-          return 'Sender address is required.';
+          return 'Recipient address is required.';
 
         case this.flow === BTC_TO_RBTC && !Web3.utils.isAddress(address):
           return 'Recipient address must be a valid RSK address.';
 
         default:
-          this.$refs.form.resetValidation();
-
           return true;
       }
     },
@@ -191,12 +179,12 @@ export default {
       this.removePooling();
     },
     handleRecipientAddressChange(v) {
-      if (this.flow === BTC_TO_RBTC) {
+      if (v && this.flow === BTC_TO_RBTC) {
         this.address = v.toLowerCase();
       }
     },
     handleSenderAddressChange(v) {
-      this.senderAddress = v.toLowerCase();
+      this.senderAddress = v ? v.toLowerCase() : '';
     },
     handleValueChange(v) {
       this.netValue = v - v * OPERATION_FEE_PERCENT;
@@ -207,6 +195,8 @@ export default {
       this.interval = null;
     },
     senderAddressRule(senderAddress) {
+      if (this.flow === BTC_TO_RBTC) return true;
+
       switch (true) {
         case _.isEmpty(senderAddress):
           return 'Sender address is required.';
@@ -256,12 +246,24 @@ export default {
   },
   mounted: async function () {
     const order = getCookie(NAMES.ORDER);
-
-    this.setLabels();
+    const query = _.get(this.$route, 'query', {});
 
     if (!_.isEmpty(order)) {
       this.$store.dispatch('order/get', { id: order });
     }
+
+    if (!_.isEmpty(query)) {
+      const { address = '', flow, senderAddress = '', value = '' } = query;
+
+      this.address = address;
+      this.flow = flow === RBTC_TO_BTC.toLowerCase() ? RBTC_TO_BTC : BTC_TO_RBTC;
+      this.isRbtcToBtc = this.flow === RBTC_TO_BTC;
+      this.netValue = value - value * OPERATION_FEE_PERCENT;
+      this.senderAddress = senderAddress;
+      this.value = value;
+    }
+
+    this.setLabels();
   },
   watch: {
     '$store.state.order.error': function (error) {

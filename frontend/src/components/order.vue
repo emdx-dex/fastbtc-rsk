@@ -3,19 +3,27 @@
     <v-container class="lighten-5">
       <v-row>
         <v-col lg="6" md="6" class="pa-8">
-          <p
-            class="order__title subtitle-1 text--primary rsk-address"
-            v-if="rbtcSenderAddress"
-          >
-            RBTC sender address
-          </p>
+          <v-row>
+            <v-col class="py-0">
+              <p
+                class="order__title subtitle-1 text--primary"
+                v-if="rbtcSenderAddress"
+              >
+                RBTC sender address
+              </p>
+            </v-col>
+          </v-row>
 
           <v-row class="d-flex align-center mb-2" v-if="rbtcSenderAddress">
             <v-col class="col-10">
               <span class="font-weight-black">{{ rbtcSenderAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <v-btn x-small class="mr-2" @click="copyToClipboard(rbtcSenderAddress)">
+              <v-btn
+                x-small
+                class="mr-2"
+                @click="copyToClipboard(rbtcSenderAddress)"
+              >
                 <v-icon size="18">mdi-content-copy</v-icon>
               </v-btn>
               <a
@@ -30,20 +38,34 @@
             </v-col>
           </v-row>
 
-          <p class="order__title subtitle-1 text--primary">
-            {{ fromCoin() }} deposit address
+          <v-row v-if="rbtcSenderAddress">
+            <v-col class="py-0">
+              <qr-code :text="rbtcSenderAddress"></qr-code>
+            </v-col>
+          </v-row>
 
-            <span class="order__title__status">
-              <status :status="depositStatus"></status>
-            </span>
-          </p>
+          <v-row>
+            <v-col class="pb-0">
+              <p class="order__title subtitle-1 text--primary">
+                {{ fromCoin() }} deposit address
+
+                <span class="order__title__status">
+                  <status :status="depositStatus"></status>
+                </span>
+              </p>
+            </v-col>
+          </v-row>
 
           <v-row class="d-flex align-center mb-2">
             <v-col class="col-10">
               <span class="font-weight-black">{{ depositAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <v-btn x-small class="mr-2" @click="copyToClipboard(depositAddress)">
+              <v-btn
+                x-small
+                class="mr-2"
+                @click="copyToClipboard(depositAddress)"
+              >
                 <v-icon size="18">mdi-content-copy</v-icon>
               </v-btn>
               <a
@@ -58,9 +80,19 @@
             </v-col>
           </v-row>
 
-          <p class="subtitle-1 text--primary" v-if="depositTxId">
-            Deposit transaction
-          </p>
+          <v-row>
+            <v-col class="py-0">
+              <qr-code :text="depositAddress"></qr-code>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col class="py-0">
+              <p class="subtitle-1 text--primary" v-if="depositTxId">
+                Deposit transaction
+              </p>
+            </v-col>
+          </v-row>
 
           <v-row class="d-flex align-center mb-2" v-if="depositTxId">
             <v-col class="col-10">
@@ -82,26 +114,44 @@
             </v-col>
           </v-row>
 
-          <p class="subtitle-1 text--primary">Value</p>
+          <v-row>
+            <v-col class="pb-0">
+              <p class="subtitle-1 text--primary">Value</p>
+            </v-col>
+          </v-row>
 
-          <p class="font-weight-black headline">{{ value }} {{ fromCoin() }}</p>
+          <v-row>
+            <v-col class="py-0">
+              <p class="font-weight-black headline">
+                {{ value }} {{ fromCoin() }}
+              </p>
+            </v-col>
+          </v-row>
         </v-col>
 
         <v-col lg="6" md="6" class="pa-8">
-          <p class="order__title subtitle-1 text--primary">
-            {{ toCoin() }} recipient address
+          <v-row>
+            <v-col class="pb-0">
+              <p class="order__title subtitle-1 text--primary">
+                {{ toCoin() }} recipient address
 
-            <span class="order__title__status">
-              <status :status="transferStatus"></status>
-            </span>
-          </p>
+                <span class="order__title__status">
+                  <status :status="transferStatus"></status>
+                </span>
+              </p>
+            </v-col>
+          </v-row>
 
           <v-row class="d-flex align-center mb-2">
             <v-col class="col-10">
-              <span class="font-weight-black rsk-address">{{ transferAddress }}</span>
+              <span class="font-weight-black">{{ transferAddress }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <v-btn x-small class="mr-2" @click="copyToClipboard(transferAddress)">
+              <v-btn
+                x-small
+                class="mr-2"
+                @click="copyToClipboard(transferAddress)"
+              >
                 <v-icon size="18">mdi-content-copy</v-icon>
               </v-btn>
               <a
@@ -113,6 +163,12 @@
                   <v-icon size="18">mdi-arrow-top-right</v-icon>
                 </v-btn>
               </a>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col class="py-0">
+              <qr-code :text="transferAddress"></qr-code>
             </v-col>
           </v-row>
 
@@ -128,13 +184,17 @@
               <span class="font-weight-black">{{ transferTxId }}</span>
             </v-col>
             <v-col class="col-2 d-flex align-center justify-center">
-              <v-btn x-small class="mr-2" @click="copyToClipboard(transferTxId)">
+              <v-btn
+                @click="copyToClipboard(transferTxId)"
+                class="mr-2"
+                x-small
+              >
                 <v-icon size="18">mdi-content-copy</v-icon>
               </v-btn>
               <a
                 :href="toTxUrl(transferTxId)"
-                target="_blank"
                 style="text-decoration: none"
+                target="_blank"
               >
                 <v-btn x-small>
                   <v-icon size="18">mdi-arrow-top-right</v-icon>
@@ -143,9 +203,19 @@
             </v-col>
           </v-row>
 
-          <p class="subtitle-1 text--primary">Value</p>
+          <v-row>
+            <v-col class="pb-0">
+              <p class="subtitle-1 text--primary">Value</p>
+            </v-col>
+          </v-row>
 
-          <p class="font-weight-black headline">{{ netValue }} {{ toCoin() }}</p>
+          <v-row>
+            <v-col class="py-0">
+              <p class="font-weight-black headline">
+                {{ netValue }} {{ toCoin() }}
+              </p>
+            </v-col>
+          </v-row>
         </v-col>
       </v-row>
     </v-container>
@@ -157,12 +227,14 @@ import _ from 'lodash';
 import { BTC_TO_RBTC, RBTC_TO_BTC } from '../../../shared/flows';
 import { getBTCAddressUrl, getBTCTxUrl } from '@/utils/btc-urls';
 import { getRSKAddressUrl, getRSKTxUrl } from '@/utils/rsk-urls';
+import QrCode from '@/components/qr-code';
 import Status from '@/components/status';
 import SYMBOLS from '../../../shared/symbols';
 
 export default {
   name: 'order',
   components: {
+    'qr-code': QrCode,
     Status,
   },
   data: () => ({
@@ -254,9 +326,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.rsk-address {
-  text-transform: lowercase!important;
-}
-</style>

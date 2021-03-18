@@ -2,18 +2,19 @@ const _ = require('lodash');
 const { BTC_TO_RBTC, RBTC_TO_BTC } = require('../../../shared/flows');
 const { BTC, RSK } = require('../../../shared/chains');
 const { getAddrNextIndex, deriveAddrByIndex } = require('../../utils/address');
+const { getBlockchainEnv } = require('../../utils/environments');
 const { getBlockHeight } = require('../../utils/block-height');
 const { isAddressValid } = require('../../utils/address');
-const { registerAddress } = require('../../utils/blocknative');
+const { CONFIRMED, PENDING } = require('../../../shared/status');
 const { rateLimiter } = require('../../utils/rate-limiter');
-const { getBlockchainEnv } = require('../../utils/environments');
+const { registerAddress } = require('../../utils/blocknative');
 const addressesModel = require('../../models/addresses');
+const BigNumber = require('bignumber.js');
 const express = require('express');
 const ordersModel = require('../../models/orders');
-const BigNumber = require('bignumber.js');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const BTC_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(BTC);
-const BTC_NETWORK = process.env.BTC_NETWORK;
 const FAST_SWAP_ADDRESS = process.env.FAST_SWAP_ADDRESS;
 const RSK_BLOCK_HEIGHT_CONFIRMATION = getBlockHeight(RSK);
 
@@ -24,8 +25,37 @@ const router = express.Router();
 
 require('dotenv').config();
 
+const existOrderWithSenderAddress = async (senderAddress) => {
+  const order = await ordersModel.find({
+    'btc.status': { $ne: CONFIRMED },
+    flow: RBTC_TO_BTC,
+    deleted: false,
+    'rsk.senderAddress': senderAddress,
+    'rsk.status': { $ne: CONFIRMED }
+  });
+
+  return !_.isEmpty(order);
+}
+
+const getNetValue = (_operationFee, _value) => {
+
+  let valueBn = new BigNumber(Number(_value));
+  let valueFeeBn = new BigNumber(Number(_operationFee));
+
+  let dcPlaces = valueBn.dp() + valueFeeBn.dp();
+
+  return (Number(_value) - (Number(_value) * _operationFee)).toFixed(dcPlaces);
+
+};
+
 router.post('/', rateLimiter, async (req, res) => {
-  const { btc, flow, rsk, value } = req.body;
+
+  /**
+   * Sanitizo los objetos del body para evitar NoSQL injection.
+   */
+  let _body = mongoSanitize.sanitize(req.body);
+
+  const { btc, flow, rsk, value } = _body;
 
   if (_.isEmpty(flow)) {
     return res.status(400).json({
@@ -46,16 +76,32 @@ router.post('/', rateLimiter, async (req, res) => {
   }
 
   if (_.isEqual(flow, RBTC_TO_BTC)) {
-    const network = getBlockchainEnv();
 
-    if (!isAddressValid(btc.address, network)) {
-      return res.status(400).json({
-        error: {
-          form: {
-            address: 'Recipient address must be a valid BTC address.'
+    try {
+
+      const existOrder = await existOrderWithSenderAddress(rsk.senderAddress);
+
+      if (existOrder) {
+        return res.status(400).json({
+          error: 'Order with sender address already exist.'
+        });
+      }
+
+      const network = getBlockchainEnv();
+
+      if (!isAddressValid(btc.address, network)) {
+        return res.status(400).json({
+          error: {
+            form: {
+              address: 'Recipient address must be a valid BTC address.'
+            }
           }
-        }
-      });
+        });
+      }
+
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error });
     }
   }
 
@@ -73,16 +119,10 @@ router.post('/', rateLimiter, async (req, res) => {
    */
   const OPERATION_FEE = process.env.OPERATION_FEE_PERCENT;
 
-  let valueBn = new BigNumber(Number(value));
-  let valueFeeBn = new BigNumber(Number(OPERATION_FEE));
-
-  let dcPlaces = valueBn.dp() + valueFeeBn.dp();
-
-  let netValue = (Number(value) - (Number(value) * OPERATION_FEE)).toFixed(dcPlaces);
+  let netValue = getNetValue(OPERATION_FEE, value);
 
   try {
     const order = new ordersModel({
-      rsk,
       flow,
       value,
       netValue: netValue,
@@ -102,23 +142,29 @@ router.post('/', rateLimiter, async (req, res) => {
       await registerAddress(depositAddr);
 
       order.btc = {
-        ...order.btc,
         address: depositAddr,
         confirmations: 0,
-        requiredConfirmations: BTC_BLOCK_HEIGHT_CONFIRMATION
+        requiredConfirmations: BTC_BLOCK_HEIGHT_CONFIRMATION,
+        status: PENDING
+      };
+      order.rsk = {
+        address: rsk.address,
+        status: PENDING
       };
     }
 
     if (flow === RBTC_TO_BTC) {
+
       order.btc = {
-        ...order.btc,
-        ...btc
+        address: btc.address,
+        status: PENDING
       };
       order.rsk = {
-        ...order.rsk,
         address: FAST_SWAP_ADDRESS,
         confirmations: 0,
-        requiredConfirmations: RSK_BLOCK_HEIGHT_CONFIRMATION
+        requiredConfirmations: RSK_BLOCK_HEIGHT_CONFIRMATION,
+        senderAddress: rsk.senderAddress,
+        status: PENDING
       }
     }
 
