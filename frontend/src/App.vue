@@ -3,7 +3,7 @@
     <v-app-bar app color="#FFFFFF" height="100">
       <router-link class="app__header__link" to="/">
         <v-img
-          alt="rSwap Logo"
+          alt="rBTC-Swap Logo"
           class="shrink mr-2"
           contain
           src="./assets/logo.png"
@@ -13,7 +13,7 @@
       </router-link>
 
       <div class="d-flex align-center flex-column">
-        <div class="text-h4 font-weight-bold">rSwap</div>
+        <div class="text-h4 font-weight-bold">rBTC Swap</div>
         <div class="app__header__subtitle font-weight-bold" v-if="isTestnet">
           Testnet
         </div>
