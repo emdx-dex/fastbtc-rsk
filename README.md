@@ -1,39 +1,211 @@
 # fastbtc-rsk
 
-## Index
+<!--
+*** Thanks for checking out the Best-README-Template. If you have a suggestion
+*** that would make this better, please fork the repo and create a pull request
+*** or simply open an issue with the tag "enhancement".
+*** Thanks again! Now go create something AMAZING! :D
+***
+***
+***
+*** To avoid retyping too much info. Do a search and replace for the following:
+*** github_username, repo_name, twitter_handle, email, project_title, project_description
+-->
 
-* [API](/docs/API.md)
-* [SETUP](/docs/SETUP.md)
-* [ADMIN PANEL SETUP](/docs/ADMIN-SETUP.md)
 
-### TODO
 
-#### Done
+<!-- PROJECT SHIELDS -->
+<!--
+*** I'm using markdown "reference style" links for readability.
+*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
+*** See the bottom of this document for the declaration of the reference variables
+*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
 
-* Better UX/UI per-side confirmation completion on tx N confirmations [x]
-* On RBTC to BTC decide on wallet, tx construction and automatic relay depending on value being transfered [x]
-* Functions to fetch Hot/MultiSig on BTC wallet and RSK contract balance. [x]@maxidev
-* Create a new function to execute on setInterval that checks the balance on hot/multisig btc and RSK contract and alert if below threshold [x]maxidev
-* Sanitize client side inputs and validate base58/ETH address type to avoid user entering wrong address type or garbage [x] @conrado/@maxidev/@agustin
-* Check if Electrumx server can be use to get latest block on BTC [x] @maxidev
-* On front end show an estimate time for conversion completion depending on the total order.value (given the routing order transaction depending on order.value) [x] @conrado/@agustin
-* cleanUp() on process-status of pending orders and createdTime > 1h : mark as deleted /BTC_RTBTC -> unwatch [x] @maxidev
-* On clear_order on front end -> cleanUp(orderId) / Review polling / bug shown on video that changes orders [x] @agustin
-* Separate orders table app from client's order view | new endpoint to set txId on hot_wallet unsigned / multisig [x] @maxidev @agustin
-* Endpoint to set txId when manually executed on RBTC_TO_BTC flow and save into proper order [x] @maxidev
-* Add convesion rate btc<->rbtc taking operation_fee into account [x] @maxidev
-* Enable function that check that the tx value sent to blocknative watchess address is >= to order value [x] @maxidev
-* Add to package.json script to build production ready front end assets and serve from express [x] @maxidev/@agustin
-* add watchdog to restart process-status if it hangs [x] @maxidev
-* Fine grain RSK Contract consumption calculation [x] @sebastian
-* Force toLowerCase() on RSK addresss [x]
-* Create some step indicators for better user understanding [x]
-* Tune block confirmations [x]
-#### Pending
 
-* Add qr code to show deposit addresses [] WIP
-* Add telegram channel for support at the bottom of the app []
 
-## Infrastructure overview
+<!-- PROJECT LOGO -->
+<br />Install the following dependencies
+<p align="center">
+  <a href="https://github.com/Teks-Capital/rbtcswap">
+    <img src="frontend/src/assets/logo.png" alt="Logo" width="80" height="80">
+  </a>
 
-![alt text](./fast-btc.png)
+  <h3 align="center">rbtcSwap</h3>
+
+  <p align="center">
+    Web App to convert BTC<->RBTC
+    <br />
+    <a href="https://github.com/Teks-Capital/rbtcswap/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/Teks-Capital/rbtcswap/issues">Request Feature</a>
+  </p>
+</p>
+Install the following dependenciesble of Contents</h2></summary>
+  <ol>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgements">Acknowledgements</a></li>
+  </ol>
+</details>
+
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+### Clone the project
+
+```
+git clone https://github.com/Teks-Capital/rbtcswap
+```
+
+### Prerequisites:
+
+* NodeJS
+* NPM
+* MongoDB
+
+## Installation
+
+In your terminal run
+
+* Run `cd backend`
+* Run `npm install`
+* Run `cp .env.testnet .env`
+* Run `node index.js`
+
+Open another tab and run `node process/index.js` in order to run the update status process.
+
+## Frontend
+
+### For run VUEjs on devmode
+
+In a new terminal tab run
+
+* Run `cd frontend`
+* Run `npm install`
+* Run `cp .env.testnet .env`
+* Run `npm run serve`
+
+### For production ready assets
+
+In a new terminal tab run
+
+* Run `cd frontend`
+* Run `npm install`
+* Run `cp .env.testnet .env`
+* Run `npm run build`
+
+By default the frontend is served in `http://localhost:5556/`.
+
+
+### Production PM2 setup
+
+#### Backend server
+
+In order to run backend server with pm2:
+
+* `cd backend`
+* `pm2 start "node index.js" --name "SOME_NAME"`
+
+#### Oder update process
+
+In order to run order-update process:
+
+* `cd backend`
+* `pm2 start "node process/index.js" --name "SOME_NAME"`
+
+#### Useful commands
+
+Some useful commands to interact with pm2:
+
+* To view process list: `pm2 list`
+* To monit process consumption: `pm2 monit`
+* To stop/restart process: `pm2 stop/restart <id>`
+* To view ALL logs: `pm2 logs`
+* To view <id> process logs: `pm2 logs <id>`
+* To flush log history: `pm2 flush`
+* To save current process configuration and enable them on startup:
+
+```
+pm2 startup
+pm2 save
+```
+
+
+
+<!-- ROADMAP -->
+## Roadmap
+
+See the [open issues](https://github.com/Teks-Capital/rbtcswap/issues) for a list of proposed features (and known issues).
+
+
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+
+
+<!-- LICENSE -->
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+
+
+<!-- CONTACT -->
+## Contact
+
+Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email
+
+Project Link: [https://github.com/Teks-Capital/rbtcswap](https://github.com/Teks-Capital/rbtcswap)
+
+
+
+<!-- ACKNOWLEDGEMENTS -->
+## Acknowledgements
+
+* []()
+* []()
+* []()
+
+
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/Teks-Capital/rbtcswap.svg?style=for-the-badge
+[contributors-url]: https://github.com/Teks-Capital/rbtcswap/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Teks-Capital/rbtcswap.svg?style=for-the-badge
+[forks-url]: https://github.com/Teks-Capital/rbtcswap/network/members
+[stars-shield]: https://img.shields.io/github/stars/Teks-Capital/rbtcswap.svg?style=for-the-badge
+[stars-url]: https://github.com/Teks-Capital/rbtcswap/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Teks-Capital/rbtcswap.svg?style=for-the-badge
+[issues-url]: https://github.com/Teks-Capital/rbtcswap/issues
+[license-shield]: https://img.shields.io/github/license/Teks-Capital/rbtcswap.svg?style=for-the-badge
+[license-url]: https://github.com/Teks-Capital/rbtcswap/blob/master/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555

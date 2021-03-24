@@ -46,10 +46,6 @@ async function getAddrNextIndex() {
   return addresses.length == 0 ? 0 : addresses.length + 1;
 }
 
-/*
-  Return the next addr for the user to deposit based on the total addressess already used.
-  TODO: Esto se puede mejorar haciendo que reciba un array dinámico de XPUBS, queda como mejora, siendo que se configuran una vez y quedan, no habría problema.
-*/
 function deriveAddrByIndex(_index) {
 
   let arr = [];

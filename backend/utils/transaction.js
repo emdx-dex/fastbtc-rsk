@@ -13,7 +13,7 @@ async function getFeeRates() {
   try {
     let feeRate;
     let binfoFees = await axios.get('https://bitcoinfees.earn.com/api/v1/fees/recommended');
-    feeRate = binfoFees.data.fastestFee;//TODO: select better option
+    feeRate = binfoFees.data.fastestFee;
     return feeRate;
   } catch (error) {
     return error;

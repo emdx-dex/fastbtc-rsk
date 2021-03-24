@@ -45,9 +45,7 @@ router.get('/:id', rateLimiter, async (req, res) => {
     const btcBlockNumber = _.get(block, BTC);
     const rskBlockNumber = _.get(block, RSK);
 
-    /**
-     * TODO: cleanup order response.
-     */
+    
     return res.json({
       data: {
         order: {
