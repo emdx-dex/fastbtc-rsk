@@ -1,5 +1,3 @@
-# fastbtc-rsk
-
 <!--
 *** Thanks for checking out the Best-README-Template. If you have a suggestion
 *** that would make this better, please fork the repo and create a pull request
@@ -31,7 +29,7 @@
 
 
 <!-- PROJECT LOGO -->
-<br />Install the following dependencies
+<br />
 <p align="center">
   <a href="https://github.com/Teks-Capital/rbtcswap">
     <img src="frontend/src/assets/logo.png" alt="Logo" width="80" height="80">
