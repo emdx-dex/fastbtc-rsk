@@ -24,8 +24,6 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
 
 
 <!-- PROJECT LOGO -->
@@ -189,5 +187,4 @@ Project Link: [https://github.com/Teks-Capital/rbtcswap](https://github.com/Teks
 [issues-shield]: https://img.shields.io/github/issues/Teks-Capital/rbtcswap.svg?style=for-the-badge
 [issues-url]: https://github.com/Teks-Capital/rbtcswap/issues
 [license-shield]: https://img.shields.io/github/license/Teks-Capital/rbtcswap.svg?style=for-the-badge
-[license-url]: https://github.com/Teks-Capital/rbtcswap/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[license-url]: https://creativecommons.org/licenses/by-sa/4.0/
