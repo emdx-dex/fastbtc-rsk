@@ -146,9 +146,10 @@
           <div
             v-if="
               !deleted &&
-              flow === 'RbtcToBtc' &&
-              (transferStatus.status === 'signature_pending' ||
-                transferStatus.status === 'multisig_pending')
+              //flow === 'RbtcToBtc' &&
+              transferStatus.status !== 'confirmed'
+              //(transferStatus.status === 'signature_pending' ||
+              //  transferStatus.status === 'multisig_pending')
             "
           >
             <v-form ref="form" v-model="valid" lazy-validation>
@@ -262,13 +263,13 @@ export default {
       }
     },
     submit: function () {
-      const { id, txInput } = this;
+      const { id, txInput, flow } = this;
       const valid = this.$refs.form.validate();
 
       if (valid) {
         this.valid = false;
 
-        this.$store.dispatch('orders/sign', { id, txId: txInput });
+        this.$store.dispatch('orders/sign', { id, txId: txInput, flow: flow });
       }
     },
     toCoin: function () {

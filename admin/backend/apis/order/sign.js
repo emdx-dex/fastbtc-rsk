@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { RBTC_TO_BTC } = require('../../../../shared/flows');
+const { RBTC_TO_BTC, BTC_TO_RBTC } = require('../../../../shared/flows');
 const { UNCONFIRMED } = require('../../../../shared/status');
 const { validateTxId } = require('../../utils/transaction');
 const express = require('express');
@@ -11,25 +11,27 @@ const router = express.Router();
 
 router.put('/', async (req, res) => {
   try {
-    let { id, txId } = req.body;
+    let { id, txId, flow } = req.body;
 
-    if (!id || !txId) {
+    console.log(id, txId, flow);
+
+    if (!id || !txId || !flow) {
       return res.status(400).json({
         error: 'Missing Parameters.'
       });
     }
 
-    const isValid = await validateTxId(txId);
+    // const isValid = await validateTxId(txId);
 
-    if (!isValid) {
-      return res.status(400).json({
-        error: 'Tx id is not valid.'
-      });
-    }
+    // if (!isValid) {
+    //   return res.status(400).json({
+    //     error: 'Tx id is not valid.'
+    //   });
+    // }
 
     let filter = {
       _id: id,
-      flow: RBTC_TO_BTC
+      flow: flow
     };
 
     const order = await ordersModel.findOne(filter);
@@ -40,8 +42,15 @@ router.put('/', async (req, res) => {
       });
     }
 
-    order.btc.status = UNCONFIRMED;
-    order.btc.txId = txId;
+    if (flow == RBTC_TO_BTC) {
+      order.btc.status = UNCONFIRMED;
+      order.btc.txId = txId;
+    }
+
+    if(flow == BTC_TO_RBTC){
+      order.rsk.status = UNCONFIRMED;
+      order.rsk.txId = txId;
+    }
 
     let savedOrder = await order.save();
 
