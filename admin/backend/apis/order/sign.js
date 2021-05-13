@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const { RBTC_TO_BTC, BTC_TO_RBTC } = require('../../../../shared/flows');
 const { UNCONFIRMED } = require('../../../../shared/status');
-const { validateTxId } = require('../../utils/transaction');
 const express = require('express');
 const ordersModel = require('../../models/orders');
 
@@ -21,17 +20,10 @@ router.put('/', async (req, res) => {
       });
     }
 
-    // const isValid = await validateTxId(txId);
-
-    // if (!isValid) {
-    //   return res.status(400).json({
-    //     error: 'Tx id is not valid.'
-    //   });
-    // }
-
     let filter = {
       _id: id,
-      flow: flow
+      flow: floworder.rsk.status = UNCONFIRMED;
+      order.rsk.txId = txId
     };
 
     const order = await ordersModel.findOne(filter);

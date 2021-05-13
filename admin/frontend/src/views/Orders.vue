@@ -16,16 +16,20 @@
           <order :order="item"></order>
         </td>
       </template>
-      <template v-slot:item.status="{ item }">
-        <div class="d-flex justify-center align-center">
+      <template v-slot:item.flow="{ item }">
+        <span v-if="item.flow === 'btcToRbtc'">
           <status-indicator
-            :status="statusMapper[item.status]"
+            :status="statusMapper[item.status.btc]"
             :pulse="pulse"
           ></status-indicator>
-        </div>
-      </template>
-      <template v-slot:item.flow="{ item }">
-        <span v-if="item.flow === 'btcToRbtc'">BTC -> RBTC</span>
+
+          BTC -> RBTC
+
+          <status-indicator
+            :status="statusMapper[item.status.rsk]"
+            :pulse="pulse"
+          ></status-indicator>
+        </span>
         <span v-else-if="item.flow === 'RbtcToBtc'">RBTC -> BTC</span>
       </template>
     </v-data-table>
@@ -42,9 +46,9 @@ import { StatusIndicator } from 'vue-status-indicator';
 
 const statusMapper = {
   pending: 'intermediary',
-  signature_pending: 'intermediary',
-  multisig_pending: 'intermediary',
-  unconfirmed: 'active',
+  signature_pending: 'active',
+  multisig_pending: 'active',
+  unconfirmed: 'intermediary',
   confirmed: 'positive',
   failed: 'negative',
   deleted: '',
@@ -63,11 +67,6 @@ export default {
     error: '',
     statusMapper: statusMapper,
     headers: [
-      {
-        text: 'Status',
-        value: 'status',
-        sortable: false,
-      },
       {
         class: 'orders__table__row--date',
         text: 'Date',
@@ -105,15 +104,14 @@ export default {
     '$store.state.orders.orders': function (orders) {
       const formattedOrders = orders.map(
         ({ btc, rsk, createdAt, flow, deleted, id, value, ...order }) => {
-          let properStatus;
+          let properStatus = {};
 
-          if (deleted) 
-            properStatus = 'deleted';
+          if (deleted) properStatus.deleted = 'deleted';
           else {
-            if (flow == 'btcToRbtc') 
-              properStatus = rsk.status;
-            else 
-              properStatus = btc.status;
+            properStatus = {
+              rsk: rsk.status,
+              btc: btc.status,
+            };
           }
 
           return {
