@@ -21,14 +21,6 @@ router.put('/', async (req, res) => {
       });
     }
 
-    // const isValid = await validateTxId(txId);
-
-    // if (!isValid) {
-    //   return res.status(400).json({
-    //     error: 'Tx id is not valid.'
-    //   });
-    // }
-
     let filter = {
       _id: id,
       flow: flow
