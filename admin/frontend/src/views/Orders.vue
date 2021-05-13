@@ -30,7 +30,18 @@
             :pulse="pulse"
           ></status-indicator>
         </span>
-        <span v-else-if="item.flow === 'RbtcToBtc'">RBTC -> BTC</span>
+        <span v-else-if="item.flow === 'RbtcToBtc'">
+          <status-indicator
+            :status="statusMapper[item.status.rsk]"
+            :pulse="pulse"
+          ></status-indicator>
+          RBTC -> BTC
+          <status-indicator
+            :status="statusMapper[item.status.btc]"
+            :pulse="pulse"
+          ></status-indicator>
+        
+        </span>
       </template>
     </v-data-table>
     <error-notification :error="error"></error-notification>
