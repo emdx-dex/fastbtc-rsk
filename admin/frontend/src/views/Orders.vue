@@ -18,24 +18,12 @@
       </template>
       <template v-slot:item.status="{ item }">
         <div class="d-flex justify-center align-center">
-          <v-icon
-            color="success"
-            v-if="
-              !item.deleted &&
-              item.flow === 'RbtcToBtc' && 
-              (item.status === 'signature_pending' ||
-                item.status === 'multisig_pending')
-            "
-          >
-            mdi-draw
-          </v-icon>
-          <v-icon v-else-if="item.status === 'deleted'" color="error">
-            mdi-trash-can
-          </v-icon>
-          <span v-else></span>
+          <status-indicator
+            :status="statusMapper[item.status]"
+            :pulse="pulse"
+          ></status-indicator>
         </div>
       </template>
-
       <template v-slot:item.flow="{ item }">
         <span v-if="item.flow === 'btcToRbtc'">BTC -> RBTC</span>
         <span v-else-if="item.flow === 'RbtcToBtc'">RBTC -> BTC</span>
@@ -50,20 +38,33 @@ import ErrorNotification from '@/components/error-notification';
 import moment from 'moment';
 import Order from '@/components/order';
 import Page from '@/components/page';
+import { StatusIndicator } from 'vue-status-indicator';
+
+const statusMapper = {
+  pending: 'intermediary',
+  signature_pending: 'intermediary',
+  multisig_pending: 'intermediary',
+  unconfirmed: 'active',
+  confirmed: 'positive',
+  failed: 'negative',
+  deleted: '',
+};
 
 export default {
   name: 'Orders',
   components: {
     'error-notification': ErrorNotification,
+    StatusIndicator,
     Order,
     Page,
   },
   data: () => ({
     expanded: [],
     error: '',
+    statusMapper: statusMapper,
     headers: [
       {
-        text: '',
+        text: 'Status',
         value: 'status',
         sortable: false,
       },
@@ -87,6 +88,8 @@ export default {
       { text: '', value: 'data-table-expand' },
     ],
     loading: false,
+    style: 'active',
+    pulse: true,
     orders: [],
   }),
   mounted: async function () {
@@ -101,7 +104,18 @@ export default {
     },
     '$store.state.orders.orders': function (orders) {
       const formattedOrders = orders.map(
-        ({ btc, createdAt, flow, deleted, id, value, ...order }) => {
+        ({ btc, rsk, createdAt, flow, deleted, id, value, ...order }) => {
+          let properStatus;
+
+          if (deleted) 
+            properStatus = 'deleted';
+          else {
+            if (flow == 'btcToRbtc') 
+              properStatus = rsk.status;
+            else 
+              properStatus = btc.status;
+          }
+
           return {
             ...order,
             btc,
@@ -109,7 +123,8 @@ export default {
             flow,
             deleted,
             id,
-            status: deleted ? 'deleted' : btc.status,
+            rsk,
+            status: properStatus,
             value,
           };
         }
